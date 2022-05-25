@@ -15,11 +15,12 @@ int main() {
 			deg[v]++;
 		}
 		int flag = 0;
-		for(int i = 0; i < n; i++) {
+		for(int i = 1; i <= n; i++) {
 			if (deg[i] % 2 != 0) {
 			    flag = 1;
 			}
 		}
 		cout << (flag ? "Hifuu" : "Luna") << endl;
 	}
+	return 0;
 }
