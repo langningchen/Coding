@@ -1,9 +1,3 @@
-//100
-//编程语言 C++14 (GCC 9) O2
-//代码长度 542B
-//用时 9ms
-//内存 744.00KB
-//2022-05-11 20:26:03
 #include <bits/stdc++.h>
 using namespace std;
 typedef long long ll;
