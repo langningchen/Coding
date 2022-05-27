@@ -14,4 +14,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: configure
-      run: gcc main.cpp -o test.exe
+      run: gcc "P8318 『JROI-4』淘气的猴子.cpp" -o test.exe
