@@ -20,6 +20,6 @@ jobs:
     - name: compile
       run: for i in "."/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}.exe" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}.exe"; done
     - name: commit
-      run: git commit -a
+      run: git commit -a -m "no message"
     - name: pull
       run: git pull
