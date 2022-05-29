@@ -2,9 +2,9 @@ name: C/C++ CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ codespace-langningchen-luogu-x596j4gx42pxr6 ]
   pull_request:
-    branches: [ main ]
+    branches: [ codespace-langningchen-luogu-x596j4gx42pxr6 ]
 
 jobs:
   build:
