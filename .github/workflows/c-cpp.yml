@@ -13,7 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: configure
-      run: gcc "P8319.cpp" -o test.exe -std=c++11 -lstdc++
-    - name: test
-      run: ls
+    - name: compile
+      run: for i in "."/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}.exe" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}.exe"; done
+    - name: commit
+      run: git commit -a
+    - name: pull
+      run: git pull
