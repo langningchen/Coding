@@ -1,0 +1,25 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ codespace-langningchen-luogu-x596j4gx42pxr6 ]
+  pull_request:
+    branches: [ codespace-langningchen-luogu-x596j4gx42pxr6 ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: config1
+      run: git config --global user.email "langningc2009@163.com"
+    - name: config2
+      run: git config --global user.name "ChenLangNing"
+    - name: compile
+      run: for i in "."/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}.exe" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}.exe"; done
+    - name: commit
+      run: git commit -a -m "no message"
+    - name: pull
+      run: git pull
