@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 1505;
-const int INF = 9999999999;
+const int INF = 0x7FFFFFFF;
 int m, n, ok[N], f[N];
 vector<int> to[N];
 vector<int> w[N];
