@@ -22,7 +22,7 @@ jobs:
     - name: compile
       run: for i in "."/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}.exe" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}.exe"; done
     - name: commit
-      run: git commit -a -m "no message"
+      run: git commit -a -m "Auto Compile"
     - name: push
       run: git push
     - name: pull
