@@ -20,9 +20,9 @@ jobs:
     - name: config3
       run: git config pull.rebase false
     - name: compileEtiger
-      run: for i in "Etiger"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}.exe" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}.exe"; done
+      run: for i in "Etiger"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}"; done
     - name: compileLuogu
-      run: for i in "Luogu"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}.exe" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}.exe"; done
+      run: for i in "Luogu"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}"; done
     - name: ZipEtiger
       run: zip -r Etiger.zip Etiger
     - name: ZipLuogu
