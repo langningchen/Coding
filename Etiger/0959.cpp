@@ -35,8 +35,8 @@ void addE(int a, int b, int v) {
     w[a].push_back(v);
 }
 int main() {
-//    freopen("inequality.in", "r", stdin);
-//    freopen("inequality.out", "w", stdout);
+    freopen("inequality.in", "r", stdin);
+    freopen("inequality.out", "w", stdout);
     cin >> T;
     for (int t = 0; t < T; t++) {
 		cin >> n;
