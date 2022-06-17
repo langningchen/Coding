@@ -5,8 +5,6 @@ const int INF = 0x7FFFFFF;
 int n, m, dst[N], vst[N];
 vector<int> to[N];
 vector<int> w[N];
-void add(int a, int b, int c) {
-}
 void dijkstra() {
 	while (1) {
 		int MinValue = INF;
