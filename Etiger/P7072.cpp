@@ -17,6 +17,7 @@ int main() {
 		}
 		cout << Index << " ";
 	}
+	cout << endl;
 	return 0;
 
 }
