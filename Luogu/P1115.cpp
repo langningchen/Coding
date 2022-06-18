@@ -1,10 +1,12 @@
 #include <bits/stdc++.h>
 using namespace std;
-int n, ans, f;
+typedef long long ll;
+const ll INF = 0x7FFFFFFF;
+ll n, ans = -INF, f;
 int main() {
 	cin >> n;
-	for (int i = 0; i < n; i++) {
-		int a;
+	for (ll i = 0; i < n; i++) {
+		ll a;
 		cin >> a;
 		f = max(f + a, a);
 		ans = max(f, ans);
