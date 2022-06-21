@@ -26,8 +26,8 @@ void dijkstra() {
 	}
 }
 int main() {
-//	freopen("bonus.in", "r", stdin);
-//	freopen("bonus.out", "w", stdout);
+//	freopen("army.in", "r", stdin);
+//	freopen("army.out", "w", stdout);
 	scanf("%d %d", &n, &m);
 	for (int i = 2; i <= n; i++) {
 		dst[i] = INF;
@@ -42,4 +42,3 @@ int main() {
 	cout << dst[2] << endl;
 	return 0;
 }
-
