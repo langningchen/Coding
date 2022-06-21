@@ -1,0 +1,53 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "compile",
+            "type": "shell",
+            "windows": {
+                "command": "gcc",
+                "args": [
+                    "${file}",
+                    "-o",
+                    "${workspaceFolder}${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.exe",
+                    "-std=c++11",
+                    "-lstdc++",
+                    "-lm",
+                    "-O2",
+                    "-g"
+                ]
+            },
+            "linux": {
+                "command": "gcc",
+                "args": [
+                    "${file}",
+                    "-o",
+                    "${workspaceFolder}${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}",
+                    "-std=c++11",
+                    "-lstdc++",
+                    "-lm",
+                    "-O2",
+                    "-g"
+                ]
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "debug",
+            "type": "shell",
+            "windows": {
+                "command": "gdb",
+                "args": [
+                    "${workspaceFolder}${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.exe"
+                ]
+            },
+            "linux": {
+                "command": "gdb",
+                "args": [
+                    "${workspaceFolder}${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}"
+                ]
+            },
+            "problemMatcher": []
+        }
+    ]
+}
