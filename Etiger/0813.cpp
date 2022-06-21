@@ -1,15 +1,17 @@
 #include <bits/stdc++.h>
 using namespace std;
 typedef long long ll;
-const int N = 100005;
-const int M = 500005;
+const int N = 1000005;
+const int M = 5000005;
 struct edge {
     ll to;
     ll nxt;
 };
 edge e[M * 2];
-ll timer, dfn[N], low[N], bridge[N], nEDCC;
-vector<ll> hd[N];
+ll n, m, rt, nE, hd[N], bridge[N];
+ll dfn[N], low[N], nSon[N], timer;
+bool vst[N];
+ll nEDCC;
 void add(ll u, ll v) {
     ++nE;
     e[nE] = (edge){v, hd[u]};
@@ -21,7 +23,7 @@ void tarjan(ll u, ll fa) {
         ll v = e[i].to;
         if (v == fa) continue;
         if (dfn[v]) {
-            low[u] = min(low[u], low[v]);
+            low[u] = min(low[u], dfn[v]);
             continue;
         }
         tarjan(v, u);
@@ -31,7 +33,7 @@ void tarjan(ll u, ll fa) {
     }
 }
 void dfs(ll u) {
-    vst[n] = nEDCC;
+    vst[u] = nEDCC;
     for (ll i = hd[u]; i; i = e[i].nxt) {
         ll v = e[i].to;
         if (vst[v]) continue;
@@ -40,6 +42,7 @@ void dfs(ll u) {
     }
 }
 int main() {
+    cin >> n >> m;
     nE = 1;
     for (ll i = 1; i <= m; i++) {
         ll u, v;
@@ -54,6 +57,6 @@ int main() {
             dfs(u);
         }
     }
-    cout << nEDCC << endl;
+    cout << nEDCC - 1 << endl;
     return 0;
 }
