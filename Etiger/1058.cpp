@@ -3,7 +3,7 @@ using namespace std;
 typedef long long ll;
 const int N = 100005;
 ll m, n, B, a[N], as[N], b[N], x[N], y[N];
-ll quert(ll l, ll r, ll k) {
+ll query(ll l, ll r, ll k) {
 	ll cnt = 0;
 	if (b[l] == b[r]) {
 		for (int i = l; i <= r; i++) cnt += (a[i] <= k);
@@ -33,7 +33,7 @@ int main() {
 	for (ll i = 1; i <= m; i++) {
 		ll l, r, k;
 		cin >> l >> r >> k;
-		cout << quert(l, r, k) << " ";
+		cout << query(l, r, k) << " ";
 	}
 	return 0;
 } 

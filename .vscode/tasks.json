@@ -30,7 +30,11 @@
                     "-g"
                 ]
             },
-            "problemMatcher": []
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
             "label": "debug",
