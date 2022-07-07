@@ -8,12 +8,14 @@ int main() {
 	for (ll i = 0; i < n; i++) {
 		cin >> a[i];
 	}
+	sort(a, a + n);
 	for (ll i = 0; i < n; i++) {
-		ll l = 0, r = n;
-		while (l < r && a[l] >= a[i] - c) l++;
-		while (l < r && a[r] < a[i] - c) r--;
-		sum += r - l;
+		ll l = 0, r = 0;
+		while (l < n && a[l] < a[i] - c) l++;
+		while (r < n && a[r] <= a[i] - c) r++;
+		if (a[i] - a[l] == c) sum += r - l;
 	}
 	cout << sum << endl;
 	return 0;
 }
+
