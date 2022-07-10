@@ -17,7 +17,7 @@ void addE(int u, int v) {
     hd[v] = nE;
 }
 void dfs(int u, int fa) {
-    tI[n] = ++timer;
+    tI[u] = ++timer;
     d[u] = d[fa] + 1;
     p[u][0] = fa;
     for (int i = 1; i <= L; i++) {
@@ -50,8 +50,8 @@ bool onPath(int x, int u, int v) {
     return dst(u, x) + dst(v, x) == dst(u, v);
 }
 int main() {
-    // freopen("intersection.in", "r", stdin);
-    // freopen("intersection.out", "w", stdout);
+    freopen("intersection.in", "r", stdin);
+    freopen("intersection.out", "w", stdout);
     cin >> n;
     for (int i = 1; i <= n - 1; i++) {
         int u, v;
