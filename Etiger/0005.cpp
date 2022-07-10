@@ -1,12 +1,13 @@
-#include <iostream>
+#include <bits/stdc++.h>
 using namespace std;
+const int N = 105;
+int n, m, a[N];
 int main()
 {
-    int n, m, a[100];
-    cin>>n>>m;
+    cin >> n >> m;
     for (int i = 0; i < n; i++)
     {
-        cin>>a[i];
+        cin >> a[i];
     }
     for (int i = 0; i < n - 1; i++)
     {
@@ -14,12 +15,11 @@ int main()
         {
             if (a[i] + a[j] == m && i != j)
             {
-                cout<<"Yes";
+                cout << "Yes" << endl;
                 return 0;
             }
         }
     }
-    cout<<"No";
+    cout << "No" << endl;
     return 0;
 }
-

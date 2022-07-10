@@ -3,7 +3,8 @@ using namespace std;
 
 const int MAX = 1005;
 
-struct SubTree{
+struct SubTree
+{
     int Left;
     int Right;
 };
@@ -12,12 +13,15 @@ int n, m, DFN[MAX], Timer;
 vector<int> AdjacencyTable[MAX];
 vector<int> Output;
 SubTree Tree[MAX];
-void DFS(int Now, int Father) {
+void DFS(int Now, int Father)
+{
     Output.push_back(Now);
     Timer++;
     Tree[Now].Left = DFN[Now] = Timer;
-    for (int i = 0; i < AdjacencyTable[Now].size(); i++) {
-        if (AdjacencyTable[Now][i] != Father) {
+    for (int i = 0; i < AdjacencyTable[Now].size(); i++)
+    {
+        if (AdjacencyTable[Now][i] != Father)
+        {
             DFS(AdjacencyTable[Now][i], Now);
             Output.push_back(Now);
         }
@@ -25,26 +29,31 @@ void DFS(int Now, int Father) {
     Timer++;
     Tree[Now].Right = Timer;
 }
-int main() {
+int main()
+{
     freopen("euler.in", "r", stdin);
     freopen("euler.out", "w", stdout);
     cin >> n;
-    for (int i = 1; i < n; i++) {
+    for (int i = 1; i < n; i++)
+    {
         int a, b;
         cin >> a >> b;
         AdjacencyTable[a].push_back(b);
         AdjacencyTable[b].push_back(a);
     }
     DFS(1, 1);
-    for (int i = 0; i < 2 * n - 2; i++) {
+    for (int i = 0; i < 2 * n - 2; i++)
+    {
         cout << Output[i] << " ";
     }
     cout << Output[2 * n - 2] << endl;
-    for (int i = 1; i < n; i++) {
+    for (int i = 1; i < n; i++)
+    {
         cout << Tree[i].Left << " ";
     }
     cout << Tree[n].Left << endl;
-    for (int i = 1; i < n; i++) {
+    for (int i = 1; i < n; i++)
+    {
         cout << Tree[i].Right - 1 << " ";
     }
     cout << Tree[n].Right - 1 << endl;

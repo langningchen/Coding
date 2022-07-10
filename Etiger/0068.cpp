@@ -1,9 +1,10 @@
-#include <iostream>
-#include <algorithm>
+#include <bits/stdc++.h>
+typedef long long ll;
 const int N = 500009;
-long long a[N], d[N], n, p, x, y, z;
+ll a[N], d[N], n, p, x, y, z;
 using namespace std;
-int main() {
+int main()
+{
     cin >> n >> p;
     for (int i = 1; i <= n; i++)
         cin >> a[i];

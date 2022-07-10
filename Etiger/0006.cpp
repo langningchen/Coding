@@ -1,7 +1,9 @@
-#include<bits/stdc++.h>
+#include <bits/stdc++.h>
 using namespace std;
-char a[7][7], ans[7][7];
-int main() {
+const int N = 7;
+char a[N][N], ans[N][N];
+int main()
+{
     for (int i = 1; i < 6; i++)
         for (int j = 1; j < 6; j++)
             cin >> a[i][j];
@@ -27,4 +29,3 @@ int main() {
     }
     return 0;
 }
-

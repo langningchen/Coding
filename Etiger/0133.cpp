@@ -1,11 +1,12 @@
 #include <bits/stdc++.h>
-#include <algorithm>
 using namespace std;
-const int N = 10001;
+const int N = 10005;
 int c, n, w, v, f[N];
-int main() {
+int main()
+{
     cin >> c >> n;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         cin >> w >> v;
         for (int j = c; j >= w; j--)
             f[j] = max(f[j], f[j - w] + v);

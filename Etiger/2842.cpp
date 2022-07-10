@@ -1,46 +1,62 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 8005;
-struct Node{
+struct Node
+{
 	int index;
 	long long value;
 };
-bool cmp(Node cmp1, Node cmp2) {
-	if (cmp1.value < cmp2.value) return true;
-	if (cmp1.value > cmp2.value) return false;
-	if (cmp1.index < cmp2.index) return true;
-	if (cmp1.index > cmp2.index) return false;
+bool cmp(Node cmp1, Node cmp2)
+{
+	if (cmp1.value < cmp2.value)
+		return true;
+	if (cmp1.value > cmp2.value)
+		return false;
+	if (cmp1.index < cmp2.index)
+		return true;
+	if (cmp1.index > cmp2.index)
+		return false;
 	return 0;
 }
 long long n, Q;
 Node a[N];
 long long f[N];
-void add(int t, int v) {
-	if (a[f[t]].value == v) return;
+void add(int t, int v)
+{
+	if (a[f[t]].value == v)
+		return;
 	int x = 0;
 	int i = 0;
 	Node temp;
 	temp.index = t;
 	temp.value = v;
 	x = f[t];
-	if (cmp(temp, a[0])) {
+	if (cmp(temp, a[0]))
+	{
 		i = -1;
 	}
-	else {
-		for (; i < n - 1; i++) {
-			if (cmp(a[i], temp) && cmp(temp, a[i + 1])) break;
+	else
+	{
+		for (; i < n - 1; i++)
+		{
+			if (cmp(a[i], temp) && cmp(temp, a[i + 1]))
+				break;
 		}
 	}
-	if (x <= i) {
-		for (int j = x; j < i; j++) {
+	if (x <= i)
+	{
+		for (int j = x; j < i; j++)
+		{
 			a[j] = a[j + 1];
 			f[a[j].index] = j;
 		}
 		a[i] = temp;
 		f[temp.index] = i;
 	}
-	if (i + 1 <= x) {
-		for (int j = x; j > i + 1; j--) {
+	if (i + 1 <= x)
+	{
+		for (int j = x; j > i + 1; j--)
+		{
 			a[j] = a[j - 1];
 			f[a[j].index] = j;
 		}
@@ -48,19 +64,23 @@ void add(int t, int v) {
 		f[temp.index] = i + 1;
 	}
 }
-void swap(int x, int y) {
-    Node temp;
+void swap(int x, int y)
+{
+	Node temp;
 	temp = a[x];
 	a[x] = a[y];
 	a[y] = temp;
 	f[a[x].index] = x;
 	f[a[y].index] = y;
 }
-void sort(int l, int r) {
-	if (l >= r) return;
+void sort(int l, int r)
+{
+	if (l >= r)
+		return;
 	int m = l + 1;
 	for (int i = l + 1; i <= r; i++)
-		if (cmp(a[i], a[l])) {
+		if (cmp(a[i], a[l]))
+		{
 			swap(i, m);
 			m++;
 		}
@@ -68,14 +88,17 @@ void sort(int l, int r) {
 	sort(l, m - 2);
 	sort(m, r);
 }
-int query(int x) {
+int query(int x)
+{
 	return f[x];
 }
-int main() {
+int main()
+{
 	freopen("sort.in", "r", stdin);
 	freopen("sort.out", "w", stdout);
 	cin >> n >> Q;
-	for (int i = 0; i < n; i++) {
+	for (int i = 0; i < n; i++)
+	{
 		int temp;
 		cin >> temp;
 		a[i].index = i;
@@ -83,15 +106,18 @@ int main() {
 		f[i] = i;
 	}
 	sort(0, n - 1);
-	for (int i = 0; i < Q; i++) {
+	for (int i = 0; i < Q; i++)
+	{
 		int t;
 		cin >> t;
-		if (t == 1) {
+		if (t == 1)
+		{
 			long long x, v;
 			cin >> x >> v;
 			add(x - 1, v);
 		}
-		else {
+		else
+		{
 			int x;
 			cin >> x;
 			cout << query(x - 1) + 1 << endl;

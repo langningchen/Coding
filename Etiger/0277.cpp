@@ -1,11 +1,12 @@
-#include <iostream>
-#include <string>
+#include <bits/stdc++.h>
 using namespace std;
 string ans;
-int main() {
-    int x, i = 0, m;
+int x, i, m;
+int main()
+{
     cin >> x >> m;
-    do {
+    do
+    {
         int n = x % m;
         if (n >= 10)
         {
@@ -17,7 +18,7 @@ int main() {
         }
         x /= m;
     } while (x);
-    while(ans.data()[i] != '\0')
+    while (ans.data()[i] != '\0')
     {
         i++;
     }
@@ -25,5 +26,6 @@ int main() {
     {
         cout << ans.data()[j];
     }
+    cout << endl;
     return 0;
 }

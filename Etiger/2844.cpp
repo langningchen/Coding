@@ -12,10 +12,12 @@ void Union(int x, int y)
 {
     Father[Find(x)] = Find(y);
 }
-int Change(int x) {
+int Change(int x)
+{
     return ((x == 0) ? 1 : 0);
 }
-void Input() {
+void Input()
+{
     scanf("%d", &n);
     for (int i = 0; i < n; i++)
     {
@@ -23,7 +25,8 @@ void Input() {
         Father[i + 1] = i + 1;
     }
 }
-void Output() {
+void Output()
+{
     for (int i = 0; i < l[now] - 1; i++)
         printf("%d ", b[now][i] + 1);
     printf("%d\n", b[now][l[now] - 1] + 1);
@@ -57,4 +60,3 @@ int main()
     }
     return 0;
 }
-

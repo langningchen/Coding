@@ -1,18 +1,21 @@
 #include <bits/stdc++.h>
 using namespace std;
-int main() {
-    freopen("merge.in","r",stdin);
-    freopen("merge.out","w",stdout);
-    multiset<int> s;
-    multiset<int>::iterator it;
+multiset<int> s;
+multiset<int>::iterator it;
+int main()
+{
+    freopen("merge.in", "r", stdin);
+    freopen("merge.out", "w", stdout);
     int n, ans = 0;
     cin >> n;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         int x;
         cin >> x;
         s.insert(x);
     }
-    while(s.size() >= 2) {
+    while (s.size() >= 2)
+    {
         it = s.begin();
         int a = *it;
         s.erase(it);
