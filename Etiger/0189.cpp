@@ -1,9 +1,10 @@
 #include <bits/stdc++.h>
-#define N 1005
-#define INF 2e9
 using namespace std;
+const int N = 1005;
+const int INF = 0x7FFFFFFF;
 int n, d[N], x[N], cnt;
-int main() {
+int main()
+{
     while (cin >> x[n])
         n++;
     fill(d, d + n, INF);

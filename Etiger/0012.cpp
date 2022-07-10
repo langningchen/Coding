@@ -7,4 +7,3 @@ int main()
     cout << fixed << setprecision(2) << a * b * c << endl;
     return 0;
 }
-

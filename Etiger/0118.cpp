@@ -1,15 +1,17 @@
-#include <iostream>
+#include <bits/stdc++.h>
 using namespace std;
-long long gcd(long long a, long long b)                //最大公约数
+typedef long long ll;
+ll gcd(ll a, ll b)
 {
-    return !b ? a : gcd(b, a % b);    //辗转相除法 
+    return !b ? a : gcd(b, a % b);
 }
-long long lcm(long long a, long long b)            //最小公倍数 
+ll lcm(ll a, ll b)
 {
-    return a / gcd(a, b) * b;    //a * b = gcd(a, b)
-} 
-int main() {
-    long long a, b;
+    return a / gcd(a, b) * b;
+}
+int main()
+{
+    ll a, b;
     cin >> a >> b;
     cout << lcm(a, b) << endl;
     return 0;

@@ -1,6 +1,7 @@
-#include <iostream>
+#include <bits/stdc++.h>
 using namespace std;
-int main() {
-  cout << "lester´óË§¸ç" << endl;
-  return 0;
+int main()
+{
+    cout << "lesterå¤§å¸…å“¥" << endl;
+    return 0;
 }

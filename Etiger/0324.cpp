@@ -1,18 +1,21 @@
 #include <bits/stdc++.h>
 using namespace std;
-int main() {
-    freopen("envelope.in","r",stdin);
-    freopen("envelope.out","w",stdout);
-    map <string, int> money;
-    int n, size, times;
+map<string, int> money;
+int n, size, times;
+int main()
+{
+    freopen("envelope.in", "r", stdin);
+    freopen("envelope.out", "w", stdout);
     cin >> n;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         string name;
         char temp;
         cin >> name;
         cin >> size >> temp >> times;
         money[name] -= size * times;
-        for (int j = 0; j < times; j++) {
+        for (int j = 0; j < times; j++)
+        {
             cin >> name;
             money[name] += size;
         }

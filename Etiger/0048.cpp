@@ -3,14 +3,17 @@ using namespace std;
 const int N = 105;
 const int MOD = 1000007;
 int m, n, a[N], f[N][N];
-int main() {
+int main()
+{
     freopen("flower.in", "r", stdin);
     freopen("flower.out", "w", stdout);
     cin >> n >> m;
-    for (int i = 1; i <= n; i++) {
+    for (int i = 1; i <= n; i++)
+    {
         cin >> a[i];
     }
-    for (int i = 0; i <= n; i++) {
+    for (int i = 0; i <= n; i++)
+    {
         f[i][0] = 1;
     }
     for (int i = 1; i <= n; i++)

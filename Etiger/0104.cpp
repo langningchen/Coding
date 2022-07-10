@@ -1,9 +1,10 @@
-#include<bits/stdc++.h>
+#include <bits/stdc++.h>
 using namespace std;
-int main() {
-    freopen("letters.in","r",stdin);
-    freopen("letters.out","w",stdout);
-    string s;
+string s;
+int main()
+{
+    freopen("letters.in", "r", stdin);
+    freopen("letters.out", "w", stdout);
     getline(cin, s);
     for (int i = 0; i < s.size(); i++)
     {
@@ -16,7 +17,6 @@ int main() {
             s[i] = s[i] + 32;
         }
     }
-    cout << s;
+    cout << s << endl;
     return 0;
 }
-

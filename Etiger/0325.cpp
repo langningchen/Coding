@@ -1,9 +1,10 @@
 #include <bits/stdc++.h>
 using namespace std;
-int main() {
-    freopen("encryption.in","r",stdin);
-    freopen("encryption.out","w",stdout);
-    string a, b;
+string a, b;
+int main()
+{
+    freopen("encryption.in", "r", stdin);
+    freopen("encryption.out", "w", stdout);
     getline(cin, a);
     getline(cin, b);
     map<char, char> code;

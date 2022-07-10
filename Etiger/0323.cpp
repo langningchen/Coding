@@ -1,13 +1,15 @@
 #include <bits/stdc++.h>
 using namespace std;
-int main() {
-    freopen("assignment.in","r",stdin);
-    freopen("assignment.out","w",stdout);
-    map<string, int> d;
-    map<string, int>::iterator mit;
-    int n;
+map<string, int> d;
+map<string, int>::iterator mit;
+int n;
+int main()
+{
+    freopen("assignment.in", "r", stdin);
+    freopen("assignment.out", "w", stdout);
     cin >> n;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         string name;
         int score;
         cin >> name >> score;
