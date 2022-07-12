@@ -6,36 +6,12 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include "lib/configor-0.9.17/include/configor/json.hpp"
+#define __DEBUG__
 using namespace std;
 using namespace configor;
 string Token = "";
 string UserName = "";
-vector<short> NotACQuestins;
-
-wstring stringtowstring(string Input)
-{
-    setlocale(LC_CTYPE, "");
-    wchar_t *OutputTemp = new wchar_t[Input.size() + 1];
-    mbstowcs(OutputTemp, Input.c_str(), wcslen(OutputTemp));
-    wstring Output(OutputTemp);
-    delete OutputTemp;
-    return Output;
-}
-
-/**
- * @brief ANSI字符集转换为UTF-8字符集
- *
- * @param Input 输入字符串缓冲区
- * @param InputSize 输入字符串缓冲区大小
- * @param Output 输出字符串缓冲区
- * @param OutputSize 输出字符串缓冲区大小
- */
-void ANSIToUTF8(const char *Input, size_t InputSize, char *Output, size_t OutputSize)
-{
-    iconv_t Iconv = iconv_open("UTF-8", "GBK");
-    iconv(Iconv, (char **)&Input, &InputSize, &Output, &OutputSize);
-    iconv_close(Iconv);
-}
+vector<string> NotACQuestins;
 
 /**
  * @brief 从网络用GET方法下载文件
@@ -138,10 +114,7 @@ void PostDataToFile(string URL, string FileName, string PostData)
         curl_easy_setopt(Curl, CURLOPT_URL, URL.c_str());
         curl_easy_setopt(Curl, CURLOPT_WRITEDATA, FilePointer);
         curl_easy_setopt(Curl, CURLOPT_POST, 1);
-        char ch[1024];
-        memset(ch, 0, sizeof(ch));
-        ANSIToUTF8(PostData.c_str(), PostData.size(), ch, sizeof(ch));
-        curl_easy_setopt(Curl, CURLOPT_POSTFIELDS, ch);
+        curl_easy_setopt(Curl, CURLOPT_POSTFIELDS, PostData.c_str());
 
         if (Token != "")
             CurlHeader = curl_slist_append(CurlHeader, string("token: " + Token).c_str());
@@ -258,24 +231,30 @@ string GetQuestionName(short QuestionID)
  * @param QuestionID 问题ID
  * @param Code 代码
  */
-void CommitCode(short QuestionID, string Code)
+void SubmitCode(short QuestionID, string Code)
 {
     StringReplaceAll(Code, "\\", "\\\\");
     StringReplaceAll(Code, "\r", "\\r");
     StringReplaceAll(Code, "\n", "\\n");
     StringReplaceAll(Code, "\t", "\\t");
     StringReplaceAll(Code, "\"", "\\\"");
-    cout << PostDataToString("http://httpbin.org/post", R"({"comment":"","lang":"CPP","submitType":0,"questionId":)" + to_string(QuestionID) + R"(,"src":")" + Code + R"("})");
-    return;
-    json Response = json::parse(PostDataToString("https://www.etiger.vip/thrall-web/saveSubmit", R"({"comment":"","lang":"CPP","submitType":0,"questionId":)" + to_string(QuestionID) + R"(,"src":")" + Code + R"("})"));
+    string TempResponse = PostDataToString("https://www.etiger.vip/thrall-web/saveSubmit", R"({"comment":"","lang":"CPP","submitType":0,"questionId":)" + to_string(QuestionID) + R"(,"src":")" + Code + R"("})");
+    if (TempResponse[0] == '<')
+    {
+        cout << "提交失败，请检查文件内是否包含中文" << endl;
+        NotACQuestins.push_back(to_string(QuestionID) + "  提交失败，请检查文件内是否包含中文");
+        return;
+    }
+    json Response = json::parse(TempResponse);
     if (Response["code"] != 200)
     {
         cout << "太戈编程返回错误信息：" << Response["msg"] << endl;
+        NotACQuestins.push_back(to_string(QuestionID) + "  太戈编程返回错误信息：" + Response["msg"].as_string());
         return;
     }
     if (Response["data"]["grade"] != 100)
     {
-        NotACQuestins.push_back(QuestionID);
+        NotACQuestins.push_back(to_string(QuestionID) + "  得分" + Response["data"]["grade"].as_string());
     }
     cout << "得分：" << Response["data"]["grade"] << endl;
     int Counter = 0;
@@ -283,13 +262,17 @@ void CommitCode(short QuestionID, string Code)
     {
         cout << "测试点" << (Counter++) << "：" << Iterator.value()["type"].as_string() << " " << Iterator.value()["timeUsed"] << "ms " << Iterator.value()["memUsed"] << "B" << endl;
     }
-    cout << endl;
 }
 
 /**
- * @brief 提交所有代码
+ * @brief 提交所有的代码
  *
- * @param RegExpresstion 匹配文件名的正则表达式
+ * @param IDStartChoose 题目ID开始位置定位方式选择
+ * @param IDStartPos 题目ID开始位置
+ * @param IDStartString 题目ID开始关键字
+ * @param IDEndChoose 题目ID结束位置定位方式选择
+ * @param IDEndPos 题目ID结束位置
+ * @param IDEndString 题目ID结束关键字
  */
 void SubmitAllCode(bool IDStartChoose, short IDStartPos, string IDStartString, bool IDEndChoose, short IDEndPos, string IDEndString)
 {
@@ -349,6 +332,10 @@ void SubmitAllCode(bool IDStartChoose, short IDStartPos, string IDStartString, b
             cout << FileName.substr(ThisFileIDStartPos, ThisFileIDEndPos - ThisFileIDStartPos) << "不是数字，跳过文件" << FileName << endl;
             continue;
         }
+#ifdef __DEBUG__
+        if (QuestionID > 10)
+            return;
+#endif
         FILE *FilePointer;
         FilePointer = fopen(FileName.c_str(), "r");
         if (FilePointer == NULL)
@@ -360,7 +347,8 @@ void SubmitAllCode(bool IDStartChoose, short IDStartPos, string IDStartString, b
         while (Code[Code.size() - 1] == '\n' || Code[Code.size() - 1] == '\r' || Code[Code.size() - 1] == -1)
             Code.erase(Code.size() - 1);
         cout << "提交第" << QuestionID << "题..." << endl;
-        CommitCode(QuestionID, Code);
+        SubmitCode(QuestionID, Code);
+        cout << endl;
     }
 }
 
@@ -370,15 +358,15 @@ int main()
     Login("18117121393", "LangNing0117");
     cout << "提交所有题目..." << endl;
     SubmitAllCode(0, 0, "", 1, 0, ".cpp");
+    cout << endl;
     cout << "提交完成！" << endl;
     if (NotACQuestins.size() != 0)
     {
-        cout << "没有通过的题目：" << endl;
-        for (vector<short>::iterator Iterator = NotACQuestins.begin(); Iterator != NotACQuestins.end(); Iterator++)
+        cout << "没有提交或通过的题目及原因：" << endl;
+        for (vector<string>::iterator Iterator = NotACQuestins.begin(); Iterator != NotACQuestins.end(); Iterator++)
         {
-            cout << *Iterator << " ";
+            cout << *Iterator << endl;
         }
-        cout << endl;
     }
     return 0;
 }
