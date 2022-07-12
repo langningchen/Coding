@@ -7,16 +7,18 @@ ll d[N], p[N][105], t[N];
 ll timer, tI[N], tO[N];
 struct edge
 {
-    ll to, nxt;
+    ll to, nxt, w;
 } e[N * 2];
 ll nE, hd[N];
-void addE(ll u, ll v)
+void addE(ll u, ll v, ll w)
 {
     e[++nE].to = v;
     e[nE].nxt = hd[u];
+    e[nE].w = w;
     hd[u] = nE;
     e[++nE].to = u;
     e[nE].nxt = hd[v];
+    e[nE].w = w;
     hd[v] = nE;
 }
 void dfs(ll u, ll fa)
@@ -65,19 +67,18 @@ int main()
     freopen("visit.in", "r", stdin);
     freopen("visit.out", "w", stdout);
     cin >> n;
-    for (ll i = 1; i <= n - 1; i++)
+    for (int i = 1; i <= n - 1; i++)
     {
-        ll u, v;
-        cin >> u >> v;
-        addE(u, v);
+        int u, v, w;
+        cin >> u >> v >> w;
+        addE(u, v, w);
     }
     L = log(n) / log(2) + 1;
     dfs(1, 0);
-    memcpy(t, d, sizeof(d));
     ll B = max_element(d + 1, d + 1 + n) - d;
     dfs(B, 0);
     ll C = max_element(d + 1, d + 1 + n) - d;
-    memcpy(d, t, sizeof(t));
+    dfs(1, 0);
     ll ans = 0;
     for (ll A = 1; A <= n; A++)
     {
