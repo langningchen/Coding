@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 typedef long long ll;
-const int = 1000005;
+const int N = 1000005;
 ll n, len, x[N];
 int main()
 {
