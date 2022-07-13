@@ -1,17 +1,17 @@
 #include <bits/stdc++.h>
 using namespace std;
 int n, a[10];
-long count = 0;
+long Counter = 0;
 void perm(int k)
 {
     int j, p, t;
     if (k == n)
     {
-        count++;
+        Counter++;
         for (p = 1; p <= n; p++)
             cout << setw(1) << a[p];
         cout << "  ";
-        if (count % 5 == 0)
+        if (Counter % 5 == 0)
             cout << endl;
         return;
     }
