@@ -19,7 +19,7 @@ void add(ll l, ll r, ll z)
             c[k] = (c[k] + z) % MOD;
     }
 }
-\r int main()
+int main()
 {
     cin >> n >> m;
     L = sqrt(n);

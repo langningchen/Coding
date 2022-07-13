@@ -12,7 +12,7 @@ struct node
 \r
 	vector<node>
 		v;
-\r bool OK(string s, int a)
+bool OK(string s, int a)
 {
 	if (s == "0")
 	{
@@ -51,7 +51,7 @@ struct node
 	}
 	return true;
 }
-\r int main()
+int main()
 {
 	freopen("network.in", "r", stdin);
 	freopen("network.out", "w", stdout);

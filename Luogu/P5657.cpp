@@ -2,6 +2,6 @@
 using namespace std;
 int main()
 {
-	\r return 0;
+	return 0;
 }
 \r

@@ -21,7 +21,7 @@ int main()
             }
         }
     }
-    \r if (((s[s.size() - 1] >= 'a' && s[s.size() - 1] <= 'z') || (s[s.size() - 1] >= 'A' && s[s.size() - 1] <= 'Z')) && ((s[s.size()] >= 'a' && s[s.size()] <= 'z') || (s[s.size()] >= 'A' && s[s.size()] <= 'Z')))
+    if (((s[s.size() - 1] >= 'a' && s[s.size() - 1] <= 'z') || (s[s.size() - 1] >= 'A' && s[s.size() - 1] <= 'Z')) && ((s[s.size()] >= 'a' && s[s.size()] <= 'z') || (s[s.size()] >= 'A' && s[s.size()] <= 'Z')))
     {
         string temp = "";
         temp += s[s.size() - 1];
