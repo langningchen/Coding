@@ -1,4 +1,4 @@
-#include <iostream>
+#include <bits/stdc++.h>
 using namespace std;
 const int N = 55;
 long long n, f[N], a, b, i = 0;

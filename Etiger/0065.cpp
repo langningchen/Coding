@@ -35,4 +35,5 @@ int main()
         update(x[i], f[i]);
     }
     cout << max_element(f, f + n) << endl;
+    return 0;
 }

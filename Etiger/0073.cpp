@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 typedef long long ll;
+ll X, Y;
 ll solve(ll n)
 {
 	ll res = 0;
@@ -14,7 +15,6 @@ ll solve(ll n)
 }
 int main()
 {
-	int X, Y;
 	cin >> X >> Y;
 	cout << solve(Y) - solve(X - 1) << endl;
 	return 0;

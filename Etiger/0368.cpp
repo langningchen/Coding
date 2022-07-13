@@ -1,11 +1,12 @@
-#include <iostream>
-#include <algorithm>
+#include <bits/stdc++.h>
 using namespace std;
 const int R = 11;
 int n, cnt[R], x;
-int main() {
+int main()
+{
     cin >> n;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         cin >> x;
         cnt[x]++;
     }

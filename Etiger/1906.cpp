@@ -1,7 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
-const int N = 51;
-const int M = 10001;
+const int N = 55;
+const int M = 10005;
+const int MOD = 1000005;
 long long n, m, x[N], f[N][M];
 int main()
 {
@@ -14,17 +15,12 @@ int main()
     for (int i = 1; i <= n; i++)
         for (int j = 0; j <= m; j++)
             if (j < x[i])
-                f[i][j] = f[i - 1][j] % 1000007;
+                f[i][j] = f[i - 1][j] % MOD;
             else
-                f[i][j] = f[i - 1][j] + f[i - 1][j - x[i]] % 1000007;
-    //    for (int i = 0; i <= n; i++) {
-    //        for (int j = 0; j <= m; j++)
-    //            cout << f[i][j];
-    //        cout << endl;
-    //    }
+                f[i][j] = f[i - 1][j] + f[i - 1][j - x[i]] % MOD;
     int ans = 0;
     for (int j = 0; j <= m; j++)
-        ans += f[n][j] % 1000007;
-    cout << ans % 1000007 << endl;
+        ans += f[n][j] % MOD;
+    cout << ans % MOD << endl;
     return 0;
 }

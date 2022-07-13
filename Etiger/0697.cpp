@@ -1,29 +1,34 @@
-#include<iostream>
-#include<cstring>
+#include <bits/stdc++.h>
 using namespace std;
-char change[26],str[5000];
-void CheckChangeRule() {
+const int N = 5005;
+char change[26], str[N];
+void CheckChangeRule()
+{
     int i;
-    for(i=0;i<26;i++) {
-        if(change[i] >= 'A' && change[i] <= 'Z')
-            change[i]-='A'-'a';
+    for (i = 0; i < 26; i++)
+    {
+        if (change[i] >= 'A' && change[i] <= 'Z')
+            change[i] -= 'A' - 'a';
     }
 }
-void ChangeString() {
+void ChangeString()
+{
     int i;
-    for(i=0;i<strlen(str);i++) {
-        if(str[i] >= 'A' && str[i] <= 'Z')
-            str[i]=change[str[i]-'A']-'a'+'A';
+    for (i = 0; i < strlen(str); i++)
+    {
+        if (str[i] >= 'A' && str[i] <= 'Z')
+            str[i] = change[str[i] - 'A'] - 'a' + 'A';
         else
-            str[i]=change[str[i]-'a'];
+            str[i] = change[str[i] - 'a'];
     }
 }
-int main() {
+int main()
+{
     int i;
-    cin>>str;
-    cin>>change;
+    cin >> str;
+    cin >> change;
     CheckChangeRule();
     ChangeString();
-    cout<<str<<endl;
+    cout << str << endl;
     return 0;
 }

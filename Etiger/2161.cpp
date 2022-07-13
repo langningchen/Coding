@@ -1,5 +1,4 @@
 #include <bits/stdc++.h>
-
 using namespace std;
 const int N = 100005;
 struct subtree
@@ -7,11 +6,9 @@ struct subtree
     int L;
     int R;
 };
-
 int n, q, dfn[N], s[N], timer;
 vector<int> to[N];
 subtree T[N];
-
 void dfs(int u, int fa)
 {
     T[u].L = dfn[u] = ++timer;
@@ -44,7 +41,6 @@ int pxq(int d)
     }
     return sum;
 }
-
 int main()
 {
     freopen("prodigal.in", "r", stdin);
@@ -77,5 +73,6 @@ int main()
             cout << ans << " ";
         }
     }
+    cout << endl;
     return 0;
 }

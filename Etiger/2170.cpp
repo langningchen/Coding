@@ -1,6 +1,6 @@
 #include <bits/stdc++.h>
 using namespace std;
-const int MOD = 1000000007;
+const int MOD = 1000000005;
 const int N = 3005;
 bool s[N];
 int n, f[N][N];

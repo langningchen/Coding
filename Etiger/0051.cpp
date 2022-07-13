@@ -1,14 +1,13 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 10005;
-int k[N];
+int n, m, k[N];
 int main()
 {
     freopen("water.in", "r", stdin);
     freopen("water.out", "w", stdout);
     multiset<int> s;
     multiset<int>::iterator it;
-    int n, m;
     cin >> n >> m;
     for (int i = 0; i < m; i++)
         s.insert(0);
@@ -19,9 +18,8 @@ int main()
     for (int i = 0; i < n; i++)
     {
         it = s.begin();
-        int a = *it;
         s.erase(it);
-        s.insert(a + k[i]);
+        s.insert(*it + k[i]);
     }
     cout << *s.rbegin() << endl;
     return 0;

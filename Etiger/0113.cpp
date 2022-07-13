@@ -2,11 +2,11 @@
 using namespace std;
 multiset<int> s;
 multiset<int>::iterator it;
+int n, ans = 0;
 int main()
 {
     freopen("merge.in", "r", stdin);
     freopen("merge.out", "w", stdout);
-    int n, ans = 0;
     cin >> n;
     for (int i = 0; i < n; i++)
     {

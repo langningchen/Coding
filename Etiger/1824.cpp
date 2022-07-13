@@ -1,6 +1,6 @@
 #include <bits/stdc++.h>
 using namespace std;
-const int N = 1009;
+const int N = 1005;
 vector<int> to[N];
 int n, m;
 int tI[N], tO[N], euler[N * 2], timer;

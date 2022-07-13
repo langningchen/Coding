@@ -1,11 +1,5 @@
 #include <bits/stdc++.h>
-//#include <iostream>
-//#include <string>
-//#include <math.h>
-//#include <vector>
-
 using namespace std;
-
 struct node
 {
 	int n;
@@ -15,10 +9,10 @@ struct node
 		return this->str > cmp->str;
 	}
 };
-
-vector<node> v;
-
-bool OK(string s, int a)
+\r
+	vector<node>
+		v;
+\r bool OK(string s, int a)
 {
 	if (s == "0")
 	{
@@ -57,8 +51,7 @@ bool OK(string s, int a)
 	}
 	return true;
 }
-
-int main()
+\r int main()
 {
 	freopen("network.in", "r", stdin);
 	freopen("network.out", "w", stdout);

@@ -1,6 +1,6 @@
-#include <iostream>
+#include <bits/stdc++.h>
 using namespace std;
-const int SIZE = 30;
+const int SIZE = 35;
 int delnum(char *s)
 {
     int i, j;

@@ -1,14 +1,17 @@
-#include <iostream>
+#include <bits/stdc++.h>
 #include <set>
+#include <unistd.h>
 #include <memory.h>
 #include <iconv.h>
 #include <curl/curl.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include "lib/configor-0.9.17/include/configor/json.hpp"
-#define __DEBUG__
+// #define __DEBUG__
 using namespace std;
 using namespace configor;
+
+bool LoadEnd = false;
 string Token = "";
 string UserName = "";
 vector<string> NotACQuestins;
@@ -226,6 +229,38 @@ string GetQuestionName(short QuestionID)
 }
 
 /**
+ * @brief 显示加载画面
+ *
+ */
+void Loading()
+{
+    string LoadingList = "⡇⠏⠛⠹⢸⣰⣤⣆";
+    while (1)
+    {
+        string s;
+        for (int i = 0; i < 24; i += 3)
+        {
+            cout << "正在等待太戈编程返回结果...... " << LoadingList[i] << LoadingList[i + 1] << LoadingList[i + 2] << " \r";
+            fflush(stdout);
+            usleep(100000);
+            if (LoadEnd)
+                return;
+        }
+    }
+}
+
+json GetCustomIOs(short QuestionID)
+{
+    json Response = json::parse(GetDataToString("https://www.etiger.vip/thrall-web/question/getUserCodeByQuestionId?questionId=" + to_string(QuestionID)));
+    if (Response["code"] != 200)
+    {
+        cout << "太戈编程返回错误信息：" << Response["msg"] << endl;
+        exit(0);
+    }
+    return Response;
+}
+
+/**
  * @brief 提交一份代码
  *
  * @param QuestionID 问题ID
@@ -238,7 +273,19 @@ void SubmitCode(short QuestionID, string Code)
     StringReplaceAll(Code, "\n", "\\n");
     StringReplaceAll(Code, "\t", "\\t");
     StringReplaceAll(Code, "\"", "\\\"");
-    string TempResponse = PostDataToString("https://www.etiger.vip/thrall-web/saveSubmit", R"({"comment":"","lang":"CPP","submitType":0,"questionId":)" + to_string(QuestionID) + R"(,"src":")" + Code + R"("})");
+    LoadEnd = false;
+    thread LoadThread(Loading);
+    string PostData = "{\"comment\":\"\",\"lang\":\"CPP\",\"submitType\":0,\"questionId\":" + to_string(QuestionID) + ",\"src\":\"" + Code + "\"";
+    json CostomIOs = GetCustomIOs(QuestionID);
+    if (CostomIOs["data"]["inputCustomIOs"].dump() != "null")
+    {
+        PostData += ",\"inputCustomIOs\":" + CostomIOs["data"]["inputCustomIOs"].dump();
+        PostData += ",\"outputCustomIOs\":" + CostomIOs["data"]["outputCustomIOs"].dump();
+    }
+    PostData += "}";
+    string TempResponse = PostDataToString("https://www.etiger.vip/thrall-web/saveSubmit", PostData);
+    LoadEnd = true;
+    LoadThread.join();
     if (TempResponse[0] == '<')
     {
         cout << "提交失败，请检查文件内是否包含中文" << endl;
@@ -248,7 +295,7 @@ void SubmitCode(short QuestionID, string Code)
     json Response = json::parse(TempResponse);
     if (Response["code"] != 200)
     {
-        cout << "太戈编程返回错误信息：" << Response["msg"] << endl;
+        cout << "太戈编程返回错误信息：" << Response["msg"] << "        " << endl;
         NotACQuestins.push_back(to_string(QuestionID) + "  太戈编程返回错误信息：" + Response["msg"].as_string());
         return;
     }
@@ -256,12 +303,37 @@ void SubmitCode(short QuestionID, string Code)
     {
         NotACQuestins.push_back(to_string(QuestionID) + "  得分" + Response["data"]["grade"].as_string());
     }
-    cout << "得分：" << Response["data"]["grade"] << endl;
+    cout << "得分：" << Response["data"]["grade"] << "                                " << endl;
     int Counter = 0;
     for (detail::iterator<json> Iterator = Response["data"]["result"].begin(); Iterator != Response["data"]["result"].end(); Iterator++)
     {
-        cout << "测试点" << (Counter++) << "：" << Iterator.value()["type"].as_string() << " " << Iterator.value()["timeUsed"] << "ms " << Iterator.value()["memUsed"] << "B" << endl;
+        cout << "测试点" << (Counter++) << "：";
+        switch (Iterator.value()["type"].as_string())
+        {
+        case "AC":
+            cout << "\033[0;32;32m";
+            break;
+        case "WA":
+            cout << "\033[0;32;31m";
+            break;
+        case "CE":
+            cout << "\033[1;33m";
+            break;
+        case "TE":
+            cout << "\033[1;33m";
+            break;
+        case "RTE":
+            cout << "\033[0;32;34m";
+            break;
+        case "ME":
+            cout << "\033[0;37m";
+            break;
+        default:
+            break;
+        }
+        cout << Iterator.value()["type"].as_string() << "\033[m " << Iterator.value()["timeUsed"] << "ms " << Iterator.value()["memUsed"] << "B" << endl;
     }
+    cout << "得分：" << Response["data"]["grade"] << endl;
 }
 
 /**

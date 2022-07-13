@@ -1,7 +1,6 @@
 #include <bits/stdc++.h>
-#include <algorithm>
 using namespace std;
-const int N = 100001;
+const int N = 100005;
 int n, x[N], f[N];
 int main()
 {
@@ -13,6 +12,6 @@ int main()
     f[0] = 0;
     for (int i = 1; i <= n; i++)
         f[i] = max(f[i - 1], 0) + x[i];
-    cout << *max_element(f + 1, f + n + 10) << " " << max_element(f + 1, f + n + 1) - f;
+    cout << *max_element(f + 1, f + n + 10) << " " << max_element(f + 1, f + n + 1) - f << endl;
     return 0;
 }

@@ -1,4 +1,4 @@
-#include <iostream>
+#include <bits/stdc++.h>
 #include <memory.h>
 #include <curl/curl.h>
 #include "lib/configor-0.9.17/include/configor/json.hpp"

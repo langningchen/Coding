@@ -1,8 +1,7 @@
-#include <iostream>
-#include <iomanip>
+#include <bits/stdc++.h>
 using namespace std;
-int n, a[10];   // a[1],a[2],��,a[n]���� n ������һ������
-long count = 0; //���� count ��¼��ͬ���еĸ������������ڿ��ƻ���
+int n, a[10];
+long count = 0;
 void perm(int k)
 {
     int j, p, t;

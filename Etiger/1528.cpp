@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
-int main() {
+int main()
+{
     freopen("casinoroyale3.in", "r", stdin);
     freopen("casinoroyale3.out", "w", stdout);
     int a, b;

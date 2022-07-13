@@ -1,14 +1,16 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 505;
-const int INF = 10000;
+const int INF = 0x7FFFFFFF;
 int n, f[N][N];
-int main() {
-    freopen("rocket.in","r",stdin);
-    freopen("rocket.out","w",stdout);
+int main()
+{
+    freopen("rocket.in", "r", stdin);
+    freopen("rocket.out", "w", stdout);
     cin >> n;
     for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++) {
+        for (int j = 0; j < n; j++)
+        {
             cin >> f[i][j];
             f[i][j] = f[i][j] == -1 ? INF : f[i][j];
             f[j][i] = f[i][j];

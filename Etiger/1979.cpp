@@ -1,11 +1,10 @@
-#include <iostream>
+#include <bits/stdc++.h>
 using namespace std;
-const int SIZE = 100;
-int a[SIZE], n, p;
-
+const int N = 105;
+int a[N], n, p;
+int i, j, b[N];
 void swap2(int p)
 {
-    int i, j, b[SIZE];
     for (i = 1; i <= p; i++)
         b[n - p + i] = a[i];
     for (i = p + 1; i <= n; i++)
@@ -13,7 +12,6 @@ void swap2(int p)
     for (i = 1; i <= n; i++)
         a[i] = b[i];
 }
-
 int main()
 {
     cin >> n >> p;

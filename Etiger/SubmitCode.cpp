@@ -1,4 +1,4 @@
-#include <iostream>
+#include <bits/stdc++.h>
 #include <memory.h>
 #include <unistd.h>
 #include <thread>
@@ -100,7 +100,11 @@ void StringReplaceAll(string &Data, string Before, string After)
     }
 }
 
-void Output()
+/**
+ * @brief 显示加载画面
+ *
+ */
+void Loading()
 {
     while (1)
     {
@@ -165,7 +169,7 @@ int main(int argc, char **argv)
     StringReplaceAll(Code, "\"", "\\\"");
 
     cout << "提交第" << QuestionID << "题..." << endl;
-    thread OutputThread(Output);
+    thread OutputThread(Loading);
     Response = json::parse(PostDataToString("https://www.etiger.vip/thrall-web/saveSubmit", "{\"comment\":\"\",\"lang\":\"CPP\",\"submitType\":0,\"questionId\":" + QuestionID +
                                                                                                 ",\"src\":\"" + Code +
                                                                                                 "\"}"));

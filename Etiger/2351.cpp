@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
-int s[605];
+const int N = 605;
+int s[N];
 int n, w;
 int main()
 {

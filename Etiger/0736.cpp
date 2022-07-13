@@ -1,8 +1,9 @@
 #include <bits/stdc++.h>
 using namespace std;
-const int N = 200009;
+const int N = 200005;
 int n, m, s[N], x[N];
-int main() {
+int main()
+{
 	freopen("dog.in", "r", stdin);
 	freopen("dog.out", "w", stdout);
 	cin >> n >> m;
@@ -16,6 +17,6 @@ int main() {
 	int ans = s[m];
 	for (int i = m + 1; i <= n * 2; i++)
 		ans = max(ans, s[i] - s[i - m]);
-	cout << ans;
+	cout << ans << endl;
 	return 0;
 }

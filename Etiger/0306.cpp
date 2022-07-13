@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
+using namespace std;
 const int N = 305;
 int n, f[N], x[N];
-using namespace std;
 int main()
 {
     freopen("tomb.in", "r", stdin);
