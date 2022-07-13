@@ -1,20 +1,17 @@
 #include <bits/stdc++.h>
-//#include <iostream>
-#include <algorithm>
-#include <math.h>
 using namespace std;
-int main() {
-//    freopen("height.in","w",stdout);
-    freopen("height.in","r",stdin);
-    freopen("height.out","w",stdout);
+int main()
+{
+    freopen("height.in", "r", stdin);
+    freopen("height.out", "w", stdout);
     int n;
     double x[10000], l, r;
-    cin >> n; // ‰»Î»À ˝ 
+    cin >> n;
     for (int i = 0; i < n; i++)
     {
-        cin >> x[i]; // ‰»Î ˝◊È 
+        cin >> x[i];
     }
-    cin >> l >> r; // ‰»Î±ﬂΩÁ 
-    cout << abs(upper_bound(x, x + n, r) - lower_bound(x, x + n, l)) << ' ' <<  abs(lower_bound(x, x + n, r) - upper_bound(x, x + n, l)) << ' ' << abs(lower_bound(x, x + n, r) - lower_bound(x, x + n, l)) << ' ' << abs(upper_bound(x, x + n, r) - upper_bound(x, x + n, l)); //  ‰≥ˆ
+    cin >> l >> r;
+    cout << abs(upper_bound(x, x + n, r) - lower_bound(x, x + n, l)) << " " << abs(lower_bound(x, x + n, r) - upper_bound(x, x + n, l)) << " " << abs(lower_bound(x, x + n, r) - lower_bound(x, x + n, l)) << " " << abs(upper_bound(x, x + n, r) - upper_bound(x, x + n, l)); // ÔøΩÔøΩÔøΩ
     return 0;
 }

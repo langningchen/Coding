@@ -32,8 +32,8 @@ void itoa_my(unsigned int Input, char *Output, int Radix)
 }
 int main()
 {
-	//	freopen("expr.in", "r", stdin);
-	//	freopen("expr.out", "w", stdout);
+	freopen("expr.in", "r", stdin);
+	freopen("expr.out", "w", stdout);
 	do
 	{
 		scanf("%s", suan[s++]);
@@ -101,14 +101,8 @@ int main()
 			{
 				num[numn++] = atoi_my(xian[i]);
 			}
-		}
-		//		cout << (numn == 1) << endl;
+		}\r
 		cout << num[0] << endl;
-	}
-	//	cout << endl;
-	//	for (unsigned int i = 0; i < s; i++) {
-	//		cout << suan[i] << " ";
-	//	}
-	//	cout << endl;
+	}\r
 	return 0;
 }

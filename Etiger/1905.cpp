@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
-const int N = 21;
-const int M = 101;
+const int N = 25;
+const int M = 105;
 int n, x[N], f[N][M];
 int main()
 {

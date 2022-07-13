@@ -3,10 +3,12 @@ using namespace std;
 typedef long long ll;
 const int N = 105;
 int f[N][N];
-ll max(ll a, ll b) {
+ll max(ll a, ll b)
+{
 	return ((a > b) ? a : b);
 }
-int main() {
+int main()
+{
 	string a, b;
 	cin >> a >> b;
 	ll n = a.size();
@@ -15,7 +17,8 @@ int main() {
 	b = " " + b;
 	ll ans = 0;
 	for (int i = 1; i <= n; i++)
-		for (int j = 1; j <= m; j++) {
+		for (int j = 1; j <= m; j++)
+		{
 			if (a[i] == b[j])
 				f[i][j] = f[i - 1][j - 1] + 1;
 			ans = max(ans, f[i][j]);

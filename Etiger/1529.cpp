@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
-int main() {
+int main()
+{
     freopen("search.in", "r", stdin);
     freopen("search.out", "w", stdout);
     int n;
@@ -8,4 +9,3 @@ int main() {
     cout << n - 1 << ".000" << endl;
     return 0;
 }
-

@@ -29,7 +29,7 @@ int main()
     {
         int a, b;
         cin >> a >> b;
-        cout << prime[b] - prime[a - 1] << ' ';
+        cout << prime[b] - prime[a - 1] << " ";
     }
     return 0;
 }

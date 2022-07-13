@@ -1,10 +1,11 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 200005;
-int b[N], w[N], L[N], R[N], LR[N]; 
-int main() {
-    freopen("color.in","r",stdin);
-    freopen("color.out","w",stdout);
+int b[N], w[N], L[N], R[N], LR[N];
+int main()
+{
+    freopen("color.in", "r", stdin);
+    freopen("color.out", "w", stdout);
     string s;
     cin >> s;
     int n = s.size();
@@ -19,6 +20,6 @@ int main() {
     int ans = n;
     for (int i = 1; i <= n - 1; i++)
         ans = min(ans, LR[i]);
-    cout << ans; 
+    cout << ans;
     return 0;
 }

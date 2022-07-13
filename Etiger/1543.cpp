@@ -1,7 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 int m, k;
-int main() {
+int main()
+{
     freopen("blindbox3.in", "r", stdin);
     freopen("blindbox3.out", "w", stdout);
     cin >> m >> k;

@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 25;
-int n, m, p[N], num[N], ans = 0;
+int n, m, sum, p[N], num[N], ans = 0;
 bool isPrime(int x)
 {
     if (x <= 1)
@@ -13,7 +13,7 @@ bool isPrime(int x)
 }
 void print()
 {
-    int sum = 0;
+    sum = 0;
     for (int i = 1; i <= m; i++)
         sum += num[p[i] - 1];
     if (isPrime(sum))

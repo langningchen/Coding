@@ -1,18 +1,15 @@
 #include <bits/stdc++.h>
 using namespace std;
-
-const int MAX = 1005;
-
+const int N = 1005;
 struct SubTree
 {
     int Left;
     int Right;
 };
-
-int n, m, DFN[MAX], Timer;
-vector<int> AdjacencyTable[MAX];
+int n, m, DFN[N], Timer;
+vector<int> AdjacencyTable[N];
 vector<int> Output;
-SubTree Tree[MAX];
+SubTree Tree[N];
 void DFS(int Now, int Father)
 {
     Output.push_back(Now);

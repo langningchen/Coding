@@ -1,8 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 typedef long long ll;
-const int N = 100005;
-ll x[N], y[N];
+const ll N = 100005;
+ll n, x[N], y[N];
 ll solve(ll l, ll r)
 {
     if (l == r)
@@ -26,9 +26,10 @@ ll solve(ll l, ll r)
 }
 int main()
 {
-    int n;
+    freopen("reverse.in", "r", stdin);
+    freopen("reverse.out", "w", stdout);
     cin >> n;
-    for (int i = 0; i < n; i++)
+    for (ll i = 0; i < n; i++)
         cin >> x[i];
     cout << solve(0, n - 1) << endl;
     return 0;

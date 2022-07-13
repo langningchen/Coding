@@ -9,7 +9,7 @@ int main()
     for (int i = 0; i < s.size(); i++)
     {
         if (s[i] == ' ')
-            cout << ' ';
+            cout << " ";
         else if (s[i] == 'z')
             cout << 'a';
         else

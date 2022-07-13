@@ -1,10 +1,9 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 105;
-int a[N];
+int n, a[N];
 int main()
 {
-    int n;
     cin >> n;
     for (int i = 0; i < n; i++)
     {
@@ -17,5 +16,6 @@ int main()
         if (a[i] != 100001)
             cout << a[i] << " ";
     }
+    cout << endl;
     return 0;
 }
