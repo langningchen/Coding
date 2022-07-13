@@ -3,7 +3,7 @@ using namespace std;
 const unsigned int N = 17;
 const unsigned int INF = 0xFFFFFFFF;
 unsigned int n, nPtn, W, ptn[1 << N], f[N], sW[1 << N], mT[1 << N], w[N], t[N];
-\r int main()
+int main()
 {
 	freopen("bridge.in", "r", stdin);
 	freopen("bridge.out", "w", stdout);
@@ -13,7 +13,7 @@ unsigned int n, nPtn, W, ptn[1 << N], f[N], sW[1 << N], mT[1 << N], w[N], t[N];
 	{
 		cin >> t[i] >> w[i];
 	}
-	\r unsigned int nOK = 0;
+	unsigned int nOK = 0;
 	for (unsigned int i = 0; i < nPtn; i++)
 	{
 		for (unsigned int j = 0; j < n; j++)
@@ -31,7 +31,7 @@ unsigned int n, nPtn, W, ptn[1 << N], f[N], sW[1 << N], mT[1 << N], w[N], t[N];
 		ptn[nOK] = i;
 		nOK++;
 	}
-	\r for (unsigned int i = 1; i < nPtn; i++)
+	for (unsigned int i = 1; i < nPtn; i++)
 	{
 		f[i] = INF;
 		for (unsigned int j = 0; j < nOK; j++)
