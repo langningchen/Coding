@@ -3,19 +3,24 @@ using namespace std;
 typedef long long ll;
 const ll N = 200005;
 ll n, c, a[N], sum;
-int main() {
+int main()
+{
 	cin >> n >> c;
-	for (ll i = 0; i < n; i++) {
+	for (ll i = 0; i < n; i++)
+	{
 		cin >> a[i];
 	}
 	sort(a, a + n);
-	for (ll i = 0; i < n; i++) {
+	for (ll i = 0; i < n; i++)
+	{
 		ll l = 0, r = 0;
-		while (l < n && a[l] < a[i] - c) l++;
-		while (r < n && a[r] <= a[i] - c) r++;
-		if (a[i] - a[l] == c) sum += r - l;
+		while (l < n && a[l] < a[i] - c)
+			l++;
+		while (r < n && a[r] <= a[i] - c)
+			r++;
+		if (a[i] - a[l] == c)
+			sum += r - l;
 	}
 	cout << sum << endl;
 	return 0;
 }
-
