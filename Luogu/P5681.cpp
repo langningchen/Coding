@@ -7,4 +7,3 @@ int main()
     cout << (a * a > b * c ? "Alice" : "Bob") << endl;
     return 0;
 }
-\r
