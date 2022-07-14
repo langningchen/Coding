@@ -44,8 +44,6 @@ int main()
 			f[i] = min(f[i], f[i - v] + mT[v]);
 		}
 	}
-	\r
-			cout
-		<< f[nPtn - 1] << endl;
+	cout << f[nPtn - 1] << endl;
 	return 0;
 }
