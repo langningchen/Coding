@@ -9,9 +9,7 @@ struct node
 		return this->str > cmp->str;
 	}
 };
-\r
-	vector<node>
-		v;
+vector<node> v;
 bool OK(string s, int a)
 {
 	if (s == "0")

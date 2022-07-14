@@ -101,8 +101,8 @@ int main()
 			{
 				num[numn++] = atoi_my(xian[i]);
 			}
-		}\r
+		}
 		cout << num[0] << endl;
-	}\r
+	}
 	return 0;
 }
