@@ -25,8 +25,6 @@ jobs:
       run: tar -xzvf curl-7.84.0.tar.gz
     - name: change dir
       run: cd curl-7.84.0
-    - name: config
-      run: ./configure --prefix=/usr/local/curl
     - name: make
       run: make && make install
     - name: compileEtiger
