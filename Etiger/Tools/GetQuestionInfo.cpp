@@ -160,6 +160,24 @@ string PostDataToString(string URL, string PostData)
     return Ans;
 }
 
+string EraseHTMLElement(string Ans)
+{
+    int HTMLStartIndex = 0;
+    for (int i = 0; i < Ans.size(); i++)
+    {
+        if (Ans[i] == '<')
+        {
+            HTMLStartIndex = i;
+        }
+        if (Ans[i] == '>')
+        {
+            Ans.erase(HTMLStartIndex, i - HTMLStartIndex + 1);
+            i = HTMLStartIndex;
+        }
+    }
+    return Ans;
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 4)
@@ -194,7 +212,7 @@ int main(int argc, char **argv)
     fprintf(FilePointer, "%s. %s\n", QuestionID.c_str(), Response["data"]["title"].as_string().c_str());
     fprintf(FilePointer, "\n");
     fprintf(FilePointer, "题目描述\n");
-    fprintf(FilePointer, "%s\n", Response["data"]["content"].as_string().c_str());
+    fprintf(FilePointer, "%s\n", EraseHTMLElement(Response["data"]["content"].as_string()).c_str());
     fprintf(FilePointer, "\n");
     fprintf(FilePointer, "输入输出格式\n");
     fprintf(FilePointer, "输入格式\n");
