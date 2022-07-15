@@ -28,7 +28,7 @@
         },
         {
             "label": "C/C++: Submit Code For Etiger",
-            "command": "/workspaces/Coding/Etiger/SubmitCode",
+            "command": "/workspaces/Coding/Etiger/Tools/SubmitCode",
             "args": [
                 "18117121393",
                 "LangNing0117",
@@ -39,7 +39,7 @@
         },
         {
             "label": "C/C++: Get Question For Etiger",
-            "command": "/workspaces/Coding/Etiger/GetQuestionInfo",
+            "command": "/workspaces/Coding/Etiger/Tools/GetQuestionInfo",
             "args": [
                 "18117121393",
                 "LangNing0117",
