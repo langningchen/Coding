@@ -24,6 +24,24 @@ void addE(ll u, ll v, ll w)
 void dfs(ll u, ll fa)
 {
     tI[u] = ++timer;
+    p[u][0] = fa;
+    for (ll i = 1; i <= L; i++)
+    {
+        p[u][i] = p[p[u][i - 1]][i - 1];
+    }
+    for (ll i = hd[u]; i; i = e[i].nxt)
+    {
+        ll v = e[i].to;
+        if (v == fa)
+            continue;
+        d[v] = d[u] + e[i].w;
+        dfs(v, u);
+    }
+    tO[u] = timer;
+}
+void dfs2(ll u, ll fa)
+{
+    tI[u] = ++timer;
     d[u] = d[fa] + 1;
     p[u][0] = fa;
     for (ll i = 1; i <= L; i++)
@@ -37,7 +55,7 @@ void dfs(ll u, ll fa)
             continue;
         dfs(v, u);
     }
-    tO[u] = ++timer;
+    tO[u] = timer;
 }
 bool up(ll u, ll v)
 {
@@ -65,7 +83,7 @@ ll dst(ll u, ll v)
 int main()
 {
     freopen("visit.in", "r", stdin);
-    freopen("visit.out", "w", stdout);
+    // freopen("visit.out", "w", stdout);
     cin >> n;
     for (int i = 1; i <= n - 1; i++)
     {
@@ -74,11 +92,20 @@ int main()
         addE(u, v, w);
     }
     L = log(n) / log(2) + 1;
+    d[1] = 1;
+    timer = 0;
     dfs(1, 0);
+
     ll B = max_element(d + 1, d + 1 + n) - d;
+    d[B] = 1;
+    timer = 0;
     dfs(B, 0);
+
     ll C = max_element(d + 1, d + 1 + n) - d;
-    dfs(1, 0);
+    d[C] = 1;
+    timer = 0;
+    dfs2(1, 0);
+
     ll ans = 0;
     for (ll A = 1; A <= n; A++)
     {

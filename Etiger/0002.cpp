@@ -1,21 +1,18 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 105;
+const int INF = 0x7FFFFFFF;
 int n, a[N];
 int main()
 {
     cin >> n;
     for (int i = 0; i < n; i++)
-    {
         cin >> a[i];
-    }
-    *(max_element(a, a + n)) = 100001;
-    *(min_element(a, a + n)) = 100001;
+    *(max_element(a, a + n)) = INF;
+    *(min_element(a, a + n)) = INF;
     for (int i = 0; i < n; i++)
-    {
-        if (a[i] != 100001)
+        if (a[i] != INF)
             cout << a[i] << " ";
-    }
     cout << endl;
     return 0;
 }
