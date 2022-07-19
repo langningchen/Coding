@@ -150,6 +150,8 @@ int main(int argc, char **argv)
     FILE *FilePointer;
     string FileName = argv[3];
     string QuestionID = FileName.substr(FileName.size() - 8, 4);
+    while (QuestionID[0] == '0')
+        QuestionID.erase(0, 1);
     FilePointer = fopen(FileName.c_str(), "r");
     if (FilePointer == NULL)
     {
@@ -183,7 +185,20 @@ int main(int argc, char **argv)
     int Counter = 0;
     for (detail::iterator<json> Iterator = Response["data"]["result"].begin(); Iterator != Response["data"]["result"].end(); Iterator++)
     {
-        cout << "测试点" << (Counter++) << "：" << Iterator.value()["type"].as_string() << " " << Iterator.value()["timeUsed"] << "ms " << Iterator.value()["memUsed"] << "B" << endl;
+        cout << "测试点" << (Counter++) << "：";
+        if (Iterator.value()["type"].as_string() == "AC")
+            cout << "\033[0;32;32m";
+        else if (Iterator.value()["type"].as_string() == "WA")
+            cout << "\033[0;32;31m";
+        else if (Iterator.value()["type"].as_string() == "CE")
+            cout << "\033[1;33m";
+        else if (Iterator.value()["type"].as_string() == "TE")
+            cout << "\033[1;33m";
+        else if (Iterator.value()["type"].as_string() == "RTE")
+            cout << "\033[0;32;34m";
+        else if (Iterator.value()["type"].as_string() == "ME")
+            cout << "\033[0;37m";
+        cout << Iterator.value()["type"].as_string() << "\033[m " << Iterator.value()["timeUsed"] << "ms " << Iterator.value()["memUsed"] << "B" << endl;
         if (Iterator.value()["input"].as_string() != "")
         {
             cout << "输入：" << Iterator.value()["input"].as_string() << endl

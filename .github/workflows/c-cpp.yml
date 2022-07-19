@@ -19,6 +19,12 @@ jobs:
       run: git config --global user.name "ChenLangNing"
     - name: config3
       run: git config pull.rebase false
+    - name: remove old txt
+      run: rm *.txt
+    - name: remove old in
+      run: rm *.in
+    - name: remove old out
+      run: rm *.out
     - name: compileEtiger
       run: for i in "Etiger"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}"; done
     - name: compileLuogu

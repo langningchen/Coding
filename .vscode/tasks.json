@@ -12,7 +12,9 @@
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lcurl",
                 "-lstdc++",
-                "-pthread"
+                "-lpthread",
+                "-lm",
+                "-O2"
             ],
             "options": {
                 "cwd": "${fileDirname}"
