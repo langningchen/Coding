@@ -1,18 +1,18 @@
 name: C++ Auto Compile
-
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-
 jobs:
   Compile:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Style Config
-      run: echo "::echo::off"
+      run: |
+        echo "::echo::off"
+        echo "# Action Summary" >> $GITHUB_STEP_SUMMARY
     - name: Git Config
       run: |
         echo "::group::Git Config"
@@ -29,14 +29,19 @@ jobs:
         echo "::endgroup::"
     - name: Compile
       run: |
+        echo "### Compiles Etiger Files" >> $GITHUB_STEP_SUMMARY
         echo "::group::Compile"
         for Files in "Etiger"/*.cpp; do 
-        echo $Files; 
+        echo "::notice::Compile "$Files; 
+        echo "- "$Files >> $GITHUB_STEP_SUMMARY
         gcc "$Files" -o "${Files%*".cpp"}" -std=c++11 -lm -lstdc++; 
         git add "${Files%*".cpp"}"; 
         done
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Compiles Luogu Files" >> $GITHUB_STEP_SUMMARY
         for Files in "Luogu"/*.cpp; do 
-        echo $Files; 
+        echo "::notice::Compile "$Files;
+        echo "- "$Files >> $GITHUB_STEP_SUMMARY
         gcc "$Files" -o "${Files%*".cpp"}" -std=c++11 -lm -lstdc++; 
         git add "${Files%*".cpp"}"; 
         done
@@ -51,6 +56,10 @@ jobs:
         echo "::endgroup::"
     - name: Submit
       run: |
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Finish" >> $GITHUB_STEP_SUMMARY
         echo "::group::Submit"
         git commit -a -m "Auto Compile"
         git push
