@@ -27,10 +27,10 @@ int main()
         Blankets.push_back(Temp);
     }
     cin >> x >> y;
-    int ans = -1;
+    int Ans = -1;
     for (int i = 0; i < Blankets.size(); i++)
         if (InBlanket(Blankets[i]))
-            ans = i + 1;
-    cout << ans << endl;
+            Ans = i + 1;
+    cout << Ans << endl;
     return 0;
 }
