@@ -27,11 +27,13 @@ jobs:
           echo "::endgroup::"
     - name: Submit
       run: |
+          git pull
           git commit -a -m "Auto Compile"
           git push
 
   CompileEtiger:
     runs-on: ubuntu-latest
+    if: ${{ always() }}
     needs: Prepare
     steps:
     - uses: actions/checkout@v3
@@ -46,10 +48,12 @@ jobs:
       run: for i in "Etiger"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}"; done
     - name: Submit
       run: |
+          git pull
           git commit -a -m "Auto Compile"
           git push
   CompileLuogu:
     runs-on: ubuntu-latest
+    if: ${{ always() }}
     needs: Prepare
     steps:
     - uses: actions/checkout@v3
@@ -64,6 +68,7 @@ jobs:
       run: for i in "Luogu"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}"; done
     - name: Submit
       run: |
+          git pull
           git commit -a -m "Auto Compile"
           git push
 
@@ -86,6 +91,7 @@ jobs:
           git add Etiger.zip
     - name: Submit
       run: |
+          git pull
           git commit -a -m "Auto Compile"
           git push
 
@@ -108,5 +114,6 @@ jobs:
           git add Luogu.zip
     - name: Submit
       run: |
+          git pull
           git commit -a -m "Auto Compile"
           git push
