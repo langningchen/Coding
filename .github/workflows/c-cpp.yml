@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: C++ Auto Compile
 
 on:
   push:
@@ -7,39 +7,55 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
+  Prepare:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
-    - name: config1
-      run: git config --global user.email "langningc2009@163.com"
-    - name: config2
-      run: git config --global user.name "ChenLangNing"
-    - name: config3
-      run: git config pull.rebase false
-    - name: remove old txt
-      run: rm -f Etiger/*.txt
-    - name: remove old in
-      run: rm -f Etiger/*.in
-    - name: remove old out
-      run: rm -f Etiger/*.out
-    - name: compileEtiger
+    - name: Config Git
+      run: |
+          echo "::group::Config Git"
+          git config --global user.email "langningc2009@163.com"
+          git config --global user.name "ChenLangNing"
+          git config pull.rebase false
+          echo "::endgroup::"
+    - name: Remove Useless Files
+      run: |
+          echo "::group::Remove Useless Files"
+          rm -f Etiger/*.txt
+          rm -f Etiger/*.in
+          rm -f Etiger/*.out
+          echo "::endgroup::"
+
+  CompileEtiger:
+    needs: Prepare
+    - name: CompileEtiger
       run: for i in "Etiger"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}"; done
-    - name: compileLuogu
+
+  CompileLuogu:
+    needs: Prepare
+    - name: CompileLuogu
       run: for i in "Luogu"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}"; done
+
+  ZipEtiger:
+    if: ${{ always() }}
+    needs: CompileEtiger
     - name: ZipEtiger
       run: zip -r Etiger.zip Etiger
-    - name: ZipLuogu
-      run: zip -r Luogu.zip Luogu
     - name: AddZipEtiger
       run: git add Etiger.zip
+
+  ZipLuogu:
+    if: ${{ always() }}
+    needs: CompileLuogu
+    - name: ZipLuogu
+      run: zip -r Luogu.zip Luogu
     - name: AddZipLuogu
       run: git add Luogu.zip
+
+  Finish:
+    if: ${{ always() }}
+    needs: [ZipEtiger, ZipLuogu]
     - name: commit
       run: git commit -a -m "Auto Compile"
     - name: push
       run: git push
-    - name: pull
-      run: git pull
