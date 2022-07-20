@@ -7,113 +7,51 @@ on:
     branches: [ main ]
 
 jobs:
-  Prepare:
+  Compile:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Config Git
+    - name: Style Config
+      run: echo "::echo::off"
+    - name: Git Config
       run: |
-          echo "::group::Config Git"
-          git config --global user.email "langningc2009@163.com"
-          git config --global user.name "ChenLangNing"
-          git config pull.rebase false
-          echo "::endgroup::"
+        echo "::group::Git Config"
+        git config --global user.email "langningc2009@163.com"
+        git config --global user.name "ChenLangNing"
+        git config pull.rebase false
+        echo "::endgroup::"
     - name: Remove Useless Files
       run: |
-          echo "::group::Remove Useless Files"
-          rm -f Etiger/*.txt
-          rm -f Etiger/*.in
-          rm -f Etiger/*.out
-          echo "::endgroup::"
+        echo "::group::Remove Useless Files"
+        rm -f Etiger/*.txt
+        rm -f Etiger/*.in
+        rm -f Etiger/*.out
+        echo "::endgroup::"
+    - name: Compile
+      run: |
+        echo "::group::Compile"
+        for Files in "Etiger"/*.cpp; do 
+        echo $Files; 
+        gcc "$Files" -o "${Files%*".cpp"}" -std=c++11 -lm -lstdc++; 
+        git add "${Files%*".cpp"}"; 
+        done
+        for Files in "Luogu"/*.cpp; do 
+        echo $Files; 
+        gcc "$Files" -o "${Files%*".cpp"}" -std=c++11 -lm -lstdc++; 
+        git add "${Files%*".cpp"}"; 
+        done
+        echo "::endgroup::"
+    - name: Zip
+      run: |
+        echo "::group::Zip"
+        zip -r Etiger.zip Etiger
+        git add Etiger.zip
+        zip -r Luogu.zip Luogu
+        git add Luogu.zip
+        echo "::endgroup::"
     - name: Submit
       run: |
-          git pull
-          git commit -a -m "Auto Compile"
-          git push
-
-  CompileEtiger:
-    runs-on: ubuntu-latest
-    if: ${{ always() }}
-    needs: Prepare
-    steps:
-    - uses: actions/checkout@v3
-    - name: Config Git
-      run: |
-          echo "::group::Config Git"
-          git config --global user.email "langningc2009@163.com"
-          git config --global user.name "ChenLangNing"
-          git config pull.rebase false
-          echo "::endgroup::"
-    - name: CompileEtiger
-      run: for i in "Etiger"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}"; done
-    - name: Submit
-      run: |
-          git pull
-          git commit -a -m "Auto Compile"
-          git push
-  CompileLuogu:
-    runs-on: ubuntu-latest
-    if: ${{ always() }}
-    needs: Prepare
-    steps:
-    - uses: actions/checkout@v3
-    - name: Config Git
-      run: |
-          echo "::group::Config Git"
-          git config --global user.email "langningc2009@163.com"
-          git config --global user.name "ChenLangNing"
-          git config pull.rebase false
-          echo "::endgroup::"
-    - name: CompileLuogu
-      run: for i in "Luogu"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}"; done
-    - name: Submit
-      run: |
-          git pull
-          git commit -a -m "Auto Compile"
-          git push
-
-  ZipEtiger:
-    runs-on: ubuntu-latest
-    if: ${{ always() }}
-    needs: CompileEtiger
-    steps:
-    - uses: actions/checkout@v3
-    - name: Config Git
-      run: |
-          echo "::group::Config Git"
-          git config --global user.email "langningc2009@163.com"
-          git config --global user.name "ChenLangNing"
-          git config pull.rebase false
-          echo "::endgroup::"
-    - name: ZipEtiger
-      run: |
-          zip -r Etiger.zip Etiger
-          git add Etiger.zip
-    - name: Submit
-      run: |
-          git pull
-          git commit -a -m "Auto Compile"
-          git push
-
-  ZipLuogu:
-    runs-on: ubuntu-latest
-    if: ${{ always() }}
-    needs: CompileLuogu
-    steps:
-    - uses: actions/checkout@v3
-    - name: Config Git
-      run: |
-          echo "::group::Config Git"
-          git config --global user.email "langningc2009@163.com"
-          git config --global user.name "ChenLangNing"
-          git config pull.rebase false
-          echo "::endgroup::"
-    - name: ZipLuogu
-      run: |
-          zip -r Luogu.zip Luogu
-          git add Luogu.zip
-    - name: Submit
-      run: |
-          git pull
-          git commit -a -m "Auto Compile"
-          git push
+        echo "::group::Submit"
+        git commit -a -m "Auto Compile"
+        git push
+        echo "::endgroup::"
