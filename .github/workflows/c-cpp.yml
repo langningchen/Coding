@@ -10,7 +10,7 @@ jobs:
   Prepare:
     runs-on: ubuntu-latest
     steps:
-    # - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
     - name: Config Git
       run: |
           echo "::group::Config Git"
@@ -34,6 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: Prepare
     steps:
+    - uses: actions/checkout@v3
     - name: Config Git
       run: |
           echo "::group::Config Git"
@@ -52,6 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: Prepare
     steps:
+    - uses: actions/checkout@v3
     - name: Config Git
       run: |
           echo "::group::Config Git"
@@ -71,6 +73,7 @@ jobs:
     if: ${{ always() }}
     needs: CompileEtiger
     steps:
+    - uses: actions/checkout@v3
     - name: ZipEtiger
       run: zip -r Etiger.zip Etiger
     - name: AddZipEtiger
@@ -85,6 +88,7 @@ jobs:
     if: ${{ always() }}
     needs: CompileLuogu
     steps:
+    - uses: actions/checkout@v3
     - name: ZipLuogu
       run: zip -r Luogu.zip Luogu
     - name: AddZipLuogu
