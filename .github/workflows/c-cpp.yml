@@ -10,7 +10,7 @@ jobs:
   Prepare:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    # - uses: actions/checkout@v3
     - name: Config Git
       run: |
           echo "::group::Config Git"
@@ -25,37 +25,71 @@ jobs:
           rm -f Etiger/*.in
           rm -f Etiger/*.out
           echo "::endgroup::"
+    - name: Commit
+      run: git commit -a -m "Auto Compile"
+    - name: Push
+      run: git push
 
   CompileEtiger:
+    runs-on: ubuntu-latest
     needs: Prepare
+    steps:
+    - name: Config Git
+      run: |
+          echo "::group::Config Git"
+          git config --global user.email "langningc2009@163.com"
+          git config --global user.name "ChenLangNing"
+          git config pull.rebase false
+          echo "::endgroup::"
     - name: CompileEtiger
       run: for i in "Etiger"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}"; done
+    - name: Commit
+      run: git commit -a -m "Auto Compile"
+    - name: Push
+      run: git push
 
   CompileLuogu:
+    runs-on: ubuntu-latest
     needs: Prepare
+    steps:
+    - name: Config Git
+      run: |
+          echo "::group::Config Git"
+          git config --global user.email "langningc2009@163.com"
+          git config --global user.name "ChenLangNing"
+          git config pull.rebase false
+          echo "::endgroup::"
     - name: CompileLuogu
       run: for i in "Luogu"/*.cpp; do echo $i; gcc "$i" -o "${i%*".cpp"}" -std=c++11 -lm -lstdc++; git add "${i%*".cpp"}"; done
+    - name: Commit
+      run: git commit -a -m "Auto Compile"
+    - name: Push
+      run: git push
 
   ZipEtiger:
+    runs-on: ubuntu-latest
     if: ${{ always() }}
     needs: CompileEtiger
+    steps:
     - name: ZipEtiger
       run: zip -r Etiger.zip Etiger
     - name: AddZipEtiger
       run: git add Etiger.zip
+    - name: Commit
+      run: git commit -a -m "Auto Compile"
+    - name: Push
+      run: git push
 
   ZipLuogu:
+    runs-on: ubuntu-latest
     if: ${{ always() }}
     needs: CompileLuogu
+    steps:
     - name: ZipLuogu
       run: zip -r Luogu.zip Luogu
     - name: AddZipLuogu
       run: git add Luogu.zip
-
-  Finish:
-    if: ${{ always() }}
-    needs: [ZipEtiger, ZipLuogu]
-    - name: commit
+    - name: Commit
       run: git commit -a -m "Auto Compile"
-    - name: push
+    - name: Push
       run: git push
