@@ -235,8 +235,11 @@ int main(int argc, char **argv)
         fprintf(FilePointer, "\n");
     }
     fprintf(FilePointer, "\n");
-    fprintf(FilePointer, "说明\n");
-    fprintf(FilePointer, "%s\n", Response["data"]["description"].as_string().c_str());
+    if (EraseHTMLElement(Response["data"]["description"].as_string()) != "")
+    {
+        fprintf(FilePointer, "说明\n");
+        fprintf(FilePointer, "%s\n", EraseHTMLElement(Response["data"]["description"].as_string()).c_str());
+    }
     fclose(FilePointer);
     return 0;
 }
