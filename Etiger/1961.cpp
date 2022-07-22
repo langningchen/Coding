@@ -1,4 +1,4 @@
-#include <bits/stdc++.h>
+ #include <bits/stdc++.h>
 using namespace std;
 typedef long long ll;
 const ll N = 200005;
@@ -82,7 +82,7 @@ ll dst(ll u, ll v)
 }
 int main()
 {
-    freopen("visit.in", "r", stdin);
+    // freopen("visit.in", "r", stdin);
     // freopen("visit.out", "w", stdout);
     cin >> n;
     for (int i = 1; i <= n - 1; i++)
@@ -94,6 +94,7 @@ int main()
     L = log(n) / log(2) + 1;
     d[1] = 1;
     timer = 0;
+    memset(p,0,sizeof(p));
     dfs(1, 0);
 
     ll B = max_element(d + 1, d + 1 + n) - d;
