@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Comfig Libcurl
+    - name: Config Libcurl
       run: |
         cd ./openssl-openssl-3.0.5
-        ./configure
+        ./Configure
         make install
         cd ../
         cd ./curl-7.84.0
