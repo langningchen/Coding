@@ -18,6 +18,7 @@ jobs:
         password: ${{ secrets.MAILPASSWORD }}
         subject: Action Runs Start
         body: Action Runs Start, Tips From Github Actions
+        from: ${{ secrets.MAILUSERNAME }}
         to: ${{ secrets.MAILUSERNAME }}
     - name: Run
       run: ./DoAutoCompileWorks
@@ -30,4 +31,5 @@ jobs:
         password: ${{ secrets.MAILPASSWORD }}
         subject: Action Runs End
         body: Action Runs End, Tips From Github Actions
+        from: ${{ secrets.MAILUSERNAME }}
         to: ${{ secrets.MAILUSERNAME }}
