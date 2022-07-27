@@ -45,7 +45,6 @@ void Compile(int ID)
             SumaryList.push_back("### File " + SourceFileName + " compile failed!");
             SumaryList.push_back(CompileOutput);
             SumaryList.push_back("");
-            cout << "\"" << CompileOutput << "\"" << endl;
             CompileFailList.insert(SourceFileName);
         }
         else
@@ -70,7 +69,7 @@ set<string> GetFiles(string Path)
         else if (DirentPointer->d_type == DT_DIR)
         {
             string FolderName = DirentPointer->d_name;
-            if (FolderName != "." && FolderName != ".." && FolderName != "lib" && FolderName != "unfinish" && FolderName[0] != '.')
+            if (FolderName != "." && FolderName != ".." && FolderName != "lib" && FolderName != "unfinish" && FolderName[0] != '.' && FolderName != "openssl-openssl-3.0.5")
             {
                 set<string> Temp = GetFiles(Path + "/" + DirentPointer->d_name);
                 FileList.insert(Temp.begin(), Temp.end());

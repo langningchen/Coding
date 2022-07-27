@@ -10,6 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: Comfig Libcurl
+      run: |
+        cd ./openssl-openssl-3.0.5
+        make install
+        cd ../
+        cd ./curl-7.84.0
+        make install
+        cd ../
     - name: Run
       run: ./DoAutoCompileWorks
     # - name: Style Config
