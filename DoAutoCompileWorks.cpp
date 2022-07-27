@@ -35,7 +35,7 @@ void Compile(int ID)
         ThreadCompileList[ID].erase(ThreadCompileList[ID].begin());
         string DestFileName = SourceFileName.substr(0, SourceFileName.size() - 4);
         string CompileOutput = "";
-        FILE *PipePointer = popen(string("gcc " + SourceFileName + " -o " + DestFileName + " -O2 -lstdc++ -lm -lpthread -lcurl 2>&1").c_str(), "r");
+        FILE *PipePointer = popen(string("gcc " + SourceFileName + " -o " + DestFileName + " -O2 -lstdc++ -lm 2>&1").c_str(), "r");
         while (!feof(PipePointer))
             CompileOutput.push_back(fgetc(PipePointer));
         while (CompileOutput.size() != 0 && (CompileOutput[CompileOutput.size() - 1] == '\r' || CompileOutput[CompileOutput.size() - 1] == '\n' || CompileOutput[CompileOutput.size() - 1] == 0 || CompileOutput[CompileOutput.size() - 1] == -1))
@@ -69,7 +69,7 @@ set<string> GetFiles(string Path)
         else if (DirentPointer->d_type == DT_DIR)
         {
             string FolderName = DirentPointer->d_name;
-            if (FolderName != "." && FolderName != ".." && FolderName != "lib" && FolderName != "unfinish" && FolderName[0] != '.' && FolderName != "openssl-openssl-3.0.5")
+            if (FolderName != "." && FolderName != ".." && FolderName != "lib" && FolderName != "unfinish" && FolderName[0] != '.' && FolderName != "Tools")
             {
                 set<string> Temp = GetFiles(Path + "/" + DirentPointer->d_name);
                 FileList.insert(Temp.begin(), Temp.end());

@@ -3,77 +3,11 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ main ]-
 jobs:
   Compile:
-    # runs-on: self-hosted
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Config Libcurl
-      run: |
-        cd ./openssl-openssl-3.0.5
-        ./Configure
-        make install
-        cd ../
-        cd ./curl-7.84.0
-        ./configure --with-openssl
-        make install
-        cd ../
     - name: Run
       run: ./DoAutoCompileWorks
-    # - name: Style Config
-    #   run: |
-    #     echo "::echo::off"
-    #     echo "# Action Summary" >> $GITHUB_STEP_SUMMARY
-    # - name: Git Config
-    #   run: |
-    #     # echo "::group::Git Config"
-    #     git config --global user.email "langningc2009@163.com"
-    #     git config --global user.name "ChenLangNing"
-    #     git config pull.rebase false
-    #     echo "::endgroup::"
-    # - name: Remove Useless Files
-    #   run: |
-    #     echo "::group::Remove Useless Files"
-    #     rm -f Etiger/*.txt
-    #     rm -f Etiger/*.in
-    #     rm -f Etiger/*.out
-    #     echo "::endgroup::"
-    # - name: Compile
-    #   run: |
-    #     echo "### Compiles Etiger Files" >> $GITHUB_STEP_SUMMARY
-    #     echo "::group::Compile"
-    #     for Files in "Etiger"/*.cpp; do 
-    #     echo "::notice::Compile "$Files; 
-    #     echo "- "$Files >> $GITHUB_STEP_SUMMARY
-    #     gcc "$Files" -o "${Files%*".cpp"}" -std=c++11 -lm -lstdc++; 
-    #     git add "${Files%*".cpp"}"; 
-    #     done
-    #     echo "" >> $GITHUB_STEP_SUMMARY
-    #     echo "### Compiles Luogu Files" >> $GITHUB_STEP_SUMMARY
-    #     for Files in "Luogu"/*.cpp; do 
-    #     echo "::notice::Compile "$Files;
-    #     echo "- "$Files >> $GITHUB_STEP_SUMMARY
-    #     gcc "$Files" -o "${Files%*".cpp"}" -std=c++11 -lm -lstdc++; 
-    #     git add "${Files%*".cpp"}"; 
-    #     done
-    #     echo "::endgroup::"
-    # - name: Zip
-    #   run: |
-    #     echo "::group::Zip"
-    #     zip -r Etiger.zip Etiger
-    #     git add Etiger.zip
-    #     zip -r Luogu.zip Luogu
-    #     git add Luogu.zip
-    #     echo "::endgroup::"
-    # - name: Submit
-    #   run: |
-    #     echo "" >> $GITHUB_STEP_SUMMARY
-    #     echo "---" >> $GITHUB_STEP_SUMMARY
-    #     echo "" >> $GITHUB_STEP_SUMMARY
-    #     echo "## Finish" >> $GITHUB_STEP_SUMMARY
-    #     echo "::group::Submit"
-    #     git commit -a -m "Auto Compile"
-    #     git push
-    #     echo "::endgroup::"
