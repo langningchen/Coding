@@ -109,7 +109,7 @@ int main()
         ThreadList[i] = thread(Compile, i);
     while (ThreadFinish != ThreadCount)
     {
-        cout << "(" << (CompiledList.size() - CompileFailList.size()) << "+" << CompileFailList.size() << "=" << CompiledList.size() << ")/" << CompileList.size() << "=" << fixed << setprecision(3) << CompileList.size() * 1.0 / CompiledList.size() << endl;
+        cout << "(" << (CompiledList.size() - CompileFailList.size()) << "+" << CompileFailList.size() << "=" << CompiledList.size() << ")/" << CompileList.size() << "=" << fixed << setprecision(3) << CompiledList.size() * 100.0 / CompileList.size() << "%" << endl;
         usleep(1000000);
     }
     for (int i = 0; i < ThreadCount; i++)
