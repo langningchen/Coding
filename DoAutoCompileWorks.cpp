@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <set>
 #include <thread>
@@ -79,7 +80,8 @@ void OutputSumary(string Data)
     StringReplaceAll(Data, "\n", "\\n");
     StringReplaceAll(Data, "\t", "\\t");
     StringReplaceAll(Data, "\r", "\\r");
-    system(string("echo \"" + Data + "\" >> $GITHUB_STEP_SUMMARY").c_str());
+    if (system(string("echo \"" + Data + "\" >> $GITHUB_STEP_SUMMARY").c_str()))
+        cout << "Output Error" << endl;
 }
 int main()
 {
@@ -107,7 +109,7 @@ int main()
         ThreadList[i] = thread(Compile, i);
     while (ThreadFinish != ThreadCount)
     {
-        cout << (CompiledList.size() - CompileFailList.size()) << "+" << CompileFailList.size() << "=" << CompiledList.size() << "/" << CompileList.size() << endl;
+        cout << "(" << (CompiledList.size() - CompileFailList.size()) << "+" << CompileFailList.size() << "=" << CompiledList.size() << ")/" << CompileList.size() << "=" << fixed << setprecision(3) << CompileList.size() * 1.0 / CompiledList.size() << endl;
         usleep(1000000);
     }
     for (int i = 0; i < ThreadCount; i++)
@@ -136,7 +138,7 @@ int main()
     OutputSumary("FileName|Compiled|Success");
     OutputSumary(":---|:---:|:---:");
     for (set<string>::iterator sit = CompileList.begin(); sit != CompileList.end(); sit++)
-        OutputSumary(*sit + "|" + (CompiledList.count(*sit) ? "Yes" : "No") + "|" + (!CompileFailList.count(*sit) ? "Yes" : "No"));
+        OutputSumary(*sit + "|" + (CompiledList.count(*sit) ? "Yes" : "<font color=\"red\">**No**</font>") + "|" + (!CompileFailList.count(*sit) ? "Yes" : "<font color=\"red\">**No**</font>"));
     OutputSumary("");
     return 0;
 }
