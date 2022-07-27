@@ -14,7 +14,8 @@ jobs:
       with:
         serveraddress: smtp.office365.com
         serverport: 587
-        username: ${{ secrets.MAILUSERNAME }} password: ${{ secrets.MAILPASSWORD }}
+        username: ${{ secrets.MAILUSERNAME }}
+        password: ${{ secrets.MAILPASSWORD }}
         subject: testsubject
         body: testbody
         to: langningc2009@163.com
