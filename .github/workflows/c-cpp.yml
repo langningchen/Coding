@@ -13,9 +13,11 @@ jobs:
     - name: Comfig Libcurl
       run: |
         cd ./openssl-openssl-3.0.5
+        ./configure
         make install
         cd ../
         cd ./curl-7.84.0
+        ./configure --with-openssl
         make install
         cd ../
     - name: Run
