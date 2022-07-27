@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Send mail
+    - name: Send mail when starts
       uses: dawidd6/action-send-mail@master
       with:
         server_address: smtp.office365.com
@@ -22,7 +22,7 @@ jobs:
         to: ${{ secrets.MAILUSERNAME }}
     - name: Run
       run: ./DoAutoCompileWorks
-    - name: Send mail
+    - name: Send mail when ends
       uses: dawidd6/action-send-mail@master
       with:
         server_address: smtp.office365.com
