@@ -12,7 +12,8 @@ jobs:
     - name: Send mail
       uses: dawidd6/action-send-mail@master
       with:
-        serveraddress: smtp.office365.com serverport: 587
+        serveraddress: smtp.office365.com
+        serverport: 587
         username: ${{ secrets.MAILUSERNAME }} password: ${{ secrets.MAILPASSWORD }}
         subject: testsubject
         body: testbody
