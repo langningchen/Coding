@@ -12,14 +12,13 @@ jobs:
     - name: Send mail
       uses: dawidd6/action-send-mail@master
       with:
-        serveraddress: smtp.office365.com
-        serverport: 587
+        server_address: smtp.office365.com
+        server_port: 587
         username: ${{ secrets.MAILUSERNAME }}
         password: ${{ secrets.MAILPASSWORD }}
         subject: testsubject
         body: testbody
         to: langningc2009@163.com
         from: GitHub Actions
-        content_type: text/html
     - name: Run
       run: ./DoAutoCompileWorks
