@@ -12,7 +12,6 @@ set<string> ThreadCompileList[ThreadCount];
 thread ThreadList[ThreadCount];
 set<string> CompileList;
 set<string> CompiledList;
-set<string> CompileSuccessList;
 set<string> CompileFailList;
 vector<string> SumaryList;
 int ThreadFinish;
@@ -46,10 +45,6 @@ void Compile(int ID)
             SumaryList.push_back(CompileOutput);
             SumaryList.push_back("");
             CompileFailList.insert(SourceFileName);
-        }
-        else
-        {
-            CompileSuccessList.insert(SourceFileName);
         }
         CompiledList.insert(SourceFileName);
     }
@@ -94,9 +89,7 @@ int main()
     {
         int PointPos;
         if ((PointPos = sit->find_last_of(".")) == sit->npos || PointPos == 0)
-        {
             remove(sit->c_str());
-        }
         else
         {
             string AfterPoint = sit->substr(PointPos + 1, sit->npos);
@@ -107,29 +100,19 @@ int main()
                 Counter++;
             }
             else if ((AfterPoint == "in" || AfterPoint == "out") && sit->find("Etiger") != sit->npos)
-            {
                 remove(sit->c_str());
-            }
         }
     }
     for (int i = 0; i < ThreadCount; i++)
-    {
         ThreadList[i] = thread(Compile, i);
-    }
     while (ThreadFinish != ThreadCount)
     {
-        cout << "::group::Status Report" << endl;
-        cout << "Compile Size: " << CompileList.size() << endl;
-        cout << "Compiled Size: " << CompiledList.size() << endl;
-        cout << "Compile Success Size: " << CompileSuccessList.size() << endl;
-        cout << "Compile Fail Size: " << CompileFailList.size() << endl;
-        cout << "::endgroup::" << endl;
+        cout << (CompiledList.size() - CompileFailList.size()) << "+" << CompileFailList.size() << "=" << CompiledList.size() << "/" << CompileList.size() << endl;
         usleep(1000000);
     }
     for (int i = 0; i < ThreadCount; i++)
-    {
         ThreadList[i].join();
-    }
+
     OutputSumary("# Work Sumary");
     OutputSumary("");
 
@@ -137,36 +120,23 @@ int main()
     OutputSumary("");
     OutputSumary("- Compile Size: " + to_string(CompileList.size()));
     OutputSumary("- Compiled Size: " + to_string(CompiledList.size()));
-    OutputSumary("- Compile Success Size: " + to_string(CompileSuccessList.size()));
+    OutputSumary("- Compile Success Size: " + to_string(CompiledList.size() - CompileFailList.size()));
     OutputSumary("- Compile Failed Size: " + to_string(CompileFailList.size()));
     OutputSumary("");
 
     OutputSumary("## Errors");
     for (vector<string>::iterator vit = SumaryList.begin(); vit != SumaryList.end(); vit++)
         OutputSumary(*vit);
+    if (SumaryList.size() == 0)
+        OutputSumary("None");
     OutputSumary("");
 
-    OutputSumary("## File List");
+    OutputSumary("## Detail");
     OutputSumary("");
-    OutputSumary("### Compile File List");
+    OutputSumary("FileName|Compiled|Success");
+    OutputSumary(":---|:---:|:---:");
     for (set<string>::iterator sit = CompileList.begin(); sit != CompileList.end(); sit++)
-        OutputSumary("- " + *sit);
+        OutputSumary(*sit + "|" + (CompiledList.count(*sit) ? "Yes" : "No") + "|" + (!CompileFailList.count(*sit) ? "Yes" : "No"));
     OutputSumary("");
-
-    OutputSumary("### Compiled File List");
-    for (set<string>::iterator sit = CompiledList.begin(); sit != CompiledList.end(); sit++)
-        OutputSumary("- " + *sit);
-    OutputSumary("");
-
-    OutputSumary("### Compile Success File List");
-    for (set<string>::iterator sit = CompileSuccessList.begin(); sit != CompileSuccessList.end(); sit++)
-        OutputSumary("- " + *sit);
-    OutputSumary("");
-
-    OutputSumary("### Compile Failed File List");
-    for (set<string>::iterator sit = CompileFailList.begin(); sit != CompileFailList.end(); sit++)
-        OutputSumary("- " + *sit);
-    OutputSumary("");
-
     return 0;
 }
