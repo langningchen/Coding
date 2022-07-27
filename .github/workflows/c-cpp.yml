@@ -16,9 +16,18 @@ jobs:
         server_port: 587
         username: ${{ secrets.MAILUSERNAME }}
         password: ${{ secrets.MAILPASSWORD }}
-        subject: testsubject
-        body: testbody
-        to: langningc2009@163.com
-        from: GitHub Actions
+        subject: Action Runs Start
+        body: Action Runs Start, Tips From Github Actions
+        to: ${{ secrets.MAILUSERNAME }}
     - name: Run
       run: ./DoAutoCompileWorks
+    - name: Send mail
+      uses: dawidd6/action-send-mail@master
+      with:
+        server_address: smtp.office365.com
+        server_port: 587
+        username: ${{ secrets.MAILUSERNAME }}
+        password: ${{ secrets.MAILPASSWORD }}
+        subject: Action Runs End
+        body: Action Runs End, Tips From Github Actions
+        to: ${{ secrets.MAILUSERNAME }}
