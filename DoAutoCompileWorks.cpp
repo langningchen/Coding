@@ -101,7 +101,7 @@ int main()
                 ThreadCompileList[Counter % ThreadCount].insert(*sit);
                 Counter++;
             }
-            else if ((AfterPoint == "in" || AfterPoint == "out") && sit->find("Etiger") != sit->npos)
+            else if ((AfterPoint == "in" || AfterPoint == "out" || AfterPoint == "txt") && sit->find("Etiger") != sit->npos)
                 remove(sit->c_str());
         }
     }
