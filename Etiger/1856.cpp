@@ -1,12 +1,15 @@
 #include <bits/stdc++.h>
 using namespace std;
+const int dx[4] = {-1, 0, 0, 1};
+const int dy[4] = {0, -1, 1, 0};
 struct Node
 {
-    int x, y
+    int x, y;
 };
 const int N = 2005;
 Node rep[N * N];
-int nID, n, m, q, rep[N], s[N][N], ok[N][N], id[N][N];
+int nID, n, m, q, s[N][N], ok[N][N], id[N][N];
+char d[N][N];
 bool out(Node &o, int &r1, int &c1, int &r2, int &c2)
 {
     return o.x < r1 || o.x > r2 || o.y < c1 || o.y > c2;
@@ -26,9 +29,12 @@ void dfs(int x, int y)
 }
 int main()
 {
-    // freopen("king.in", "r", stdin);
-    // freopen("king.out", "w", stdout);
+    freopen("king.in", "r", stdin);
+    freopen("king.out", "w", stdout);
     cin >> n >> m;
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= m; j++)
+            cin >> d[i][j];
     for (int i = 1; i <= n; i++)
         for (int j = 1; j <= m; j++)
             if (!id[i][j])
