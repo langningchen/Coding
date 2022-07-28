@@ -1,4 +1,4 @@
- #include <bits/stdc++.h>
+#include <bits/stdc++.h>
 using namespace std;
 typedef long long ll;
 const ll N = 200005;
@@ -39,24 +39,6 @@ void dfs(ll u, ll fa)
     }
     tO[u] = timer;
 }
-void dfs2(ll u, ll fa)
-{
-    tI[u] = ++timer;
-    d[u] = d[fa] + 1;
-    p[u][0] = fa;
-    for (ll i = 1; i <= L; i++)
-    {
-        p[u][i] = p[p[u][i - 1]][i - 1];
-    }
-    for (ll i = hd[u]; i; i = e[i].nxt)
-    {
-        ll v = e[i].to;
-        if (v == fa)
-            continue;
-        dfs(v, u);
-    }
-    tO[u] = timer;
-}
 bool up(ll u, ll v)
 {
     return !u || tI[u] <= tI[v] && tO[v] <= tO[u];
@@ -82,8 +64,8 @@ ll dst(ll u, ll v)
 }
 int main()
 {
-    // freopen("visit.in", "r", stdin);
-    // freopen("visit.out", "w", stdout);
+    freopen("visit.in", "r", stdin);
+    freopen("visit.out", "w", stdout);
     cin >> n;
     for (int i = 1; i <= n - 1; i++)
     {
@@ -94,7 +76,7 @@ int main()
     L = log(n) / log(2) + 1;
     d[1] = 1;
     timer = 0;
-    memset(p,0,sizeof(p));
+    memset(p, 0, sizeof(p));
     dfs(1, 0);
 
     ll B = max_element(d + 1, d + 1 + n) - d;
@@ -105,7 +87,7 @@ int main()
     ll C = max_element(d + 1, d + 1 + n) - d;
     d[C] = 1;
     timer = 0;
-    dfs2(1, 0);
+    dfs(1, 0);
 
     ll ans = 0;
     for (ll A = 1; A <= n; A++)

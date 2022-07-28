@@ -11,9 +11,9 @@ int main()
 		cin >> a[i];
 	}
 	sort(a, a + n);
+	ll l = 0, r = 0;
 	for (ll i = 0; i < n; i++)
 	{
-		ll l = 0, r = 0;
 		while (l < n && a[l] < a[i] - c)
 			l++;
 		while (r < n && a[r] <= a[i] - c)
