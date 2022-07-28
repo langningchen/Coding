@@ -43,7 +43,7 @@ void Compile(int ID)
         if (!IsFileExists(DestFileName))
         {
             SumaryList.push_back("### File " + SourceFileName + " compile failed!");
-            SumaryList.push_back(CompileOutput);
+            SumaryList.push_back("```\n" + CompileOutput + "\n```");
             SumaryList.push_back("");
             CompileFailList.insert(SourceFileName);
         }
