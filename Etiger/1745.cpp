@@ -3,8 +3,8 @@ using namespace std;
 int T, n;
 int main()
 {
-    // freopen("stomach.in", "r", stdin);
-    // freopen("stomach.out", "w", stdout);
+    freopen("stomach.in", "r", stdin);
+    freopen("stomach.out", "w", stdout);
     cin >> T;
     for (int i = 0; i < T; i++)
     {
