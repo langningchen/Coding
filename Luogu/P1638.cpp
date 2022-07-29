@@ -1,32 +1,40 @@
 #include <bits/stdc++.h>
 using namespace std;
-typedef long long ll;
 const int N = 1000005;
 const int INF = 0x7FFFFFFF;
-int n, m, a[N], c[N], ans = INF, ansl, ansr;
-int main() {
+int n, m, l, r, ans, ansl, ansr, num, sum[N], a[N];
+int main()
+{
 	cin >> n >> m;
-	for (int i = 0; i < n; i++) {
+	for (int i = 1; i <= n; i++)
 		cin >> a[i];
-	}
-	int l = 0, r = 0, cnt = 0;
-	while (r < n) {
-		if (cnt < m) {
-			c[a[r]]++;
-			if (c[a[r]] == 1) cnt++;
+	l = 1;
+	r = 1;
+	num = 0;
+	ans = INF;
+	while (l <= r && r <= n + 1)
+	{
+		if (num < m)
+		{
 			r++;
+			sum[a[r - 1]]++;
+			if (sum[a[r - 1]] == 1)
+				num++;
 		}
-		else {
-			c[a[l]]--;
-			if (c[a[l]] == 0) cnt--;
+		else
+		{
+			if (ans > r - l)
+			{
+				ans = r - l;
+				ansl = l;
+				ansr = r - 1;
+			}
+			sum[a[l]]--;
+			if (sum[a[l]] == 0)
+				num--;
 			l++;
 		}
-		if (cnt == m && r - l + 1 < ans) {
-			ans = r - l + 1;
-			ansl = l;
-			ansr = r;
-		}
 	}
-	cout << ansl + 1 << " " << ansr << endl;
+	cout << ansl << " " << ansr << endl;
 	return 0;
 }
