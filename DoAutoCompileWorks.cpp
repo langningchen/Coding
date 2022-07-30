@@ -146,7 +146,7 @@ int main()
     OutputSumary("FileName|Compiled|Success");
     OutputSumary(":---|:---:|:---:");
     for (set<string>::iterator sit = CompileList.begin(); sit != CompileList.end(); sit++)
-        OutputSumary(*sit + "|" + (CompiledList.count(*sit) ? "Yes" : "<font color=\"red\">**No**</font>") + "|" + (!CompileFailList.count(*sit) ? "Yes" : "<font color=\"red\">**No**</font>"));
+        OutputSumary(*sit + "|" + (CompiledList.count(*sit) ? "Yes" : "<font color=\\\"red\\\">**No**</font>") + "|" + (!CompileFailList.count(*sit) ? "Yes" : "<font color=\\\"red\\\">**No**</font>"));
     OutputSumary("");
 
     ofstream OutputMailStream("mail.txt");
