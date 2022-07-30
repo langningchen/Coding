@@ -119,6 +119,11 @@ int main()
     for (int i = 0; i < ThreadCount; i++)
         ThreadList[i].join();
 
+    if (system("git config --global user.email \"langningc2009@163.com\""))
+        cout << "\"git config\" Error!" << endl;
+    if (system("git config --global user.name \"Langning Chen\""))
+        cout << "\"git config\" Error!" << endl;
+
     if (system("git add ."))
         cout << "\"git add\" Error!" << endl;
     if (system("git commit -m \"Auto Commit By Auto Compile Script\""))
