@@ -1,7 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 int a;
-double l = -5, r = 5, m, ans const double wc = 0.000001;
+double l = -5, r = 5, m, ans;
+const double wc = 0.000001;
 double jcf(double x, int n)
 {
 	double xnew = 1;

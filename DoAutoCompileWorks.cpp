@@ -119,9 +119,12 @@ int main()
     for (int i = 0; i < ThreadCount; i++)
         ThreadList[i].join();
 
-    system("git add .");
-    system("git commit -m \"Auto Commit By Auto Compile Script\"");
-    system("git push");
+    if (system("git add ."))
+        cout << "\"git add\" Error!" << endl;
+    if (system("git commit -m \"Auto Commit By Auto Compile Script\""))
+        cout << "\"git commit\" Error!" << endl;
+    if (system("git push"))
+        cout << "\"git push\" Error!" << endl;
 
     OutputSumary("# Work Sumary");
     OutputSumary("");
@@ -146,7 +149,7 @@ int main()
     OutputSumary("FileName|Compiled|Success");
     OutputSumary(":---|:---:|:---:");
     for (set<string>::iterator sit = CompileList.begin(); sit != CompileList.end(); sit++)
-        OutputSumary(*sit + "|" + (CompiledList.count(*sit) ? "Yes" : "<font color=\\\"red\\\">**No**</font>") + "|" + (!CompileFailList.count(*sit) ? "Yes" : "<font color=\\\"red\\\">**No**</font>"));
+        OutputSumary(*sit + "|" + (CompiledList.count(*sit) ? "Yes" : "**❌No❌**") + "|" + (!CompileFailList.count(*sit) ? "Yes" : "**❌No❌**"));
     OutputSumary("");
 
     ofstream OutputMailStream("mail.txt");

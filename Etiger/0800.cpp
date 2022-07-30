@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 string s1, s2, ans;
-int pos_start = -1, pos_end = -1, times, find;
+int pos_start = -1, pos_end = -1, times, Find;
 string i2s(int i)
 {
 	string temp, ans;
@@ -25,7 +25,7 @@ int main()
 	getline(cin, s1);
 	while (1)
 	{
-		find = 0;
+		Find = 0;
 		times = 0;
 		pos_start = -1;
 		pos_end = -1;
@@ -37,7 +37,7 @@ int main()
 				s2 += s1[i] - 32;
 				s2 += i2s(times + 1).data();
 				s2 += s1.substr(0, pos_start);
-				find = 1;
+				Find = 1;
 				break;
 			}
 			else
@@ -55,7 +55,7 @@ int main()
 					s2 += s1[i] - 32;
 					s2 += i2s(times + 1).data();
 					s2 += s1.substr(0, pos_start);
-					find = 1;
+					Find = 1;
 					break;
 				}
 				else
@@ -65,12 +65,12 @@ int main()
 				}
 			}
 		}
-		if (find == 0)
+		if (Find == 0)
 		{
 			cout << s1 << endl;
 			break;
 		}
-		find = 0;
+		Find = 0;
 		times = 0;
 		pos_start = -1;
 		pos_end = -1;
@@ -82,7 +82,7 @@ int main()
 				s2 += s1[i] - 32;
 				s2 += i2s(times + 1).data();
 				s2 += s1.substr(0, pos_start);
-				find = 1;
+				Find = 1;
 				break;
 			}
 			else
@@ -100,7 +100,7 @@ int main()
 					s1 += s2[i] - 32;
 					s1 += i2s(times + 1).data();
 					s1 += s2.substr(0, pos_start);
-					find = 1;
+					Find = 1;
 					break;
 				}
 				else
@@ -110,7 +110,7 @@ int main()
 				}
 			}
 		}
-		if (find == 0)
+		if (Find == 0)
 		{
 			cout << s2 << endl;
 			break;
