@@ -30,6 +30,6 @@ jobs:
         username: ${{ secrets.MAILUSERNAME }}
         password: ${{ secrets.MAILPASSWORD }}
         subject: Action Runs End
-        body: Action Runs End, Tips From Github Actions
+        body: file://mail.txt
         from: ${{ secrets.MAILUSERNAME }}
         to: ${{ secrets.MAILUSERNAME }}

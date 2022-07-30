@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <string>
 #include <set>
@@ -44,9 +45,9 @@ void Compile(int ID)
         {
             SumaryList.push_back("### File " + SourceFileName + " compile failed!");
             SumaryList.push_back("");
-            SumaryList.push_back("\\`\\`\\`");
+            SumaryList.push_back("<pre><code>");
             SumaryList.push_back(CompileOutput);
-            SumaryList.push_back("\\`\\`\\`");
+            SumaryList.push_back("</code></pre>");
             SumaryList.push_back("");
             CompileFailList.insert(SourceFileName);
         }
@@ -118,6 +119,10 @@ int main()
     for (int i = 0; i < ThreadCount; i++)
         ThreadList[i].join();
 
+    system("git add .");
+    system("git commit -m \"Auto Commit By Auto Compile Script\"");
+    system("git push");
+
     OutputSumary("# Work Sumary");
     OutputSumary("");
 
@@ -143,5 +148,11 @@ int main()
     for (set<string>::iterator sit = CompileList.begin(); sit != CompileList.end(); sit++)
         OutputSumary(*sit + "|" + (CompiledList.count(*sit) ? "Yes" : "<font color=\"red\">**No**</font>") + "|" + (!CompileFailList.count(*sit) ? "Yes" : "<font color=\"red\">**No**</font>"));
     OutputSumary("");
+
+    ofstream OutputMailStream("mail.txt");
+    OutputMailStream << "Action Runs End, Tips From Github Actions" << endl;
+    for (vector<string>::iterator vit = SumaryList.begin(); vit != SumaryList.end(); vit++)
+        OutputMailStream << *vit << endl;
+    OutputMailStream.close();
     return 0;
 }
