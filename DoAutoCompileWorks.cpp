@@ -119,6 +119,11 @@ int main()
     for (int i = 0; i < ThreadCount; i++)
         ThreadList[i].join();
 
+    if (system("zip -r Etiger.zip Etiger"))
+        cout << "\"zip\" Error!" << endl;
+    if (system("zip -r Luogu.zip Luogu"))
+        cout << "\"zip\" Error!" << endl;
+
     if (system("git config --global user.email \"langningc2009@163.com\""))
         cout << "\"git config\" Error!" << endl;
     if (system("git config --global user.name \"Langning Chen\""))

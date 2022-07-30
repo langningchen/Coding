@@ -33,3 +33,13 @@ jobs:
         body: file://mail.txt
         from: ${{ secrets.MAILUSERNAME }}
         to: ${{ secrets.MAILUSERNAME }}
+    - name: Upload Artifact 1
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: Etiger
+        path: Etiger.zip
+    - name: Upload Artifact 2
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: Luogu
+        path: Luogu.zip
