@@ -6,3 +6,5 @@
 * Luogu folder is from [http://www.luogu.com.cn](www.luogu.com.cn)
 
 **THESE CODES ARE FOR REFERENCY ONLY**
+
+[![C++ Auto Compile](https://github.com/langningchen/Coding/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/langningchen/Coding/actions)

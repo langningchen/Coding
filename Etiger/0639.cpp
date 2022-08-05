@@ -1,4 +1,4 @@
-#include <iostream>
+#include <bits/stdc++.h>
 using namespace std;
 const int N = 105;
 int a[N], n, i, ans, len, tmp, beg;

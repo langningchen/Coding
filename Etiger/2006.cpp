@@ -1,4 +1,4 @@
-#include <iostream>
+#include <bits/stdc++.h>
 using namespace std;
 const int SIZE = 105;
 int matrix[SIZE][SIZE], rowsum[SIZE][SIZE], m, n, i, j, first, last, area, ans;
