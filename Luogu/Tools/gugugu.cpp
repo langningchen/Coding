@@ -6,17 +6,16 @@
 using namespace std;
 using namespace configor;
 map<int, string> LanguageName, LanguageMarkdownName;
-map<int, pair<string, string>> DifficultyName, TagName;
+map<int, pair<string, string>> DifficultyName, TagName, RecordName;
 map<string, string> TypeName, ColorList;
 void GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyFileName = "Body.tmp", bool IsPost = false, string PostData = "", curl_slist *HeaderList = NULL, int *HTTPResponseCode = NULL)
 {
-    cout << "Sending " << (IsPost ? "post" : "get") << " request with url \"" << URL << "\"" << (PostData != "" ? string(" and data \"" + PostData + "\"") : "") << "...   ";
-    FILE *HeaderFilePointer = fopen(He aderFileName.c_str(), "w");
+    FILE *HeaderFilePointer = fopen(HeaderFileName.c_str(), "w");
     FILE *BodyFilePointer = fopen(BodyFileName.c_str(), "w");
     CURLcode CurlCode = curl_global_init(CURL_GLOBAL_ALL);
     if (CurlCode != 0)
     {
-        cout << "Libcurl init failed with error code " << CurlCode << "!" << endl;
+        cout << "libcurl初始化失败，错误代码：" << CurlCode << "。" << endl;
         fclose(BodyFilePointer);
         fclose(HeaderFilePointer);
         return;
@@ -39,10 +38,7 @@ void GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string Body
     curl_easy_setopt(Curl, CURLOPT_HTTPHEADER, HeaderList);
     CurlCode = curl_easy_perform(Curl);
     if (CurlCode != 0)
-        cout << "Failed!" << endl
-             << "Libcurl request failed with error code " << CurlCode << "!" << endl;
-    else
-        cout << "Success!" << endl;
+        cout << "请求发送失败，错误代码：" << CurlCode << "。" << endl;
     if (HTTPResponseCode != NULL)
         curl_easy_getinfo(Curl, CURLINFO_RESPONSE_CODE, HTTPResponseCode);
     curl_easy_cleanup(Curl);
@@ -149,7 +145,6 @@ void Init()
     json Config = json::parse(GetDataFromFileToString());
     GetDataToFile("https://www.luogu.com.cn/_lfe/tags");
     json Tag = json::parse(GetDataFromFileToString());
-    cout << Config["codeLanguages"].dump() << endl;
     for (json::iterator jit = Config["codeLanguages"].begin(); jit != Config["codeLanguages"].end(); jit++)
     {
         LanguageName[jit.value()["value"].as_integer()] = jit.value()["name"].as_string();
@@ -165,23 +160,21 @@ void Init()
         Temp[jit.value()["id"].as_integer()] = jit.value()["color"].as_string();
     for (json::iterator jit = Tag["tags"].begin(); jit != Tag["tags"].end(); jit++)
         TagName[jit.value()["id"].as_integer()] = make_pair(jit.value()["name"].as_string(), Temp[jit.value()["type"].as_integer()]);
+    for (json::iterator jit = Config["recordStatus"].begin(); jit != Config["recordStatus"].end(); jit++)
+        RecordName[jit.value()["id"].as_integer()] = make_pair(jit.value()["name"].as_string(), jit.value()["shortName"].as_string());
 }
 void Login(string Username, string Password)
 {
-    cout << "Login..." << endl;
     int HTTPResponseCode;
     GetDataToFile("https://www.luogu.com.cn/auth/login", "Header.tmp", "Body.tmp", false, "", NULL, &HTTPResponseCode);
     if (HTTPResponseCode == 302)
-    {
-        cout << "Already logged in. " << endl;
         return;
-    }
     string LoginPageData = GetDataFromFileToString();
     string TokenStartString = "<meta name=\"csrf-token\" content=\"";
     int TokenStartPos = LoginPageData.find(TokenStartString);
     if (TokenStartPos == LoginPageData.npos)
     {
-        cout << "Can not find login token start pos. " << endl;
+        cout << "无法找到登录密钥开始位置。" << endl;
         return;
     }
     TokenStartPos += TokenStartString.size();
@@ -190,16 +183,15 @@ void Login(string Username, string Password)
         TokenEndPos++;
     if (TokenEndPos == LoginPageData.size())
     {
-        cout << "Can not find login token end pos. " << endl;
+        cout << "无法找到登录密钥结束位置。" << endl;
         return;
     }
     string Token = LoginPageData.substr(TokenStartPos, TokenEndPos - TokenStartPos);
-    cout << "Founded login token: \"" << Token << "\"" << endl;
     GetDataToFile("https://www.luogu.com.cn/api/verify/captcha", "Header.tmp", "Captcha.jpeg");
     string Captcha = "";
     while (Captcha.size() != 4)
     {
-        cout << "Please open file \"Captcha.jpeg\" and input the 4-digit verification code: ";
+        cout << "请打开文件\"Captcha.jpeg\"并输入4位验证码：";
         cin >> Captcha;
     }
     json LoginInfo;
@@ -217,22 +209,15 @@ void Login(string Username, string Password)
     GetDataToFile("https://www.luogu.com.cn/api/auth/userPassLogin", "Header.tmp", "Body.tmp", true, LoginInfo.dump(), HeaderList);
     json ResponseInfo = json::parse(GetDataFromFileToString());
     if (ResponseInfo["status"].dump() != "null")
-    {
-        cout << "Response status " << ResponseInfo["status"].as_integer() << " and error message " << ResponseInfo["errorMessage"].as_string() << endl;
-    }
-    else
-    {
-        cout << "Login success!" << endl;
-    }
+        cout << "登录失败，错误码" << ResponseInfo["status"].as_integer() << "，错误信息" << ResponseInfo["errorMessage"].as_string() << endl;
 }
 void SubmitCode(string QuestionID)
 {
-    cout << "Submitting..." << endl;
     string Code = "";
     FILE *FilePointer = fopen(string("../" + QuestionID + ".cpp").c_str(), "r");
     if (FilePointer == NULL)
     {
-        cout << "Can not open code input file. " << endl;
+        cout << "无法打开输入文件。" << endl;
         return;
     }
     while (!feof(FilePointer))
@@ -246,7 +231,7 @@ void SubmitCode(string QuestionID)
     int TokenStartPos = LoginPageData.find(TokenStartString);
     if (TokenStartPos == LoginPageData.npos)
     {
-        cout << "Can not find submit token start pos. " << endl;
+        cout << "无法找到提交密钥起始位置。" << endl;
         return;
     }
     TokenStartPos += TokenStartString.size();
@@ -255,11 +240,10 @@ void SubmitCode(string QuestionID)
         TokenEndPos++;
     if (TokenEndPos == LoginPageData.size())
     {
-        cout << "Can not find submit token end pos. " << endl;
+        cout << "无法找到提交密钥结束位置。" << endl;
         return;
     }
     string Token = LoginPageData.substr(TokenStartPos, TokenEndPos - TokenStartPos);
-    cout << "Founded submit token: \"" << Token << "\"" << endl;
     json SubmitInfo;
     SubmitInfo["code"] = Code;
     SubmitInfo["enableO2"] = 1;
@@ -276,16 +260,31 @@ void SubmitCode(string QuestionID)
     json ResponseInfo = json::parse(GetDataFromFileToString());
     if (ResponseInfo["status"].dump() != "null")
     {
-        cout << "Response status " << ResponseInfo["status"].as_integer() << " and error message " << ResponseInfo["errorMessage"].as_string() << endl;
+        cout << "提交失败，错误码" << ResponseInfo["status"].as_integer() << "，错误信息" << ResponseInfo["errorMessage"].as_string() << endl;
         return;
     }
     int RecordID = ResponseInfo["rid"].as_integer();
-    cout << "Submit success with record ID " << RecordID << "!" << endl;
     json RecordData;
-    while (RecordData["currentData"]["record"]["status"] != 12)
+    while (!RecordData["currentData"]["record"]["status"].is_number() || RecordData["currentData"]["record"]["status"].as_integer() < 2)
     {
         GetDataToFile("https://www.luogu.com.cn/record/" + to_string(RecordID) + "?_contentOnly=1");
         RecordData = json::parse(GetDataFromFileToString());
+    }
+    time_t TimeStamp = RecordData["currentData"]["record"]["submitTime"].as_integer();
+    tm *FormatedTime = localtime(&TimeStamp);
+    if (!RecordData["currentData"]["record"]["detail"]["compileResult"]["success"].as_bool())
+        cout << "编译错误：" << endl
+             << RecordData["currentData"]["record"]["detail"]["compileResult"]["message"].as_string() << endl;
+    else
+    {
+        cout << RecordData["currentData"]["record"]["score"].as_integer() << "pts" << endl;
+        for (json::iterator jit = RecordData["currentData"]["record"]["detail"]["judgeResult"]["subtasks"].begin(); jit != RecordData["currentData"]["record"]["detail"]["judgeResult"]["subtasks"].end(); jit++)
+        {
+            cout << "#" << jit.value()["id"] << endl;
+            for (json::iterator jit2 = RecordData["currentData"]["record"]["detail"]["judgeResult"]["subtasks"][jit.value()["id"].as_integer()]["testCases"].begin(); jit2 != RecordData["currentData"]["record"]["detail"]["judgeResult"]["subtasks"][jit.value()["id"].as_integer()]["testCases"].end(); jit2++)
+                cout << "    #" << jit2.value()["id"].as_integer() << " " << jit2.value()["score"].as_integer() << "pts " << RecordName[jit2.value()["status"].as_integer()].second << " " << jit2.value()["time"].as_integer() << "ms " << jit2.value()["memory"].as_integer() << "KB" << endl;
+        }
+        cout << RecordData["currentData"]["record"]["score"].as_integer() << "pts" << endl;
     }
 }
 string FixString(string Data)
@@ -301,22 +300,17 @@ string StringReplaceAll(string Data, string Before, string After)
 }
 void GetQuestionDetail(string QuestionID)
 {
-    cout << "Geting question detail for question " << QuestionID << endl;
     GetDataToFile("https://www.luogu.com.cn/problem/" + QuestionID + "?_contentOnly=1");
     json JSONData = json::parse(GetDataFromFileToString());
     if (JSONData["code"].as_integer() != 200)
     {
-        cout << "Response status " << JSONData["code"].as_integer() << " and error message " << JSONData["currentData"]["errorMessage"].as_string() << endl;
+        cout << "获取题目信息失败，错误码" << JSONData["code"].as_integer() << "，错误信息" << JSONData["currentData"]["errorMessage"].as_string() << endl;
         return;
     }
-    cout << "Get question detail success! " << endl;
-
-    cout << "Write data to file...   ";
     ofstream OutputFileStream(string("../" + QuestionID + ".md").c_str());
     if (OutputFileStream.bad())
     {
-        cout << "Failed!" << endl
-             << "Can not open output file. " << endl;
+        cout << "无法打开输出文件。" << endl;
         return;
     }
     OutputFileStream << "# " << QuestionID << " " << JSONData["currentData"]["problem"]["title"] << endl;
@@ -349,8 +343,8 @@ void GetQuestionDetail(string QuestionID)
                      << endl;
 
     if (JSONData["currentData"]["problem"]["samples"].size() == 0)
-        cout << "无" << endl
-             << endl;
+        OutputFileStream << "无" << endl
+                         << endl;
     else
     {
         int Counter = 1;
@@ -371,7 +365,6 @@ void GetQuestionDetail(string QuestionID)
                      << endl
                      << FixString(JSONData["currentData"]["problem"]["hint"]) << endl
                      << endl;
-
     OutputFileStream << "## 时空限制" << endl;
     OutputFileStream << "|测试点编号|时间限制|空间限制|" << endl
                      << "|:---:|:---:|:---:|" << endl;
@@ -404,16 +397,45 @@ void GetQuestionDetail(string QuestionID)
                      << "|来源|`" << TypeName[JSONData["currentData"]["problem"]["type"].as_string()] << "`|" << endl
                      << "|最后一次提交语言|`" << LanguageName[JSONData["currentData"]["lastLanguage"].as_integer()] << "`|" << endl
                      << endl;
-
     OutputFileStream.close();
-    cout << "Success! " << endl;
+}
+void ClockIn()
+{
+    GetDataToFile("https://www.luogu.com.cn/");
+    string LoginPageData = GetDataFromFileToString();
+    string TokenStartString = "<meta name=\"csrf-token\" content=\"";
+    int TokenStartPos = LoginPageData.find(TokenStartString);
+    if (TokenStartPos == LoginPageData.npos)
+    {
+        cout << "无法找到打卡密钥开始位置。" << endl;
+        return;
+    }
+    TokenStartPos += TokenStartString.size();
+    int TokenEndPos = TokenStartPos + 1;
+    while (TokenEndPos < LoginPageData.size() && LoginPageData[TokenEndPos] != '"')
+        TokenEndPos++;
+    if (TokenEndPos == LoginPageData.size())
+    {
+        cout << "无法找到打卡密钥结束位置。" << endl;
+        return;
+    }
+    string Token = LoginPageData.substr(TokenStartPos, TokenEndPos - TokenStartPos);
+    curl_slist *HeaderList = NULL;
+    HeaderList = curl_slist_append(HeaderList, string("X-CSRF-TOKEN: " + Token).c_str());
+    HeaderList = curl_slist_append(HeaderList, "Host: www.luogu.com.cn");
+    HeaderList = curl_slist_append(HeaderList, "Referer: https://www.luogu.com.cn/");
+    HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
+    HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
+    HeaderList = curl_slist_append(HeaderList, "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:103.0) Gecko/20100101 Firefox/103.0");
+    GetDataToFile("https://www.luogu.com.cn/index/ajax_punch", "Header.tmp", "Body.tmp", true, "", HeaderList);
 }
 int main(int argc, char **argv)
 {
     Init();
     Login("langningc2009", "1!2@3#qQwWeE");
+    ClockIn();
     // GetQuestionDetail("P1000");
-    SubmitCode("P1000");
+    SubmitCode("P1002");
     remove("Captcha.jpeg");
     remove("Body.tmp");
     remove("Header.tmp");
