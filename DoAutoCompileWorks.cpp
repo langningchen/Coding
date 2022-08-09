@@ -36,7 +36,7 @@ void Compile(int ID)
         ThreadCompileList[ID].erase(ThreadCompileList[ID].begin());
         string DestFileName = SourceFileName.substr(0, SourceFileName.size() - 4);
         string CompileOutput = "";
-        FILE *PipePointer = popen(string("gcc " + SourceFileName + " -o " + DestFileName + " -O2 -lstdc++ -lm 2>&1").c_str(), "r");
+        FILE *PipePointer = popen(string("gcc " + SourceFileName + " -o " + DestFileName + " -O2 -lstdc++ -lm -lpthread 2>&1").c_str(), "r");
         while (!feof(PipePointer))
             CompileOutput.push_back(fgetc(PipePointer));
         while (CompileOutput.size() != 0 && (CompileOutput[CompileOutput.size() - 1] == '\r' || CompileOutput[CompileOutput.size() - 1] == '\n' || CompileOutput[CompileOutput.size() - 1] == 0 || CompileOutput[CompileOutput.size() - 1] == -1))
@@ -95,11 +95,14 @@ int main()
     {
         int PointPos;
         if ((PointPos = sit->find_last_of(".")) == sit->npos || PointPos == 0)
-            remove(sit->c_str());
+        {
+            if (sit->find("DoAutoCompileWorks") != sit->npos && sit->find("Tool") != sit->npos)
+                remove(sit->c_str());
+        }
         else
         {
             string AfterPoint = sit->substr(PointPos + 1, sit->npos);
-            if (AfterPoint == "cpp" && *sit != "./DoAutoCompileWorks.cpp")
+            if (AfterPoint == "cpp" && *sit != "./DoAutoCompileWorks.cpp" && *sit != "./Tool.cpp" && *sit != "./gugugu.cpp")
             {
                 CompileList.insert(*sit);
                 ThreadCompileList[Counter % ThreadCount].insert(*sit);
