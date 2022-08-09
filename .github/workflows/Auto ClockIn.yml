@@ -1,0 +1,13 @@
+name: Auto ClockIn
+on:
+  schedule:
+    - cron:  '0 8 * * *'
+jobs:
+  ClockIn:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: ClockIn for Etiger
+      run: ./Tool Etiger 18117121393 LangNing0117 ClockIn
+    - name: ClockIn for Luogu
+      run: ./Tool Luogu langningc2009 1\!2@3#qQwWeE ClockIn
