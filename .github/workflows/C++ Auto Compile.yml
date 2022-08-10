@@ -21,7 +21,7 @@ jobs:
         from: ${{ secrets.MAILUSERNAME }}
         to: ${{ secrets.MAILUSERNAME }}
     - name: Run
-      run: ./DoAutoCompileWorks
+      run: ./Tools/DoAutoCompileWorks
     - name: Send mail when ends
       uses: dawidd6/action-send-mail@master
       with:

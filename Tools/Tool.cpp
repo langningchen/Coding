@@ -34,6 +34,7 @@ void GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string Body
         curl_easy_setopt(Curl, CURLOPT_POST, true);
         curl_easy_setopt(Curl, CURLOPT_POSTFIELDS, PostData.c_str());
     }
+    HeaderList = curl_slist_append(HeaderList, string("User-Agent: " + UA).c_str());
     curl_easy_setopt(Curl, CURLOPT_HTTPHEADER, HeaderList);
     CurlCode = curl_easy_perform(Curl);
     if (CurlCode != 0)
@@ -291,11 +292,10 @@ namespace Luogu
         HeaderList = curl_slist_append(HeaderList, "Referer: https://www.luogu.com.cn/auth/login");
         HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
         HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
-        HeaderList = curl_slist_append(HeaderList, string("User-Agent: " + UA).c_str());
         GetDataToFile("https://www.luogu.com.cn/api/auth/userPassLogin", "Header.tmp", "Body.tmp", true, LoginRequest.dump(), HeaderList);
         json LoginInfo = json::parse(GetDataFromFileToString());
         if (!LoginInfo["status"].is_null())
-            cout << "登录失败，错误码：" << LoginInfo["status"].as_integer() << "，错误信息：" << LoginInfo["errorMessage"].as_string() << endl;
+            cout << "登录失败，错误码：" << LoginInfo["status"].as_integer() << "，错误信息：" << LoginInfo["currentData"]["errorMessage"].as_string() << endl;
     }
     void ClockIn()
     {
@@ -324,7 +324,6 @@ namespace Luogu
         HeaderList = curl_slist_append(HeaderList, "Referer: https://www.luogu.com.cn/");
         HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
         HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
-        HeaderList = curl_slist_append(HeaderList, string("User-Agent: " + UA).c_str());
         GetDataToFile("https://www.luogu.com.cn/index/ajax_punch", "Header.tmp", "Body.tmp", true, "{}", HeaderList);
         json ClockInInfo = json::parse(GetDataFromFileToString());
         if (ClockInInfo["code"].as_integer() != 200)
@@ -437,18 +436,7 @@ namespace Luogu
     }
     void SubmitCode(string QuestionID)
     {
-        string Code = "";
-        FILE *FilePointer = fopen(string("/workspaces/Coding/Luogu/" + QuestionID + ".cpp").c_str(), "r");
-        if (FilePointer == NULL)
-        {
-            cout << "无法打开输入文件。" << endl;
-            return;
-        }
-        while (!feof(FilePointer))
-            Code.push_back(fgetc(FilePointer));
-        fclose(FilePointer);
-        while (Code.size() >= 0 && Code[Code.size() - 1] == -1)
-            Code.erase(Code.size() - 1, 1);
+        string Code = GetDataFromFileToString(string("/workspaces/Coding/Luogu/" + QuestionID + ".cpp"));
         GetDataToFile("https://www.luogu.com.cn/problem/" + QuestionID);
         string LoginPageData = GetDataFromFileToString();
         string TokenStartString = "<meta name=\"csrf-token\" content=\"";
@@ -479,7 +467,6 @@ namespace Luogu
         HeaderList = curl_slist_append(HeaderList, string("Referer: https://www.luogu.com.cn/problem/" + QuestionID).c_str());
         HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
         HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
-        HeaderList = curl_slist_append(HeaderList, string("User-Agent: " + UA).c_str());
         GetDataToFile("https://www.luogu.com.cn/fe/api/problem/submit/" + QuestionID, "Header.tmp", "Body.tmp", true, SubmitRequest.dump(), HeaderList);
         json SubmitInfo = json::parse(GetDataFromFileToString());
         if (!SubmitInfo["status"].is_null())
@@ -536,7 +523,6 @@ namespace Etiger
         HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json;charset=utf-8");
         HeaderList = curl_slist_append(HeaderList, "lang: zh");
         HeaderList = curl_slist_append(HeaderList, "Host: www.etiger.vip");
-        HeaderList = curl_slist_append(HeaderList, string("User-Agent: " + UA).c_str());
         GetDataToFile("https://www.etiger.vip/thrall-web/user/login", "Header.tmp", "Body.tmp", true, LoginRequest.dump(), HeaderList);
         json LoginInfo = json::parse(GetDataFromFileToString());
         if (LoginInfo["code"] != 200)
@@ -553,7 +539,6 @@ namespace Etiger
         HeaderList = curl_slist_append(HeaderList, "lang: zh");
         HeaderList = curl_slist_append(HeaderList, "Host: www.etiger.vip");
         HeaderList = curl_slist_append(HeaderList, string("Token: " + Token).c_str());
-        HeaderList = curl_slist_append(HeaderList, string("User-Agent: " + UA).c_str());
         GetDataToFile("https://www.etiger.vip/thrall-web/sign/dailySign", "Header.tmp", "Body.tmp", false, "", HeaderList);
         json ClockInInfo = json::parse(GetDataFromFileToString());
         if (ClockInInfo["code"] != 200)
@@ -569,7 +554,6 @@ namespace Etiger
         HeaderList = curl_slist_append(HeaderList, "lang: zh");
         HeaderList = curl_slist_append(HeaderList, "Host: www.etiger.vip");
         HeaderList = curl_slist_append(HeaderList, string("Token: " + Token).c_str());
-        HeaderList = curl_slist_append(HeaderList, string("User-Agent: " + UA).c_str());
         GetDataToFile("https://www.etiger.vip/thrall-web/question/getById?id=" + QuestionID, "Header.tmp", "Body.tmp", false, "", HeaderList);
         json QuestionInfo = json::parse(GetDataFromFileToString());
         if (QuestionInfo["code"] != 200)
@@ -644,21 +628,7 @@ namespace Etiger
     void SubmitCode(string QuestionID)
     {
         FILE *FilePointer;
-        string FileName = "/workspaces/Coding/Etiger/" + QuestionID + ".cpp";
-        while (QuestionID[0] == '0')
-            QuestionID.erase(0, 1);
-        FilePointer = fopen(FileName.c_str(), "r");
-        if (FilePointer == NULL)
-        {
-            cout << "无法打开输入文件。" << endl;
-            return;
-        }
-        string Code = "";
-        while (!feof(FilePointer))
-            Code.push_back(fgetc(FilePointer));
-        fclose(FilePointer);
-        while (Code[Code.size() - 1] == '\n' || Code[Code.size() - 1] == '\r' || Code[Code.size() - 1] == -1)
-            Code.erase(Code.size() - 1);
+        string Code = GetDataFromFileToString(string("/workspaces/Coding/Etiger/" + QuestionID + ".cpp"));
         json SubmitRequest;
         SubmitRequest["comment"] = "";
         SubmitRequest["lang"] = "CPP";
@@ -670,7 +640,6 @@ namespace Etiger
         HeaderList = curl_slist_append(HeaderList, "lang: zh");
         HeaderList = curl_slist_append(HeaderList, "Host: www.etiger.vip");
         HeaderList = curl_slist_append(HeaderList, string("Token: " + Token).c_str());
-        HeaderList = curl_slist_append(HeaderList, string("User-Agent: " + UA).c_str());
         GetDataToFile("https://www.etiger.vip/thrall-web/saveSubmit", "Header.tmp", "Body.tmp", true, SubmitRequest.dump(), HeaderList);
         json SubmitInfo = json::parse(GetDataFromFileToString());
         if (SubmitInfo["code"] != 200)

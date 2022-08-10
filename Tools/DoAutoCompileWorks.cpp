@@ -16,6 +16,7 @@ set<string> CompileList;
 set<string> CompiledList;
 set<string> CompileFailList;
 vector<string> SumaryList;
+set<string> ExcludeFolderName;
 int ThreadFinish;
 bool IsFileExists(string FileName)
 {
@@ -69,7 +70,7 @@ set<string> GetFiles(string Path)
         else if (DirentPointer->d_type == DT_DIR)
         {
             string FolderName = DirentPointer->d_name;
-            if (FolderName != "." && FolderName != ".." && FolderName != "lib" && FolderName != "unfinish" && FolderName[0] != '.' && FolderName != "Tools")
+            if (ExcludeFolderName.count(FolderName) == 0)
             {
                 set<string> Temp = GetFiles(Path + "/" + DirentPointer->d_name);
                 FileList.insert(Temp.begin(), Temp.end());
@@ -78,6 +79,15 @@ set<string> GetFiles(string Path)
     }
     closedir(DirPointer);
     return FileList;
+}
+void Init()
+{
+    ExcludeFolderName.insert(".");
+    ExcludeFolderName.insert("..");
+    ExcludeFolderName.insert(".github");
+    ExcludeFolderName.insert(".vscode");
+    ExcludeFolderName.insert("lib");
+    ExcludeFolderName.insert("Tools");
 }
 void OutputSumary(string Data)
 {
@@ -89,6 +99,7 @@ void OutputSumary(string Data)
 }
 int main()
 {
+    Init();
     set<string> FileList = GetFiles(".");
     int Counter = 0;
     for (set<string>::iterator sit = FileList.begin(); sit != FileList.end(); sit++)
