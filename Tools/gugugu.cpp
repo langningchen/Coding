@@ -155,12 +155,17 @@ void Login(string Username, string Password)
     {
         GetDataToFile("https://www.luogu.com.cn/api/OAuth2/authorize?response_type=code&client_id=lgclass.luoguclass&scope=oauth2.login&redirect_uri=https%3A%2F%2Fclass.luogu.com.cn%2Flogin%2Fcheck-luogu");
         string HeaderData = GetDataFromFileToString("Header.tmp");
-        string LocationStartString = "location: ";
+        string LocationStartString = "Location: ";
         int LocationStartPos = HeaderData.find(LocationStartString);
         if (LocationStartPos == HeaderData.npos)
         {
-            cout << "无法找到重定向网址起始位置" << endl;
-            return;
+            LocationStartString = "location: ";
+            LocationStartPos = HeaderData.find(LocationStartString);
+            if (LocationStartPos == HeaderData.npos)
+            {
+                cout << "无法找到重定向网址起始位置" << endl;
+                return;
+            }
         }
         LocationStartPos += LocationStartString.size();
         int LocationEndPos = LocationStartPos + 1;
@@ -178,53 +183,74 @@ void DownloadVideo(string CourseID)
         cout << "获取课程信息失败，错误码：" << CourseInfo["code"].as_integer() << "，错误信息：" << CourseInfo["currentData"]["errorMessage"].as_string() << endl;
         return;
     }
-    GetDataToFile(Decode(CourseInfo["currentData"]["replayFiles"][0]["url"]["HD"].as_string(), CourseInfo["currentData"]["obfsKey"].as_integer()));
-    string M3U8Detail = GetDataFromFileToString();
-    int Counter = 0;
-    if (system(string("mkdir \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "\"").c_str()) != 0)
+    int M3U8Counter = 0;
+    for (json::iterator jit = CourseInfo["currentData"]["replayFiles"].begin(); jit != CourseInfo["currentData"]["replayFiles"].end(); jit++)
     {
-        cout << "创建文件夹失败" << endl;
-        return;
-    }
-    ofstream OutputFileStream(string(CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.m3u8"));
-    if (OutputFileStream.bad())
-    {
-        cout << "无法打开输出文件" << endl;
-        return;
-    }
-    for (int i = 0; i < M3U8Detail.size(); i++)
-    {
-        int LineStartPos = i;
-        int LineEndPos = i + 1;
-        while (LineEndPos < M3U8Detail.size() && M3U8Detail[LineEndPos] != '\n')
-            LineEndPos++;
-        string Line = M3U8Detail.substr(LineStartPos, LineEndPos - LineStartPos);
-        if (Line.size() > 0 && Line[0] != '#')
+        GetDataToFile(Decode(jit.value()["url"]["HD"].as_string(), CourseInfo["currentData"]["obfsKey"].as_integer()));
+        string M3U8Detail = GetDataFromFileToString();
+        int TSCounter = 0;
+        if (system(string("mkdir \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "\"").c_str()) != 0)
         {
-            GetDataToFile(string("https://class.luogu.com.cn/api/live/signReplay?url=https://video.class.luogu.com.cn/yugu-live/" + CourseID + "/" + Line));
-            json TSURLInfo = json::parse(GetDataFromFileToString());
-            cout << TSURLInfo["url"].as_string() << endl;
-            if (GetDataToFile(TSURLInfo["url"].as_string(), "Header.tmp", string(CourseInfo["currentData"]["lesson"]["name"].as_string() + "/" + to_string(Counter) + ".ts")) == -1)
+            cout << "创建文件夹失败" << endl;
+            return;
+        }
+        ofstream OutputFileStream(string(CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.m3u8"));
+        if (OutputFileStream.bad())
+        {
+            cout << "无法打开输出文件" << endl;
+            return;
+        }
+        for (int i = 0; i < M3U8Detail.size(); i++)
+        {
+            int LineStartPos = i;
+            int LineEndPos = i + 1;
+            while (LineEndPos < M3U8Detail.size() && M3U8Detail[LineEndPos] != '\n')
+                LineEndPos++;
+            string Line = M3U8Detail.substr(LineStartPos, LineEndPos - LineStartPos);
+            if (Line.size() > 0 && Line[0] != '#')
             {
-                i--;
-                continue;
+                GetDataToFile(string("https://class.luogu.com.cn/api/live/signReplay?url=https://video.class.luogu.com.cn/yugu-live/" + CourseID + "/" + Line));
+                json TSURLInfo = json::parse(GetDataFromFileToString());
+                cout << TSURLInfo["url"].as_string() << endl;
+                if (GetDataToFile(TSURLInfo["url"].as_string(), "Header.tmp", string(CourseInfo["currentData"]["lesson"]["name"].as_string() + "/" + to_string(TSCounter) + ".ts")) == -1)
+                {
+                    i--;
+                    continue;
+                }
+                OutputFileStream << TSCounter << ".ts" << endl;
+                TSCounter++;
             }
-            OutputFileStream << Counter << ".ts" << endl;
-            Counter++;
+            else
+            {
+                if (Line.find("https://class.luogu.com.cn/") != Line.npos)
+                    Line.replace(Line.find("https://class.luogu.com.cn/"), 27, "https://class.luogu.com.cn/api/");
+                OutputFileStream << Line << endl;
+            }
+            i = LineEndPos;
+        }
+        OutputFileStream.close();
+        if (system(string("ffmpeg -protocol_whitelist concat,file,http,https,tcp,tls,crypto -i \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.m3u8\" \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\"").c_str()) == 0)
+        {
+            if (system(string("cp \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\" \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "_" + to_string(M3U8Counter) + ".mp4\"").c_str()) == 0)
+            {
+                if (system(string("rm -r \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "\"").c_str()) != 0)
+                {
+                    cout << "删除临时文件出错" << endl;
+                    return;
+                }
+            }
+            else
+            {
+                cout << "MP4复制出错" << endl;
+                return;
+            }
         }
         else
         {
-            if (Line.find("https://class.luogu.com.cn/") != Line.npos)
-                Line.replace(Line.find("https://class.luogu.com.cn/"), 27, "https://class.luogu.com.cn/api/");
-            OutputFileStream << Line << endl;
+            cout << "TS文件合并出错" << endl;
+            return;
         }
-        i = LineEndPos;
-    }
-    OutputFileStream.close();
-    if (system(string("ffmpeg -protocol_whitelist concat,file,http,https,tcp,tls,crypto -i \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.m3u8\" -o \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\"").c_str()) == 0)
-    {
-        system(string("cp \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\" \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + ".mp4\"").c_str());
-        system(string("rm -r \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "\"").c_str());
+        M3U8Counter++;
     }
 }
 int main()
@@ -235,8 +261,10 @@ int main()
     CurrentDir = Buffer;
     delete Buffer;
     CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
+    string CourseID;
+    cin >> CourseID;
     Login("langningc2009", "1!2@3#qQwWeE");
-    DownloadVideo("lgr99");
+    DownloadVideo(CourseID);
     Clean();
     return 0;
 }
