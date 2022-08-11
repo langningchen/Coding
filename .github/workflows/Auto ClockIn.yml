@@ -2,6 +2,7 @@ name: Auto ClockIn
 on:
   schedule:
     - cron:  '38 21 * * *'
+  workflow_dispatch: 
 jobs:
   ClockIn:
     runs-on: ubuntu-latest
