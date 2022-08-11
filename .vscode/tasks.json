@@ -14,7 +14,15 @@
                 "-lstdc++",
                 "-lpthread",
                 "-lm",
-                "-O2"
+                "-O2",
+                "-Wall",
+                "-Wcast-align",
+                "-Wsign-compare",
+                "-Wpacked",
+                "-Wpadded",
+                "-Wunreachable-code",
+                "-Winline",
+                "-Wdisabled-optimization"
             ],
             "options": {
                 "cwd": "${fileDirname}"
@@ -32,7 +40,7 @@
             "label": "Run command for OJ",
             "command": "bash",
             "args": [
-                "/workspaces/Coding/Tool.sh",
+                "/workspaces/Coding/Tools/Tool.sh",
                 "${file}",
                 "${input:CommandToRun}"
             ],

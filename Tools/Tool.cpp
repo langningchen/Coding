@@ -49,6 +49,8 @@ string GetDataFromFileToString(string FileName = "Body.tmp")
 {
     string Data = "";
     FILE *BodyFilePointer = fopen((CurrentDir + FileName).c_str(), "r");
+    if (BodyFilePointer == NULL)
+        return "";
     while (!feof(BodyFilePointer))
         Data.push_back(fgetc(BodyFilePointer));
     fclose(BodyFilePointer);
@@ -63,7 +65,7 @@ string FixString(string Data)
 string EraseHTMLElement(string Data)
 {
     int HTMLStartIndex = 0;
-    for (int i = 0; i < Data.size(); i++)
+    for (unsigned int i = 0; i < Data.size(); i++)
         if (Data[i] == '<')
             HTMLStartIndex = i;
         else if (Data[i] == '>')
@@ -137,6 +139,26 @@ void Usage()
 )" << endl;
     Clean();
     exit(0);
+}
+string Base64Encode(string Input)
+{
+    string base64_chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789+/";
+    string Output;
+    for (unsigned int k = 0; k < Input.size(); k += 3)
+    {
+        Output.push_back(base64_chars[(Input[k] & 0xfc) >> 2]);
+        Output.push_back(base64_chars[((Input[k] & 0x03) << 4) + ((Input[k + 1] & 0xf0) >> 4)]);
+        Output.push_back(base64_chars[((Input[k + 1] & 0x0f) << 2) + ((Input[k + 2] & 0xc0) >> 6)]);
+        Output.push_back(base64_chars[Input[k + 2] & 0x3f]);
+    }
+    if (Input.size() % 3 == 1)
+        Output.replace(Output.size() - 2, 2, "==");
+    else if (Input.size() % 3 == 2)
+        Output.replace(Output.size() - 1, 1, "=");
+    return Output;
 }
 namespace Luogu
 {
@@ -258,14 +280,14 @@ namespace Luogu
             return;
         string LoginPageData = GetDataFromFileToString();
         string TokenStartString = "<meta name=\"csrf-token\" content=\"";
-        int TokenStartPos = LoginPageData.find(TokenStartString);
+        unsigned int TokenStartPos = LoginPageData.find(TokenStartString);
         if (TokenStartPos == LoginPageData.npos)
         {
             cout << "无法找到登录密钥开始位置。" << endl;
             return;
         }
         TokenStartPos += TokenStartString.size();
-        int TokenEndPos = TokenStartPos + 1;
+        unsigned int TokenEndPos = TokenStartPos + 1;
         while (TokenEndPos < LoginPageData.size() && LoginPageData[TokenEndPos] != '"')
             TokenEndPos++;
         if (TokenEndPos == LoginPageData.size())
@@ -274,42 +296,57 @@ namespace Luogu
             return;
         }
         string Token = LoginPageData.substr(TokenStartPos, TokenEndPos - TokenStartPos);
-        GetDataToFile("https://www.luogu.com.cn/api/verify/captcha", "Header.tmp", "Captcha.jpeg");
-        string Captcha = "";
-        while (Captcha.size() != 4)
+        int ErrorCounter = 0;
+        while (1)
         {
-            cout << "请打开文件\"Captcha.jpeg\"并输入4位验证码：";
-            cin >> Captcha;
+            cout << "[";
+            GetDataToFile("https://www.luogu.com.cn/api/verify/captcha");
+            cout << "]";
+            curl_slist *HeaderList = NULL;
+            HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json");
+            cout << "{";
+            GetDataToFile("https://luogu-captcha-bypass.piterator.com/predict/", "Header.tmp", "Body.tmp", true, string("data:image/jpeg;base64," + Base64Encode(GetDataFromFileToString())), HeaderList);
+            cout << "}";
+            string Captcha = GetDataFromFileToString();
+            json LoginRequest;
+            LoginRequest["username"] = Username;
+            LoginRequest["password"] = Password;
+            LoginRequest["captcha"] = Captcha;
+            HeaderList = NULL;
+            HeaderList = curl_slist_append(HeaderList, string("X-CSRF-TOKEN: " + Token).c_str());
+            HeaderList = curl_slist_append(HeaderList, string("Content-Length: " + to_string(LoginRequest.dump().size())).c_str());
+            HeaderList = curl_slist_append(HeaderList, "Host: www.luogu.com.cn");
+            HeaderList = curl_slist_append(HeaderList, "Referer: https://www.luogu.com.cn/auth/login");
+            HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
+            HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
+            GetDataToFile("https://www.luogu.com.cn/api/auth/userPassLogin", "Header.tmp", "Body.tmp", true, LoginRequest.dump(), HeaderList);
+            json LoginInfo = json::parse(GetDataFromFileToString());
+            if (!LoginInfo["status"].is_null())
+            {
+                if (LoginInfo["currentData"]["errorMessage"].as_string() != "验证码错误" && ErrorCounter < 5)
+                {
+                    cout << "登录失败，错误码：" << LoginInfo["status"].as_integer() << "，错误信息：" << LoginInfo["currentData"]["errorMessage"].as_string() << endl;
+                    return;
+                }
+            }
+            else
+                break;
+            ErrorCounter++;
         }
-        json LoginRequest;
-        LoginRequest["username"] = Username;
-        LoginRequest["password"] = Password;
-        LoginRequest["captcha"] = Captcha;
-        curl_slist *HeaderList = NULL;
-        HeaderList = curl_slist_append(HeaderList, string("X-CSRF-TOKEN: " + Token).c_str());
-        HeaderList = curl_slist_append(HeaderList, string("Content-Length: " + to_string(LoginRequest.dump().size())).c_str());
-        HeaderList = curl_slist_append(HeaderList, "Host: www.luogu.com.cn");
-        HeaderList = curl_slist_append(HeaderList, "Referer: https://www.luogu.com.cn/auth/login");
-        HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
-        HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
-        GetDataToFile("https://www.luogu.com.cn/api/auth/userPassLogin", "Header.tmp", "Body.tmp", true, LoginRequest.dump(), HeaderList);
-        json LoginInfo = json::parse(GetDataFromFileToString());
-        if (!LoginInfo["status"].is_null())
-            cout << "登录失败，错误码：" << LoginInfo["status"].as_integer() << "，错误信息：" << LoginInfo["currentData"]["errorMessage"].as_string() << endl;
     }
     void ClockIn()
     {
         GetDataToFile("https://www.luogu.com.cn/");
         string LoginPageData = GetDataFromFileToString();
         string TokenStartString = "<meta name=\"csrf-token\" content=\"";
-        int TokenStartPos = LoginPageData.find(TokenStartString);
+        unsigned int TokenStartPos = LoginPageData.find(TokenStartString);
         if (TokenStartPos == LoginPageData.npos)
         {
             cout << "无法找到打卡密钥开始位置。" << endl;
             return;
         }
         TokenStartPos += TokenStartString.size();
-        int TokenEndPos = TokenStartPos + 1;
+        unsigned int TokenEndPos = TokenStartPos + 1;
         while (TokenEndPos < LoginPageData.size() && LoginPageData[TokenEndPos] != '"')
             TokenEndPos++;
         if (TokenEndPos == LoginPageData.size())
@@ -403,7 +440,7 @@ namespace Luogu
         OutputFileStream << "## 时空限制" << endl;
         OutputFileStream << "|测试点编号|时间限制|空间限制|" << endl
                          << "|:---:|:---:|:---:|" << endl;
-        for (int Counter = 0; Counter < QuestionInfo["currentData"]["problem"]["limits"]["memory"].size(); Counter++)
+        for (unsigned int Counter = 0; Counter < QuestionInfo["currentData"]["problem"]["limits"]["memory"].size(); Counter++)
         {
             OutputFileStream << "|$" << (Counter + 1) << "$"
                              << "|$" << (QuestionInfo["currentData"]["problem"]["limits"]["memory"][Counter].as_integer() / 1024.0) << "MB$"
@@ -421,7 +458,7 @@ namespace Luogu
                          << endl;
         string Tags = "";
         for (json::iterator cit = QuestionInfo["currentData"]["problem"]["tags"].begin(); cit != QuestionInfo["currentData"]["problem"]["tags"].end(); cit++)
-            Tags += "<span style=\"display: inline-block; margin-right: 5px; border-radius: 2px; color: white; padding: 0px 8px; background-color: #" + ColorList[TagName[cit.value().as_integer()].second] + "\">" + TagName[cit.value().as_integer()].first + "</span>";
+            Tags += "<span style=\"display: inline-block; margin-right: 5px; margin-bottom: 5px; border-radius: 2px; color: white; padding: 0px 8px; background-color: #" + ColorList[TagName[cit.value().as_integer()].second] + "; \">" + TagName[cit.value().as_integer()].first + "</span>";
         OutputFileStream << "|项目|值|" << endl
                          << "|:---:|:---:|" << endl
                          << "|难度|<span style=\"font-weight: bold; color: #" << ColorList[DifficultyName[QuestionInfo["currentData"]["problem"]["difficulty"].as_integer()].second] << "\">" << DifficultyName[QuestionInfo["currentData"]["problem"]["difficulty"].as_integer()].first << "</span>|" << endl
@@ -436,18 +473,18 @@ namespace Luogu
     }
     void SubmitCode(string QuestionID)
     {
-        string Code = GetDataFromFileToString(string("/workspaces/Coding/Luogu/" + QuestionID + ".cpp"));
+        string Code = GetDataFromFileToString(string("../Luogu/" + QuestionID + ".cpp"));
         GetDataToFile("https://www.luogu.com.cn/problem/" + QuestionID);
         string LoginPageData = GetDataFromFileToString();
         string TokenStartString = "<meta name=\"csrf-token\" content=\"";
-        int TokenStartPos = LoginPageData.find(TokenStartString);
+        unsigned int TokenStartPos = LoginPageData.find(TokenStartString);
         if (TokenStartPos == LoginPageData.npos)
         {
             cout << "无法找到提交密钥起始位置。" << endl;
             return;
         }
         TokenStartPos += TokenStartString.size();
-        int TokenEndPos = TokenStartPos + 1;
+        unsigned int TokenEndPos = TokenStartPos + 1;
         while (TokenEndPos < LoginPageData.size() && LoginPageData[TokenEndPos] != '"')
             TokenEndPos++;
         if (TokenEndPos == LoginPageData.size())
@@ -481,8 +518,6 @@ namespace Luogu
             GetDataToFile("https://www.luogu.com.cn/record/" + to_string(RecordID) + "?_contentOnly=1");
             RecordInfo = json::parse(GetDataFromFileToString());
         }
-        time_t TimeStamp = RecordInfo["currentData"]["record"]["submitTime"].as_integer();
-        tm *FormatedTime = localtime(&TimeStamp);
         if (!RecordInfo["currentData"]["record"]["detail"]["compileResult"]["success"].as_bool())
             cout << "编译错误：" << endl
                  << RecordInfo["currentData"]["record"]["detail"]["compileResult"]["message"].as_string() << endl;
@@ -627,8 +662,7 @@ namespace Etiger
     }
     void SubmitCode(string QuestionID)
     {
-        FILE *FilePointer;
-        string Code = GetDataFromFileToString(string("/workspaces/Coding/Etiger/" + QuestionID + ".cpp"));
+        string Code = GetDataFromFileToString(string("../Etiger/" + QuestionID + ".cpp"));
         json SubmitRequest;
         SubmitRequest["comment"] = "";
         SubmitRequest["lang"] = "CPP";

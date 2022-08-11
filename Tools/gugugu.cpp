@@ -83,6 +83,26 @@ void Clean()
     remove((CurrentDir + "Body.tmp").c_str());
     remove((CurrentDir + "Header.tmp").c_str());
 }
+string Base64Encode(string Input)
+{
+    string base64_chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789+/";
+    string Output;
+    for (int k = 0; k < Input.size(); k += 3)
+    {
+        Output.push_back(base64_chars[(Input[k] & 0xfc) >> 2]);
+        Output.push_back(base64_chars[((Input[k] & 0x03) << 4) + ((Input[k + 1] & 0xf0) >> 4)]);
+        Output.push_back(base64_chars[((Input[k + 1] & 0x0f) << 2) + ((Input[k + 2] & 0xc0) >> 6)]);
+        Output.push_back(base64_chars[Input[k + 2] & 0x3f]);
+    }
+    if (Input.size() % 3 == 1)
+        Output.replace(Output.size() - 2, 2, "==");
+    else if (Input.size() % 3 == 2)
+        Output.replace(Output.size() - 1, 1, "=");
+    return Output;
+}
 string Decode(string Input, int OBFSKEY)
 {
     for (int i = 0; i < Input.size(); i++)
@@ -124,30 +144,38 @@ void Login(string Username, string Password)
             return;
         }
         string Token = LoginPageData.substr(TokenStartPos, TokenEndPos - TokenStartPos);
-        GetDataToFile("https://www.luogu.com.cn/api/verify/captcha", "Header.tmp", "Captcha.jpeg");
-        string Captcha = "";
-        while (Captcha.size() != 4)
+        int ErrorCounter = 0;
+        while (1)
         {
-            cout << "请打开文件\"Captcha.jpeg\"并输入4位验证码：";
-            cin >> Captcha;
-        }
-        json LoginRequest;
-        LoginRequest["username"] = Username;
-        LoginRequest["password"] = Password;
-        LoginRequest["captcha"] = Captcha;
-        curl_slist *HeaderList = NULL;
-        HeaderList = curl_slist_append(HeaderList, string("X-CSRF-TOKEN: " + Token).c_str());
-        HeaderList = curl_slist_append(HeaderList, string("Content-Length: " + to_string(LoginRequest.dump().size())).c_str());
-        HeaderList = curl_slist_append(HeaderList, "Host: www.luogu.com.cn");
-        HeaderList = curl_slist_append(HeaderList, "Referer: https://www.luogu.com.cn/auth/login");
-        HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
-        HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
-        GetDataToFile("https://www.luogu.com.cn/api/auth/userPassLogin", "Header.tmp", "Body.tmp", true, LoginRequest.dump(), HeaderList);
-        json LoginInfo = json::parse(GetDataFromFileToString());
-        if (!LoginInfo["status"].is_null())
-        {
-            cout << "登录失败，错误码：" << LoginInfo["status"].as_integer() << "，错误信息：" << LoginInfo["currentData"]["errorMessage"].as_string() << endl;
-            return;
+            GetDataToFile("https://www.luogu.com.cn/api/verify/captcha");
+            curl_slist *HeaderList = NULL;
+            HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json");
+            GetDataToFile("https://luogu-captcha-bypass.piterator.com/predict/", "Header.tmp", "Body.tmp", true, string("data:image/jpeg;base64," + Base64Encode(GetDataFromFileToString())), HeaderList);
+            string Captcha = GetDataFromFileToString();
+            json LoginRequest;
+            LoginRequest["username"] = Username;
+            LoginRequest["password"] = Password;
+            LoginRequest["captcha"] = Captcha;
+            HeaderList = NULL;
+            HeaderList = curl_slist_append(HeaderList, string("X-CSRF-TOKEN: " + Token).c_str());
+            HeaderList = curl_slist_append(HeaderList, string("Content-Length: " + to_string(LoginRequest.dump().size())).c_str());
+            HeaderList = curl_slist_append(HeaderList, "Host: www.luogu.com.cn");
+            HeaderList = curl_slist_append(HeaderList, "Referer: https://www.luogu.com.cn/auth/login");
+            HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
+            HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
+            GetDataToFile("https://www.luogu.com.cn/api/auth/userPassLogin", "Header.tmp", "Body.tmp", true, LoginRequest.dump(), HeaderList);
+            json LoginInfo = json::parse(GetDataFromFileToString());
+            if (!LoginInfo["status"].is_null())
+            {
+                if (LoginInfo["currentData"]["errorMessage"].as_string() != "验证码错误" && ErrorCounter < 5)
+                {
+                    cout << "登录失败，错误码：" << LoginInfo["status"].as_integer() << "，错误信息：" << LoginInfo["currentData"]["errorMessage"].as_string() << endl;
+                    return;
+                }
+            }
+            else
+                break;
+            ErrorCounter++;
         }
     }
     GetDataToFile("https://class.luogu.com.cn/course", "Header.tmp", "Body.tmp", false, "", NULL, &HTTPResponseCode);
