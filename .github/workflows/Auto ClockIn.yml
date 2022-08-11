@@ -1,7 +1,7 @@
 name: Auto ClockIn
 on:
   schedule:
-    - cron:  '0 8 * * *'
+    - cron:  '38 21 * * *'
 jobs:
   ClockIn:
     runs-on: ubuntu-latest

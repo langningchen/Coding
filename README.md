@@ -7,4 +7,4 @@
 
 **THESE CODES ARE FOR REFERENCY ONLY**
 
-[![C++ Auto Compile](https://github.com/langningchen/Coding/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/langningchen/Coding/actions)
+[![C++ Auto Compile](https://github.com/langningchen/Coding/actions/workflows/C++%20Auto%20Compile.yml/badge.svg?branch=main)](https://github.com/langningchen/Coding/actions/workflows/C++%20Auto%20Compile.yml)
