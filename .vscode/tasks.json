@@ -14,15 +14,14 @@
                 "-lstdc++",
                 "-lpthread",
                 "-lm",
-                "-O2",
+                // "-O2",
                 "-Wall",
                 "-Wcast-align",
                 "-Wsign-compare",
-                "-Wpacked",
-                "-Wpadded",
                 "-Wunreachable-code",
                 "-Winline",
-                "-Wdisabled-optimization"
+                "-Wdisabled-optimization",
+                "-ljpeg"
             ],
             "options": {
                 "cwd": "${fileDirname}"
