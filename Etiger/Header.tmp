@@ -1,9 +1,0 @@
-HTTP/1.1 200 OK
-X-Powered-By: Express
-Access-Control-Allow-Origin: *
-Content-Type: text/html; charset=utf-8
-Content-Length: 809
-ETag: W/"329-NoOnekhurA4Os/UAHg4MEu2vPaU"
-Date: Mon, 08 Aug 2022 02:50:25 GMT
-Connection: keep-alive
-
