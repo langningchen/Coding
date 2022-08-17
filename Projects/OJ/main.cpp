@@ -1,23 +1,40 @@
 #include <iostream>
 #include <vector>
+#include <queue>
+#include <thread>
+#include <string.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #include <sys/resource.h>
-#define SE                                                   \
-    {                                                        \
-        for (unsigned int i = 0; i < TestPoints.size(); i++) \
-            TestPoints[i].Status = "SE";                     \
-        Status = (Status == 3 ? 4 : 3);                      \
-        return;                                              \
+#define SE                                                                                   \
+    {                                                                                        \
+        for (unsigned int i = 0; i < TestPoints.size(); i++)                                 \
+        {                                                                                    \
+            TestPoints[i].ErrorMessage = "System error, error code: " + to_string(__LINE__); \
+            TestPoints[i].Status = "SE";                                                     \
+        }                                                                                    \
+        Status = (Status == 3 ? 4 : 3);                                                      \
+        return;                                                                              \
     }
 using namespace std;
+
+string CurrentDir;
 class JUDGE
 {
 private:
+    int TempExitNumberTransfer = 0;
     int Status = 0;
+    void __Compile();
+    static void *_Compile(void *This);
+    void __Judge();
+    static void *_Judge(void *This);
+    string StringReplaceAll(string Input, string Before, string After);
 
 public:
+    string MySystem(string Command, FILE *InputRedirect = NULL, FILE *OutputRedirect = NULL, int *Status = NULL);
     struct TESTPOINT
     {
         string StanderdInput = "";
@@ -28,21 +45,99 @@ public:
         int TimeLimit = 1000;
         int TimeUsed = 0;
         string Status = "UKE";
+        string ErrorMessage = "";
     };
     int Score = 0;
     string SourceCode = "";
     string IOFileName = "";
     string JudegeFolderName = "";
     string StanderdInputFileName = "Answer.in";
-    string StanderdOutputFileName = "Answer.ans";
     string UserOutputFileName = "Answer.out";
     string SourceCodeName = "main.cpp";
+    string ExecutableFileName = "main";
+    bool Compiled = false;
+    bool RunFinished = false;
+    bool Accepted = false;
     vector<TESTPOINT> TestPoints;
     void Init();
     void Compile();
     void Judge();
     void Clean();
 };
+string JUDGE::MySystem(string Command, FILE *InputRedirect, FILE *OutputRedirect, int *Status)
+{
+    Command += " ";
+    int __fd[2];
+    FILE *__stream;
+    pid_t pid;
+    if (pipe(__fd) != 0)
+        return "ERR1";
+    if ((pid = vfork()) < 0)
+        return "ERR2";
+    else if (pid == 0)
+    {
+        queue<string> TempArguments;
+        int FileNameStartPos = Command.find(" ");
+        string FileName = Command.substr(0, FileNameStartPos);
+        TempArguments.push(FileName);
+        Command = Command.substr(FileNameStartPos + 1, Command.npos);
+        while (Command != "")
+        {
+            int ArgumentStartPos = Command.find(" ");
+            TempArguments.push(Command.substr(0, ArgumentStartPos));
+            Command = Command.substr(ArgumentStartPos + 1, Command.npos);
+        }
+        char **Arguments = new char *[TempArguments.size() + 1];
+        int Counter = 0;
+        while (!TempArguments.empty())
+        {
+            Arguments[Counter] = new char[TempArguments.front().size() + 1];
+            strcpy(Arguments[Counter], TempArguments.front().c_str());
+            TempArguments.pop();
+            Counter++;
+        }
+        Arguments[Counter] = NULL;
+        if (InputRedirect != NULL)
+            dup2(fileno(InputRedirect), STDIN_FILENO);
+        close(__fd[0]);
+        if (OutputRedirect == NULL)
+        {
+            dup2(__fd[1], STDOUT_FILENO);
+            dup2(__fd[1], STDERR_FILENO);
+        }
+        else
+        {
+            dup2(fileno(OutputRedirect), STDOUT_FILENO);
+            dup2(fileno(OutputRedirect), STDERR_FILENO);
+        }
+        close(__fd[1]);
+        execvp(FileName.c_str(), Arguments);
+        cout << "FAILED " << errno << endl;
+        delete Arguments;
+        _exit(127);
+    }
+    close(__fd[1]);
+    if (Status != NULL)
+        waitpid(pid, Status, 0);
+    string Output = "";
+    if ((__stream = fdopen(__fd[0], string("r").c_str())) == NULL)
+        return "ERR3";
+    while (!feof(__stream))
+        Output.push_back(fgetc(__stream));
+    fclose(__stream);
+    Output.erase(Output.size() - 1, 1);
+    return Output;
+}
+string JUDGE::StringReplaceAll(string Input, string Before, string After)
+{
+    long unsigned int FoundedPos = Input.find(Before);
+    while (FoundedPos != Input.npos)
+    {
+        Input.replace(FoundedPos, Before.size(), After);
+        FoundedPos = Input.find(Before);
+    }
+    return Input;
+}
 void JUDGE::Init()
 {
     if (Status != 0)
@@ -63,34 +158,168 @@ void JUDGE::Init()
         SE;
     if (fclose(SourceOutputFilePointer) != 0)
         SE;
+    if (IOFileName != "")
+    {
+        StanderdInputFileName = IOFileName + ".in";
+        UserOutputFileName = IOFileName + ".out";
+    }
     Status = 1;
+}
+void *JUDGE::_Compile(void *This)
+{
+    JUDGE *CurrentClass = (JUDGE *)This;
+    CurrentClass->__Compile();
+    return NULL;
+}
+void JUDGE::__Compile()
+{
+    MySystem(string("gcc " + SourceCodeName + " -O2 -std=c++11 -lstdc++ -lm -DONLINE_JUDGE -o " + ExecutableFileName));
+    Compiled = true;
+    sleep(INT32_MAX);
 }
 void JUDGE::Compile()
 {
     if (Status != 1)
+        return;
+    pthread_t CompileThread;
+    if (pthread_create(&CompileThread, NULL, _Compile, (void *)this) != 0)
         SE;
+    time_t Now = time(NULL);
+    while (time(NULL) - Now < 10 && !Compiled)
+        ;
+    if (pthread_cancel(CompileThread) != 0)
+        SE;
+    if (pthread_join(CompileThread, NULL) != 0)
+        SE;
+    if (!Compiled)
+    {
+        for (unsigned int i = 0; i < TestPoints.size(); i++)
+        {
+            TestPoints[i].ErrorMessage = "Compile time limit exceeded. ";
+            TestPoints[i].Status = "CE";
+        }
+        Status = 3;
+        return;
+    }
+    struct stat Temp;
+    if (stat(ExecutableFileName.c_str(), &Temp) != 0)
+    {
+        for (unsigned int i = 0; i < TestPoints.size(); i++)
+        {
+            TestPoints[i].ErrorMessage = "Compile failed. ";
+            TestPoints[i].Status = "CE";
+        }
+        Status = 3;
+        return;
+    }
     Status = 2;
+}
+void *JUDGE::_Judge(void *This)
+{
+    JUDGE *CurrentClass = (JUDGE *)This;
+    CurrentClass->__Judge();
+    return NULL;
+}
+void JUDGE::__Judge()
+{
+    FILE *InputFileRedirect = fopen(string(CurrentDir + JudegeFolderName + "/" + StanderdInputFileName).c_str(), "r");
+    if (InputFileRedirect == NULL)
+        return;
+    FILE *OutputFileRedirect = fopen(string(CurrentDir + JudegeFolderName + "/" + UserOutputFileName).c_str(), "w");
+    if (OutputFileRedirect == NULL)
+        return;
+    int ExitNumber = 0;
+    MySystem(CurrentDir + JudegeFolderName + "/" + ExecutableFileName, InputFileRedirect, OutputFileRedirect, &ExitNumber);
+    fclose(InputFileRedirect);
+    fclose(OutputFileRedirect);
+    TempExitNumberTransfer = ExitNumber;
+    RunFinished = true;
+    sleep(INT32_MAX);
 }
 void JUDGE::Judge()
 {
     if (Status != 2)
-        SE;
+        return;
     for (unsigned int i = 0; i < TestPoints.size(); i++)
     {
-        rlimit Limit;
-        Limit.rlim_cur = TestPoints[i].MemoryLimit;
-        Limit.rlim_max = TestPoints[i].MemoryLimit;
-        if (setrlimit(RLIMIT_AS, &Limit) != 0)
+        FILE *StanderdInputFilePointer = fopen(StanderdInputFileName.c_str(), "w");
+        if (StanderdInputFilePointer == NULL)
             SE;
+        if (fprintf(StanderdInputFilePointer, "%s", TestPoints[i].StanderdInput.c_str()) < 0)
+            SE;
+        if (fclose(StanderdInputFilePointer) != 0)
+            SE;
+        // rlimit Limit;
+        // Limit.rlim_cur = TestPoints[i].MemoryLimit;
+        // Limit.rlim_max = TestPoints[i].MemoryLimit;
+        // if (setrlimit(RLIMIT_AS, &Limit) != 0)
+        //     SE;
+        RunFinished = false;
+        pthread_t JudgeThread;
+        if (pthread_create(&JudgeThread, NULL, _Judge, (void *)this) != 0)
+            SE;
+        clock_t Now = clock();
+        while (clock() - Now < TestPoints[i].TimeLimit && !RunFinished)
+            ;
+        TestPoints[i].TimeUsed = clock() - Now;
+        if (pthread_cancel(JudgeThread) != 0)
+            SE;
+        if (pthread_join(JudgeThread, NULL) != 0)
+            SE;
+        if (!RunFinished)
+        {
+            TestPoints[i].Status = "TLE";
+            TestPoints[i].ErrorMessage = "Time limit exceeded. ";
+            continue;
+        }
+        FILE *UserOutputFilePointer = fopen(UserOutputFileName.c_str(), "r");
+        if (UserOutputFilePointer == NULL)
+            SE;
+        while (!feof(UserOutputFilePointer))
+            TestPoints[i].UserOutput.push_back(fgetc(UserOutputFilePointer));
+        fclose(UserOutputFilePointer);
+        TestPoints[i].UserOutput.erase(TestPoints[i].UserOutput.size() - 1, 1);
+        TestPoints[i].UserOutput = StringReplaceAll(StringReplaceAll(TestPoints[i].UserOutput, " \n", "\n"), "\n\n", "\n");
+        while (TestPoints[i].UserOutput.size() > 0 && TestPoints[i].UserOutput[TestPoints[i].UserOutput.size() - 1] == '\n')
+            TestPoints[i].UserOutput.erase(TestPoints[i].UserOutput.size() - 1, 1);
+        if (WIFEXITED(TempExitNumberTransfer) && WEXITSTATUS(TempExitNumberTransfer) != 0)
+        {
+            TestPoints[i].Status = "RTE";
+            TestPoints[i].ErrorMessage = string("Run time error, Program has exited with code " + to_string(WEXITSTATUS(TempExitNumberTransfer)) + ". ");
+        }
+        else if (WIFSIGNALED(TempExitNumberTransfer))
+        {
+            TestPoints[i].Status = "RTE";
+            TestPoints[i].ErrorMessage = string("Run time error, Program has exited with signal " + to_string(WTERMSIG(TempExitNumberTransfer)) + ". ");
+        }
+        else if (WIFSTOPPED(TempExitNumberTransfer))
+        {
+            TestPoints[i].Status = "RTE";
+            TestPoints[i].ErrorMessage = string("Run time error, Program has stopped with code " + to_string(WSTOPSIG(TempExitNumberTransfer)) + ". ");
+        }
+        else if (TestPoints[i].UserOutput == TestPoints[i].StanderdOutput)
+        {
+            TestPoints[i].Status = "AC";
+            TestPoints[i].ErrorMessage = "Accepted. ";
+        }
+        else
+        {
+            TestPoints[i].Status = "WA";
+            TestPoints[i].ErrorMessage = "Wrong answer. ";
+        }
     }
     Status = 3;
 }
 void JUDGE::Clean()
 {
     if (Status != 3)
-        SE;
-    if (remove(SourceCodeName.c_str()) != 0)
-        SE;
+        return;
+    DIR *DirPointer = opendir(".");
+    dirent *DirentPointer = NULL;
+    while ((DirentPointer = readdir(DirPointer)) != NULL)
+        if (DirentPointer->d_type == DT_REG)
+            remove(DirentPointer->d_name);
+    closedir(DirPointer);
     if (chdir("..") != 0)
         SE;
     if (rmdir(JudegeFolderName.c_str()) != 0)
@@ -99,27 +328,123 @@ void JUDGE::Clean()
 }
 int main()
 {
-    FILE *fp = popen("ping www.baidu.com", "r");
-    while (!feof(fp))
-        cout << fgetc(fp);
-    pclose(fp);
-    return 0;
+    int BufferSize = 1024;
+    char *Buffer = new char[BufferSize];
+    readlink("/proc/self/exe", Buffer, BufferSize);
+    CurrentDir = Buffer;
+    delete Buffer;
+    CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
+
     JUDGE JudgeStatus;
+
+    // /*
     JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
 using namespace std;
 int main()
 {
+    freopen("output.in", "r", stdin);
+    freopen("output.out", "w", stdout);
     cout << "Hello World" << endl;
     return 0;
-})";
+})"; // AC
+    // * /
+
+    /*
+    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
+using namespace std;
+int main()
+{
+    freopen("output.in", "r", stdin);
+    freopen("output.out", "w", stdout);
+    cout << "Hello World     " << endl << endl << "  " << endl << "     " << endl;
+    return 0;
+})"; // AC
+    * /
+
+    /*
+    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
+using namespace std;
+int main()
+{
+    freopen("output2.in", "r", stdin);
+    freopen("output2.out", "w", stdout);
+    cout << "Hello World" << endl;
+    return 0;
+})"; // WA
+    * /
+
+    /*
+    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
+using namespace std;
+int main()
+{
+    freopen("output.in", "r", stdin);
+    freopen("output.out", "w", stdout);
+    cout << "Hello World Hello World" << endl;
+    return 0;
+})"; // WA
+    * /
+
+    /*
+    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
+using namespace std;
+int main()
+{
+    return 1;
+})"; // RTE (exited with code)
+    */
+
+    /*
+    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
+using namespace std;
+int main()
+{
+    throw "ERR";
+})"; // RTE (exited with signal)
+    */
+
+    /*
+    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
+using namespace std;
+int main()
+{
+    while(1)
+        ;
+    return 0;
+})"; // TLE
+    */
+
+    /*
+    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
+using namespace std;
+int main()
+{
+    hahaha;
+    return 0;
+})"; // CE (compile failed)
+    */
+
+    /*
+    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
+#include</dev/console>
+using namespace std;
+int main()
+{
+    return 0;
+})"; // CE (compile TLE)
+    */
+
+    JudgeStatus.IOFileName = "output";
     JUDGE::TESTPOINT Temp;
     Temp.StanderdOutput = "Hello World";
+    Temp.TimeLimit = 1 * CLOCKS_PER_SEC;
+    JudgeStatus.TestPoints.push_back(Temp);
     JudgeStatus.TestPoints.push_back(Temp);
     JudgeStatus.Init();
     JudgeStatus.Compile();
     JudgeStatus.Judge();
-    JudgeStatus.Clean();
+    // JudgeStatus.Clean();
     for (unsigned int i = 0; i < JudgeStatus.TestPoints.size(); i++)
-        cout << JudgeStatus.TestPoints[i].Status << " " << JudgeStatus.TestPoints[i].MemoryUsed << " " << JudgeStatus.TestPoints[i].TimeUsed << endl;
+        cout << JudgeStatus.TestPoints[i].Status << " " << JudgeStatus.TestPoints[i].MemoryUsed << "MB " << JudgeStatus.TestPoints[i].TimeUsed * 1.0 / CLOCKS_PER_SEC << "s " << JudgeStatus.TestPoints[i].ErrorMessage << endl;
     return 0;
 }

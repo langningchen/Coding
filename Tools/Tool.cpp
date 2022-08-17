@@ -13,6 +13,8 @@ void Usage()
             洛谷
         Etiger
             太戈编程
+        UVa
+            UVa Online Judge
     用户名
         登录用户名
     密码
@@ -34,9 +36,9 @@ void Usage()
 
 输出内容
     若程序运行正确
-        若命令为ClockIn
-            无输出
         若服务器名称为Luogu
+            若命令为ClockIn
+                无输出
             若命令为GetQuestionDetail
                 打开文件"/workspaces/Coding/Luogu/<题目编号>.md"
                 写入题目数据
@@ -46,6 +48,8 @@ void Usage()
                 提交
                 输出评测结果
         若服务器名称为Etiger
+            若命令为ClockIn
+                无输出
             若命令为GetQuestionDetail
                 打开文件"/workspaces/Coding/Etiger/<题目编号>.md"
                 写入题目数据
@@ -54,6 +58,18 @@ void Usage()
                 读取文件"/workspaces/Coding/Etiger/<题目编号>.cpp"
                 提交
                 输出评测结果
+        若服务器名称为UVa
+            若命令为ClockIn
+                不支持此命令
+            若命令为GetQuestionDetail
+                打开文件"/workspaces/Coding/UVa/<题目编号>.pdf"
+                写入题目数据
+                关闭文件
+            若命令为SubmitCode
+                现在没有设计好，暂不支持此命令
+                // 读取文件"/workspaces/Coding/UVa/<题目编号>.cpp"
+                // 提交
+                // 输出评测结果
     若程序运行失败
         输出错误信息或返回非0
 )" << endl;
@@ -593,6 +609,25 @@ namespace Etiger
         cout << SubmitInfo["data"]["grade"] << "pts" << endl;
     }
 }
+namespace UVa
+{
+    void Init()
+    {
+        cout << "现在没有设计好，暂不支持此命令" << endl;
+    }
+    void Login(string Username, string Password)
+    {
+        cout << "现在没有设计好，暂不支持此命令" << endl;
+    }
+    void SubmitCode(string QuestionID)
+    {
+        cout << "现在没有设计好，暂不支持此命令" << endl;
+    }
+    void GetQuestionDetail(string QuestionID)
+    {
+        cout << "现在没有设计好，暂不支持此命令" << endl;
+    }
+}
 int main(int argc, char **argv)
 {
     if (argc != 5 && argc != 6)
@@ -625,6 +660,18 @@ int main(int argc, char **argv)
         if (string(argv[4]) == "ClockIn")
             argc == 5 ? ClockIn() : Usage();
         else if (string(argv[4]) == "GetQuestionDetail")
+            argc == 6 ? GetQuestionDetail(argv[5]) : Usage();
+        else if (string(argv[4]) == "SubmitCode")
+            argc == 6 ? SubmitCode(argv[5]) : Usage();
+        else
+            Usage();
+    }
+    else if (string(argv[1]) == "UVa")
+    {
+        using namespace UVa;
+        Init();
+        Login(argv[2], argv[3]);
+        if (string(argv[4]) == "GetQuestionDetail")
             argc == 6 ? GetQuestionDetail(argv[5]) : Usage();
         else if (string(argv[4]) == "SubmitCode")
             argc == 6 ? SubmitCode(argv[5]) : Usage();

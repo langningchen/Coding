@@ -90,5 +90,6 @@
         "stack": "cpp",
         "version": "cpp"
     },
-    "C_Cpp.errorSquiggles": "Disabled"
+    "C_Cpp.errorSquiggles": "Disabled",
+    "terminal.integrated.defaultProfile.linux": "fish"
 }
