@@ -101,7 +101,11 @@ void OutputSumary(string Data)
 int main()
 {
     Init();
-    set<string> FileList = GetFiles("/workspaces/Coding");
+    int BufferSize = 1024;
+    char *Buffer = new char[BufferSize];
+    readlink("/proc/self/exe", Buffer, BufferSize);
+    set<string> FileList = GetFiles(string(Buffer));
+    delete Buffer;
     int Counter = 0;
     for (set<string>::iterator sit = FileList.begin(); sit != FileList.end(); sit++)
     {
