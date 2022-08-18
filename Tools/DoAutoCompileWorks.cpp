@@ -25,7 +25,7 @@ bool IsFileExists(string FileName)
 }
 void StringReplaceAll(string &Data, string Before, string After)
 {
-    int FindPos = 0;
+    size_t FindPos = 0;
     while ((FindPos = Data.find(Before)) != Data.npos)
         Data.replace(FindPos, Before.size(), After);
 }
@@ -104,7 +104,7 @@ int main()
     int Counter = 0;
     for (set<string>::iterator sit = FileList.begin(); sit != FileList.end(); sit++)
     {
-        int PointPos;
+        size_t PointPos;
         if ((PointPos = sit->find_last_of(".")) == sit->npos || PointPos == 0)
         {
             if (sit->find("DoAutoCompileWorks") != sit->npos && sit->find("Tool") != sit->npos)
@@ -113,7 +113,7 @@ int main()
         else
         {
             string AfterPoint = sit->substr(PointPos + 1, sit->npos);
-            if (AfterPoint == "cpp" && *sit != "./DoAutoCompileWorks.cpp" && *sit != "./Tool.cpp" && *sit != "./gugugu.cpp" * sit != "./Captcha.cpp")
+            if (AfterPoint == "cpp" && *sit != "./DoAutoCompileWorks.cpp" && *sit != "./Tool.cpp" && *sit != "./gugugu.cpp" && *sit != "./Captcha.cpp")
             {
                 CompileList.insert(*sit);
                 ThreadCompileList[Counter % ThreadCount].insert(*sit);
@@ -124,6 +124,12 @@ int main()
                 remove(sit->c_str());
         }
     }
+
+    if (system("zip -r Etiger.zip Etiger"))
+        cout << "\"zip\" Error!" << endl;
+    if (system("zip -r Luogu.zip Luogu"))
+        cout << "\"zip\" Error!" << endl;
+
     for (int i = 0; i < ThreadCount; i++)
         ThreadList[i] = thread(Compile, i);
     do
@@ -133,11 +139,6 @@ int main()
     } while (ThreadFinish != ThreadCount);
     for (int i = 0; i < ThreadCount; i++)
         ThreadList[i].join();
-
-    if (system("zip -r Etiger.zip Etiger"))
-        cout << "\"zip\" Error!" << endl;
-    if (system("zip -r Luogu.zip Luogu"))
-        cout << "\"zip\" Error!" << endl;
 
     if (system("git config --global user.email \"langningc2009@163.com\""))
         cout << "\"git config\" Error!" << endl;
