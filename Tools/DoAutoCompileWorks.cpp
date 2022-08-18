@@ -84,6 +84,7 @@ void Init()
 {
     ExcludeFolderName.insert(".");
     ExcludeFolderName.insert("..");
+    ExcludeFolderName.insert(".git");
     ExcludeFolderName.insert(".github");
     ExcludeFolderName.insert(".vscode");
     ExcludeFolderName.insert("lib");
@@ -100,16 +101,13 @@ void OutputSumary(string Data)
 int main()
 {
     Init();
-    set<string> FileList = GetFiles(".");
+    set<string> FileList = GetFiles("/workspaces/Coding");
     int Counter = 0;
     for (set<string>::iterator sit = FileList.begin(); sit != FileList.end(); sit++)
     {
         size_t PointPos;
         if ((PointPos = sit->find_last_of(".")) == sit->npos || PointPos == 0)
-        {
-            if (sit->find("DoAutoCompileWorks") != sit->npos && sit->find("Tool") != sit->npos)
-                remove(sit->c_str());
-        }
+            remove(sit->c_str());
         else
         {
             string AfterPoint = sit->substr(PointPos + 1, sit->npos);
