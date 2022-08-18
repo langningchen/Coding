@@ -107,6 +107,7 @@ int main()
     string CurrentDir = Buffer;
     delete Buffer;
     CurrentDir.erase(CurrentDir.find_last_of("/"), CurrentDir.npos);
+    CurrentDir.erase(CurrentDir.find_last_of("/"), CurrentDir.npos);
     set<string> FileList = GetFiles(CurrentDir);
     int Counter = 0;
     for (set<string>::iterator sit = FileList.begin(); sit != FileList.end(); sit++)
