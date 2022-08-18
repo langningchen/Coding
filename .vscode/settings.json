@@ -91,5 +91,6 @@
         "version": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled",
-    "terminal.integrated.defaultProfile.linux": "fish"
+    "terminal.integrated.defaultProfile.linux": "fish",
+    "winopacity.opacity": 180
 }
