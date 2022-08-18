@@ -113,7 +113,7 @@ int main()
         else
         {
             string AfterPoint = sit->substr(PointPos + 1, sit->npos);
-            if (AfterPoint == "cpp" && *sit != "./DoAutoCompileWorks.cpp" && *sit != "./Tool.cpp" && *sit != "./gugugu.cpp")
+            if (AfterPoint == "cpp" && *sit != "./DoAutoCompileWorks.cpp" && *sit != "./Tool.cpp" && *sit != "./gugugu.cpp" * sit != "./Captcha.cpp")
             {
                 CompileList.insert(*sit);
                 ThreadCompileList[Counter % ThreadCount].insert(*sit);
