@@ -3,14 +3,24 @@
 #include <string>
 using namespace std;
 #define KEY 0x7F
-string Locked = ".encrypted";
+bool OnlyEncrypt = false;
+bool OnlyDecrypt = false;
+string Suffix = ".encrypted";
 void LockAndUnlock(string InputFileName)
 {
     string OutputFileName;
-    if (InputFileName.substr(InputFileName.size() - Locked.size(), InputFileName.npos) == Locked)
-        OutputFileName = InputFileName.substr(0, InputFileName.size() - Locked.size());
+    if (InputFileName.substr(InputFileName.size() - Suffix.size(), InputFileName.npos) == Suffix)
+    {
+        if (OnlyEncrypt)
+            return;
+        OutputFileName = InputFileName.substr(0, InputFileName.size() - Suffix.size());
+    }
     else
-        OutputFileName = InputFileName + Locked;
+    {
+        if (OnlyDecrypt)
+            return;
+        OutputFileName = InputFileName + Suffix;
+    }
     cout << InputFileName << " --> " << OutputFileName << " ...   ";
     FILE *InputFilePointer = fopen(InputFileName.c_str(), "rb");
     if (InputFilePointer == NULL)
@@ -59,18 +69,33 @@ void GetFiles(string Path)
     }
     closedir(DirPointer);
 }
+string FixPath(string Input)
+{
+    size_t FoundedPos = 0;
+    while ((FoundedPos = Input.find("\\")) != Input.npos)
+        Input.replace(FoundedPos, 1, "/");
+    return Input;
+}
 int main(int argc, char *argv[])
 {
     if (argc == 1)
     {
         cout << "Please input a folder name: ";
-        string s;
-        cin >> s;
-        GetFiles(s);
+        string FolderName;
+        cin >> FolderName;
+        FolderName = FixPath(FolderName);
+        char Select;
+        cout << "Please select what to do(c=change(default), e=encrypt, d=decrypt): ";
+        cin >> Select;
+        if (Select == 'e' || Select == 'E')
+            OnlyEncrypt = true;
+        if (Select == 'd' || Select == 'D')
+            OnlyDecrypt = true;
+        GetFiles(FolderName);
     }
     else if (argc > 1)
         for (int i = 1; i < argc; i++)
-            LockAndUnlock(argv[i]);
+            LockAndUnlock(FixPath(argv[i]));
     cout << "Finish" << endl;
     return 0;
 }

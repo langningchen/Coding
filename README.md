@@ -14,7 +14,7 @@ Only for record.
   - `c_cpp_properties.json` A C/C++ config file which is auto created by vscode.
   - `settings.json` Also auto created by vscode.
   - `tasks.json` Config the building tasks and some tasks for OJ.
-- `Etiger` Something with [www.kkcoding.net](https://www.kkcoding.net) or [www.etiger.vip](https://www.etiger.vip)
+- `Etiger` Something with [www.kkcoding.net](https://www.kkcoding.net) or [www.etiger.vip](https://www.etiger.vip).
   - `001` `002` `100` `101` `101` `103` `104` `105` `205` Some handouts which is encrypted because of the copyright.
   - `Other Files` The exercises I have done in Etiger.
 - `lib` Some libraries required.
@@ -31,8 +31,7 @@ Only for record.
   - `Cookies.tmp` My cookies, please don't use it to do bad things!
   - `DoAutoCompileWorks.cpp` `DoAutoCompileWorks` The program run in github actions "C++ Auto Compile".
   - `Tool.cpp` `Tool` `Tool.sh` Run commands for OJ such as submit code, get question detail and clock in.
-  - `Other Files` No use :stuck_out_tongue_winking_eye:.
-- `UVa` Something with [onlinejudge.org](https://onlinejudge.org/)
+- `UVa` Something with [onlinejudge.org](https://onlinejudge.org/).
   - `All Files` The exercises I have done in UVa.
 - `Etiger.zip` Zip the `Etiger` folder.
 - `Luogu.zip` Zip the `Luogu` folder.
