@@ -104,8 +104,10 @@ int main()
     int BufferSize = 1024;
     char *Buffer = new char[BufferSize];
     readlink("/proc/self/exe", Buffer, BufferSize);
-    set<string> FileList = GetFiles(string(Buffer));
+    string CurrentDir = Buffer;
     delete Buffer;
+    CurrentDir.erase(CurrentDir.find_last_of("/"), CurrentDir.npos);
+    set<string> FileList = GetFiles(CurrentDir);
     int Counter = 0;
     for (set<string>::iterator sit = FileList.begin(); sit != FileList.end(); sit++)
     {
