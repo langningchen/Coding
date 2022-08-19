@@ -45,6 +45,15 @@
             ],
             "problemMatcher": [],
             "detail": ""
+        },
+        {
+            "label": "Encrypt or Decrypt",
+            "command": "/workspaces/Coding/Tools/LockAndUnlock",
+            "args": [
+                "${file}"
+            ],
+            "problemMatcher": [],
+            "detail": ""
         }
     ],
     "inputs": [
