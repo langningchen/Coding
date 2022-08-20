@@ -130,9 +130,9 @@ int main()
         }
     }
 
-    if (system("zip -r Etiger.zip Etiger"))
+    if (system(string("find " + CurrentDir + " -wholename \"" + CurrentDir + "/Etiger/*.cpp\" -print | zip " + CurrentDir + "/Etiger -@").c_str()))
         cout << "\"zip\" Error!" << endl;
-    if (system("zip -r Luogu.zip Luogu"))
+    if (system(string("find " + CurrentDir + " -wholename \"" + CurrentDir + "/Luogu/*.cpp\" -print | zip " + CurrentDir + "/Luogu -@").c_str()))
         cout << "\"zip\" Error!" << endl;
 
     for (int i = 0; i < ThreadCount; i++)
