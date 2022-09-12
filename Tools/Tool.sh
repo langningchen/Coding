@@ -1,3 +1,4 @@
+#!/bin/bash
 LuoguPattern=".*Luogu.*"
 LuoguUsername="langningc2009"
 LuoguPassword="1!2@3#qQwWeE"

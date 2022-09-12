@@ -10,6 +10,7 @@
                 "${file}",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
+                "-ljpeg",
                 "-lcurl",
                 "-lstdc++",
                 "-lpthread",
@@ -20,8 +21,7 @@
                 "-Wsign-compare",
                 "-Wunreachable-code",
                 "-Winline",
-                "-Wdisabled-optimization",
-                "-ljpeg"
+                "-Wdisabled-optimization"
             ],
             "options": {
                 "cwd": "${fileDirname}"

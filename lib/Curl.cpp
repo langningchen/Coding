@@ -6,7 +6,7 @@ using namespace std;
 using namespace configor;
 string CurrentDir;
 const string UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:103.0) Gecko/20100101 Firefox/103.0";
-int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyFileName = "Body.tmp", bool IsPost = false, string PostData = "", curl_slist *HeaderList = NULL, int *HTTPResponseCode = NULL)
+int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyFileName = "Body.tmp", bool IsPost = false, string PostData = "", curl_slist *HeaderList = NULL, int *HTTPResponseCode = NULL, string PostContentType = "application/json")
 {
     FILE *HeaderFilePointer = fopen((CurrentDir + HeaderFileName).c_str(), "w");
     FILE *BodyFilePointer = fopen((CurrentDir + BodyFileName).c_str(), "w");
@@ -29,7 +29,7 @@ int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyF
     curl_easy_setopt(Curl, CURLOPT_URL, URL.c_str());
     if (IsPost)
     {
-        HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json");
+        HeaderList = curl_slist_append(HeaderList, string("Content-Type: " + PostContentType).c_str());
         curl_easy_setopt(Curl, CURLOPT_POST, true);
         curl_easy_setopt(Curl, CURLOPT_POSTFIELDS, PostData.c_str());
     }
