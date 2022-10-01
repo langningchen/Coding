@@ -78,7 +78,7 @@ void Login(string Username, string Password)
         GetDataToFile("https://www.luogu.com.cn/api/OAuth2/authorize?response_type=code&client_id=lgclass.luoguclass&scope=oauth2.login&redirect_uri=https%3A%2F%2Fclass.luogu.com.cn%2Flogin%2Fcheck-luogu");
         string HeaderData = GetDataFromFileToString("Header.tmp");
         string LocationStartString = "Location: ";
-        unsigned int LocationStartPos = HeaderData.find(LocationStartString);
+        size_t LocationStartPos = HeaderData.find(LocationStartString);
         if (LocationStartPos == HeaderData.npos)
         {
             LocationStartString = "location: ";
@@ -90,7 +90,7 @@ void Login(string Username, string Password)
             }
         }
         LocationStartPos += LocationStartString.size();
-        unsigned int LocationEndPos = LocationStartPos + 1;
+        size_t LocationEndPos = LocationStartPos + 1;
         while (HeaderData[LocationEndPos] != '\n' && HeaderData[LocationEndPos] != '\r' && LocationEndPos < HeaderData.size())
             LocationEndPos++;
         GetDataToFile(HeaderData.substr(LocationStartPos, LocationEndPos - LocationStartPos));

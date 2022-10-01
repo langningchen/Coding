@@ -26,13 +26,17 @@ int main()
             ll cnt = 0, sV = 0;
             for (int i = 1; i <= 4; i++)
             {
-                if ()
+                if ((ptn & (1 << (i - 1))) == 0)
                     continue;
                 cnt++;
-                sV += ;
+                sV += (c[i] + 1) * v[i];
             }
             if (sV > price)
                 continue;
+            if (cnt & 1)
+                ans -= f[price - sV];
+            else
+                ans += f[price - sV];
         }
         cout << ans << endl;
     }
