@@ -1,27 +1,20 @@
 #include <bits/stdc++.h>
 using namespace std;
-const int N = 1000005;
 typedef long long ll;
-ll a, b, n;
+ll a, b, h;
 int main()
 {
-    cin >> a >> b >> n;
-    ll d = a - b;
-    if ()
-    {
+    freopen("snail.in", "r", stdin);
+    freopen("snail.out", "w", stdout);
+    cin >> a >> b >> h;
+    if (a <= b && a < h)
         cout << "forever" << endl;
-        return 0;
-    }
-    ll t = 0;
-    ll pos = 0;
-    while (pos < n)
+    else
     {
-        t++;
-        pos += d;
-        if (t % 2 == 0)
-            pos += a;
-        else
-            pos -= b;
+        ll d = a - b;
+        ll g = max(h - a, 0ll);
+        ll cnt = ceil(g * 1.0 / d);
+        cout << cnt * 2 + 1 << endl;
     }
     return 0;
 }
