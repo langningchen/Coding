@@ -2,60 +2,57 @@
 using namespace std;
 typedef long long ll;
 const int N = 105;
-int n, m, k;
-vector<ll> to[N];
-vector<ll> w[N];
-ll d[N][N];
-bool vst[N];
-// void dijkstra()
-// {
-//     memset(d, 0x7FFFFFFF, sizeof(d));
-//     memset(vst, 0, sizeof(vst));
-//     d[0] = 0;
-//     while (1)
-//     {
-//         int x = -1;
-//         for (int j = 0; j < n; j++)
-//             if (!vst[j] && (x == -1 || d[j] < d[x]))
-//                 x = j;
-//         if (x == -1)
-//             break;
-//         vst[x] = 1;
-//         for (size_t j = 0; j < to[x].size(); j++)
-//             d[to[x][j]] = min(d[to[x][j]], d[x] + w[x][j]);
-//     }
-// }
-void floyd()
+ll m, n, k, dis[N][N], f[N][N];
+struct Edge
 {
-    for (int k = 0; k < n; k++)
-        for (int i = 0; i < n; i++)
-            for (int j = 0; j < n; j++)
-                d[i][j] = min(d[i][j], d[i][k] + d[k][j]);
+    ll from, to, val;
+} e[N * N];
+void Mul(ll d[N][N], ll a[N][N], ll b[N][N])
+{
+    ll t[N][N];
+    memset(t, 0x3F, sizeof(t));
+    for (ll i = 1; i <= n; i++)
+        for (ll j = 1; j <= n; j++)
+            for (ll k = 1; k <= n; k++)
+                t[i][j] = min(t[i][j], a[i][k] + b[k][j]);
+    memcpy(d, t, sizeof(t));
 }
 int main()
 {
-    freopen("magic.in", "r", stdin);
-    freopen("magic.out", "w", stdout);
+    // freopen("magic.in", "r", stdin);
+    // freopen("magic.out", "w", stdout);
     cin >> n >> m >> k;
-    if (n == 1)
+    memset(dis, 0x3F, sizeof(dis));
+    for (ll i = 1; i <= m; i++)
     {
-        cout << 0 << endl;
-        return 0;
+        cin >> e[i].from >> e[i].to >> e[i].val;
     }
-    for (int i = 0; i < m; i++)
+    for (ll i = 1; i <= n; i++)
+        dis[i][i] = 0;
+    for (ll cc = 1; cc <= n; cc++)
+        for (ll i = 1; i <= n; i++)
+            for (ll j = 1; j <= n; j++)
+                dis[i][j] = min(dis[i][j], dis[i][cc] + dis[cc][j]);
+    memcpy(f, dis, sizeof(dis));
+    for (ll i = 1; i <= m; i++)
     {
-        ll u, v, t;
-        cin >> u >> v >> t;
-        u--;
-        v--;
-        d[u][v] = t;
-        to[u].push_back(v);
-        w[u].push_back(t);
+        ll u = e[i].from;
+        ll v = e[i].to;
+        ll w = e[i].val;
+        for (ll j = 1; j <= n; j++)
+        {
+            for (ll cc = 1; cc <= n; cc++)
+            {
+                f[j][cc] = min(f[j][cc], dis[j][u] - w + dis[v][cc]);
+            }
+        }
     }
-    // dijkstra();
-    for (int i = 0; i < n; i++)
-        d[i][i] = 0;
-    floyd();
-    cout << d[0][n - 1] << endl;
+    for (; k; k >>= 1)
+    {
+        if (k & 1)
+            Mul(dis, dis, f);
+        Mul(f, f, f);
+    }
+    cout << f[1][n] << endl;
     return 0;
 }
