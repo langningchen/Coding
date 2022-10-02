@@ -608,6 +608,26 @@ namespace Etiger
         }
         cout << SubmitInfo["data"]["grade"] << "pts" << endl;
     }
+    void Temp()
+    {
+        for (int i = 3000; i < 3137; i++)
+        {
+            string QuestionID = to_string(i);
+            curl_slist *HeaderList = NULL;
+            HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json;charset=utf-8");
+            HeaderList = curl_slist_append(HeaderList, "lang: zh");
+            HeaderList = curl_slist_append(HeaderList, "Host: www.etiger.vip");
+            HeaderList = curl_slist_append(HeaderList, string("Token: " + Token).c_str());
+            GetDataToFile("https://www.etiger.vip/thrall-web/question/getById?id=" + QuestionID, "Header.tmp", "Body.tmp", false, "", HeaderList);
+            json QuestionInfo = json::parse(GetDataFromFileToString());
+            if (QuestionInfo["code"] != 200)
+            {
+                cout << "获取题目信息失败，错误码：" << QuestionInfo["code"].as_integer() << "，错误信息：" << QuestionInfo["msg"].as_string() << endl;
+                continue;
+            }
+            cout << i << " " << FixString(QuestionInfo["data"]["ioName"].as_string()) << endl;
+        }
+    }
 }
 namespace UVa
 {
@@ -659,6 +679,8 @@ int main(int argc, char **argv)
         Login(argv[2], argv[3]);
         if (string(argv[4]) == "ClockIn")
             argc == 5 ? ClockIn() : Usage();
+        else if (string(argv[4]) == "Temp")
+            argc == 5 ? Temp() : Usage();
         else if (string(argv[4]) == "GetQuestionDetail")
             argc == 6 ? GetQuestionDetail(argv[5]) : Usage();
         else if (string(argv[4]) == "SubmitCode")
