@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <curl/curl.h>
+#include <unistd.h>
 #include "./configor/json.hpp"
 using namespace std;
 using namespace configor;

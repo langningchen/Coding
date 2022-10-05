@@ -15,7 +15,7 @@ thread ThreadList[ThreadCount];
 set<string> CompileList;
 set<string> CompiledList;
 set<string> CompileFailList;
-vector<string> SumaryList;
+vector<string> SummaryList;
 set<string> ExcludeFolderName;
 int ThreadFinish;
 bool IsFileExists(string FileName)
@@ -44,12 +44,12 @@ void Compile(int ID)
             CompileOutput.erase(CompileOutput.size() - 1, 1);
         if (!IsFileExists(DestFileName))
         {
-            SumaryList.push_back("### File " + SourceFileName + " compile failed!");
-            SumaryList.push_back("");
-            SumaryList.push_back("<pre><code>");
-            SumaryList.push_back(CompileOutput);
-            SumaryList.push_back("</code></pre>");
-            SumaryList.push_back("");
+            SummaryList.push_back("### File " + SourceFileName + " compile failed!");
+            SummaryList.push_back("");
+            SummaryList.push_back("<pre><code>");
+            SummaryList.push_back(CompileOutput);
+            SummaryList.push_back("</code></pre>");
+            SummaryList.push_back("");
             CompileFailList.insert(SourceFileName);
         }
         CompiledList.insert(SourceFileName);
@@ -90,7 +90,7 @@ void Init()
     ExcludeFolderName.insert("lib");
     ExcludeFolderName.insert("Tools");
 }
-void OutputSumary(string Data)
+void OutputSummary(string Data)
 {
     StringReplaceAll(Data, "\n", "\\n");
     StringReplaceAll(Data, "\t", "\\t");
@@ -157,35 +157,35 @@ int main()
     if (system("git push"))
         cout << "\"git push\" Error!" << endl;
 
-    OutputSumary("# Work Sumary");
-    OutputSumary("");
+    OutputSummary("# Work Summary");
+    OutputSummary("");
 
-    OutputSumary("## Size");
-    OutputSumary("");
-    OutputSumary("- Compile Size: " + to_string(CompileList.size()));
-    OutputSumary("- Compiled Size: " + to_string(CompiledList.size()));
-    OutputSumary("- Compile Success Size: " + to_string(CompiledList.size() - CompileFailList.size()));
-    OutputSumary("- Compile Failed Size: " + to_string(CompileFailList.size()));
-    OutputSumary("");
+    OutputSummary("## Size");
+    OutputSummary("");
+    OutputSummary("- Compile Size: " + to_string(CompileList.size()));
+    OutputSummary("- Compiled Size: " + to_string(CompiledList.size()));
+    OutputSummary("- Compile Success Size: " + to_string(CompiledList.size() - CompileFailList.size()));
+    OutputSummary("- Compile Failed Size: " + to_string(CompileFailList.size()));
+    OutputSummary("");
 
-    OutputSumary("## Errors");
-    for (vector<string>::iterator vit = SumaryList.begin(); vit != SumaryList.end(); vit++)
-        OutputSumary(*vit);
-    if (SumaryList.size() == 0)
-        OutputSumary("None");
-    OutputSumary("");
+    OutputSummary("## Errors");
+    for (vector<string>::iterator vit = SummaryList.begin(); vit != SummaryList.end(); vit++)
+        OutputSummary(*vit);
+    if (SummaryList.size() == 0)
+        OutputSummary("None");
+    OutputSummary("");
 
-    OutputSumary("## Detail");
-    OutputSumary("");
-    OutputSumary("FileName|Compiled|Success");
-    OutputSumary(":---|:---:|:---:");
+    OutputSummary("## Detail");
+    OutputSummary("");
+    OutputSummary("FileName|Compiled|Success");
+    OutputSummary(":---|:---:|:---:");
     for (set<string>::iterator sit = CompileList.begin(); sit != CompileList.end(); sit++)
-        OutputSumary(*sit + "|" + (CompiledList.count(*sit) ? "Yes" : "**❌No❌**") + "|" + (!CompileFailList.count(*sit) ? "Yes" : "**❌No❌**"));
-    OutputSumary("");
+        OutputSummary(*sit + "|" + (CompiledList.count(*sit) ? "Yes" : "**❌No❌**") + "|" + (!CompileFailList.count(*sit) ? "Yes" : "**❌No❌**"));
+    OutputSummary("");
 
     ofstream OutputMailStream("mail.txt");
     OutputMailStream << "Action Runs End, Tips From Github Actions" << endl;
-    for (vector<string>::iterator vit = SumaryList.begin(); vit != SumaryList.end(); vit++)
+    for (vector<string>::iterator vit = SummaryList.begin(); vit != SummaryList.end(); vit++)
         OutputMailStream << *vit << endl;
     OutputMailStream.close();
     return 0;
