@@ -21,7 +21,7 @@
                 "-Wcast-align",
                 "-Wsign-compare",
                 "-Wunreachable-code",
-                "-Winline",
+                // "-Winline",
                 "-Wdisabled-optimization"
             ],
             "options": {

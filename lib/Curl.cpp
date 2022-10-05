@@ -109,3 +109,63 @@ string StringReplaceAll(string Data, string Before, string After)
         Data.replace(Index, Before.size(), After);
     return Data;
 }
+unsigned char ToHex(unsigned char x)
+{
+    return x > 9 ? x + 55 : x + 48;
+}
+unsigned char FromHex(unsigned char x)
+{
+    unsigned char y;
+    if (x >= 'A' && x <= 'Z')
+        y = x - 'A' + 10;
+    else if (x >= 'a' && x <= 'z')
+        y = x - 'a' + 10;
+    else if (x >= '0' && x <= '9')
+        y = x - '0';
+    else
+        assert(0);
+    return y;
+}
+string URLEncode(string Input)
+{
+    string Output = "";
+    size_t length = Input.length();
+    for (size_t i = 0; i < length; i++)
+    {
+        if (isalnum((unsigned char)Input[i]) ||
+            (Input[i] == '-') ||
+            (Input[i] == '_') ||
+            (Input[i] == '.') ||
+            (Input[i] == '~'))
+            Output += Input[i];
+        else if (Input[i] == ' ')
+            Output += "+";
+        else
+        {
+            Output += '%';
+            Output += ToHex((unsigned char)Input[i] >> 4);
+            Output += ToHex((unsigned char)Input[i] % 16);
+        }
+    }
+    return Output;
+}
+string URLDecode(string Input)
+{
+    string Output = "";
+    size_t length = Input.length();
+    for (size_t i = 0; i < length; i++)
+    {
+        if (Input[i] == '+')
+            Output += ' ';
+        else if (Input[i] == '%')
+        {
+            assert(i + 2 < length);
+            unsigned char high = FromHex((unsigned char)Input[++i]);
+            unsigned char low = FromHex((unsigned char)Input[++i]);
+            Output += high * 16 + low;
+        }
+        else
+            Output += Input[i];
+    }
+    return Output;
+}
