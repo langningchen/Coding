@@ -337,113 +337,48 @@ int main()
 
     JUDGE JudgeStatus;
 
-    // /*
     JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
-using namespace std;
-int main()
-{
-    freopen("output.in", "r", stdin);
-    freopen("output.out", "w", stdout);
-    cout << "Hello World" << endl;
-    return 0;
-})"; // AC
-    // * /
-
-    /*
-    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
-using namespace std;
-int main()
-{
-    freopen("output.in", "r", stdin);
-    freopen("output.out", "w", stdout);
-    cout << "Hello World     " << endl << endl << "  " << endl << "     " << endl;
-    return 0;
-})"; // AC
-    * /
-
-    /*
-    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
-using namespace std;
-int main()
-{
-    freopen("output2.in", "r", stdin);
-    freopen("output2.out", "w", stdout);
-    cout << "Hello World" << endl;
-    return 0;
-})"; // WA
-    * /
-
-    /*
-    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
-using namespace std;
-int main()
-{
-    freopen("output.in", "r", stdin);
-    freopen("output.out", "w", stdout);
-    cout << "Hello World Hello World" << endl;
-    return 0;
-})"; // WA
-    * /
-
-    /*
-    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
-using namespace std;
-int main()
-{
-    return 1;
-})"; // RTE (exited with code)
-    */
-
-    /*
-    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
-using namespace std;
-int main()
-{
-    throw "ERR";
-})"; // RTE (exited with signal)
-    */
-
-    /*
-    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
-using namespace std;
-int main()
-{
-    while(1)
-        ;
-    return 0;
-})"; // TLE
-    */
-
-    /*
-    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
-using namespace std;
-int main()
-{
-    hahaha;
-    return 0;
-})"; // CE (compile failed)
-    */
-
-    /*
-    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
-#include</dev/console>
-using namespace std;
-int main()
-{
-    return 0;
-})"; // CE (compile TLE)
-    */
+    using namespace std;
+    int main()
+    {
+        freopen("output.in", "r", stdin);
+        freopen("output.out", "w", stdout);
+        int a;
+        cin >> a;
+        if (a == 1)
+            cout << 1 << endl;
+        else if (a == 2)
+            cout << "2    " << endl << "    " << endl << endl;
+        else if (a == 3)
+            cout << "2" << endl;
+        else if (a == 4)
+            return 1;
+        else if (a == 5)
+            while (1);
+        else if (a == 6)
+            throw("ERR");
+        return 0;
+    })";
 
     JudgeStatus.IOFileName = "output";
     JUDGE::TESTPOINT Temp;
-    Temp.StanderdOutput = "Hello World";
     Temp.TimeLimit = 1 * CLOCKS_PER_SEC;
+    Temp.StanderdInput = Temp.StanderdOutput = "1";
     JudgeStatus.TestPoints.push_back(Temp);
+    Temp.StanderdInput = Temp.StanderdOutput = "2";
+    JudgeStatus.TestPoints.push_back(Temp);
+    Temp.StanderdInput = Temp.StanderdOutput = "3";
+    JudgeStatus.TestPoints.push_back(Temp);
+    Temp.StanderdInput = Temp.StanderdOutput = "4";
+    JudgeStatus.TestPoints.push_back(Temp);
+    Temp.StanderdInput = Temp.StanderdOutput = "5";
+    JudgeStatus.TestPoints.push_back(Temp);
+    Temp.StanderdInput = Temp.StanderdOutput = "6";
     JudgeStatus.TestPoints.push_back(Temp);
     JudgeStatus.Init();
     JudgeStatus.Compile();
     JudgeStatus.Judge();
-    // JudgeStatus.Clean();
+    JudgeStatus.Clean();
     for (unsigned int i = 0; i < JudgeStatus.TestPoints.size(); i++)
         cout << JudgeStatus.TestPoints[i].Status << " " << JudgeStatus.TestPoints[i].MemoryUsed << "MB " << JudgeStatus.TestPoints[i].TimeUsed * 1.0 / CLOCKS_PER_SEC << "s " << JudgeStatus.TestPoints[i].ErrorMessage << endl;
     return 0;

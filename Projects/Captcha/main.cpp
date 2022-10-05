@@ -19,7 +19,7 @@ struct PICTURE
         unsigned char r, g, b;
         bool IsShow;
     };
-    PIXEL Data[100][100];
+    PIXEL Data[100][200];
     int Width, Height;
 } Picture;
 void ReadJpegFile(string FileName)
@@ -104,16 +104,16 @@ int main()
                 }
     for (int i = 0; i < Picture.Height; i++)
         for (int j = 0; j < Picture.Width; j++)
-            if (abs(Picture.Data[i][j].r - MaxRed) < 30 ||
-                abs(Picture.Data[i][j].g - MaxGreen) < 30 ||
-                abs(Picture.Data[i][j].b - MaxBlue) < 30)
+            if (abs(Picture.Data[i][j].r - MaxRed) < 50 ||
+                abs(Picture.Data[i][j].g - MaxGreen) < 50 ||
+                abs(Picture.Data[i][j].b - MaxBlue) < 50)
                 Picture.Data[i][j].IsShow = false;
     for (int i = 0; i < Picture.Height; i++)
     {
         for (int j = 0; j < Picture.Width; j++)
         {
             memset(vst, 0, sizeof(vst));
-            if (dfs(i, j) <= 100)
+            if (dfs(i, j) <= 500)
             {
                 memset(vst, 0, sizeof(vst));
                 dfs(i, j, true);
@@ -124,12 +124,16 @@ int main()
     {
         for (int j = 0; j < Picture.Width; j++)
         {
+            // if (Picture.Data[i][j].IsShow)
+            //     cout << "<font style=\"color: rgb(" << (int)Picture.Data[i][j].r << "," << (int)Picture.Data[i][j].g << "," << (int)Picture.Data[i][j].b << ")\">哦</font>";
+            // else
+            //     cout << "<font style=\"color: rgba(0,0,0,0)\">哦</font>";
             if (Picture.Data[i][j].IsShow)
-                cout << "<font style=\"color: rgb(" << (int)Picture.Data[i][j].r << "," << (int)Picture.Data[i][j].g << "," << (int)Picture.Data[i][j].b << ")\">哦</font>";
+                cout << "哦";
             else
-                cout << "<font style=\"color: rgba(0,0,0,0)\">哦</font>";
+                cout << "  ";
         }
-        cout << "<br>";
+        cout << endl;
     }
     return 0;
 }

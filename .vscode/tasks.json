@@ -14,6 +14,7 @@
                 "-lcurl",
                 "-lstdc++",
                 "-lpthread",
+                "-lz",
                 "-lm",
                 // "-O2",
                 "-Wall",

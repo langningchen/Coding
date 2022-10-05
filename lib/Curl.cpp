@@ -5,7 +5,7 @@
 using namespace std;
 using namespace configor;
 string CurrentDir;
-const string UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:103.0) Gecko/20100101 Firefox/103.0";
+string UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:103.0) Gecko/20100101 Firefox/103.0";
 int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyFileName = "Body.tmp", bool IsPost = false, string PostData = "", curl_slist *HeaderList = NULL, int *HTTPResponseCode = NULL, string PostContentType = "application/json")
 {
     FILE *HeaderFilePointer = fopen((CurrentDir + HeaderFileName).c_str(), "w");
@@ -100,4 +100,11 @@ string Base64Encode(string Input)
     else if (Input.size() % 3 == 2)
         Output.replace(Output.size() - 1, 1, "=");
     return Output;
+}
+string StringReplaceAll(string Data, string Before, string After)
+{
+    size_t Index = 0;
+    while ((Index = Data.find(Before)) != string::npos)
+        Data.replace(Index, Before.size(), After);
+    return Data;
 }

@@ -1,0 +1,1 @@
+while echo 1 == 1; ./generator; time ./income; diff income.out income-OK.out; end;
