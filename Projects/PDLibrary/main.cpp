@@ -7,11 +7,11 @@ int main()
     readlink("/proc/self/exe", Buffer, BufferSize);
     CurrentDir = Buffer;
     delete Buffer;
-    CurrentDir.erase(CurrentDir.find_last_of("/"), CurrentDir.npos);
+    CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
     UA = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36 NetType/WIFI MicroMessenger/7.0.20.1781(0x6700143B) WindowsWechat(0x6307062c)";
     // GetDataToFile("https://wx1.pdlib.com/pudonglib-weixin/activity/list/load1?pageSize=10&currentPage=1&categoryid=33", "Header.tmp", "Body.tmp", true);
     // json ListData = json::parse(GetDataFromFileToString());
-    int ActiveID = 3109;
+    int ActiveID = 3110;
     GetDataToFile("https://wx1.pdlib.com/pudonglib-weixin/activity/detail?id=" + to_string(ActiveID) + "&src=list");
     string Data = GetDataFromFileToString();
     Data = StringReplaceAll(Data, "\t", "");
@@ -32,7 +32,9 @@ int main()
     }
     while (1)
     {
-        cout << "状态：";
+        time_t TempTime = time(NULL);
+        tm Now = localtime(&TempTime);
+        cout << Now.tm_hour << ":" << Now.tm_min << ":" << Now.tm_sec << " 状态：";
         if (Data.find("<button type=\"button\" class=\"air_button\" onclick=\"signup(" + to_string(ActiveID) + ")\">报名</button>") != string::npos)
         {
             cout << "可以报名" << endl
@@ -58,14 +60,14 @@ int main()
                                   "&hidAge=" +
                                   "&activityType=2" +
                                   "&selectedSeatIds=" +
-                                  "&name=" + Base64Encode(Name) +
+                                  "&name=" + URLEncode(Base64Encode(URLEncode(Name))) +
                                   "&cardType=0" +
-                                  "&cardCode=" + Base64Encode(cardCode) +
-                                  "&phone=" + Base64Encode(phone) +
+                                  "&cardCode=" + URLEncode(Base64Encode(cardCode)) +
+                                  "&phone=" + URLEncode(Base64Encode(phone)) +
                                   "&smscode=0000" +
                                   "&canvasStr=0000" +
                                   "&num=0",
-                              NULL, &HTTPResponseCode);
+                              NULL, &HTTPResponseCode, "application/x-www-form-urlencoded");
                 if (HTTPResponseCode == 303)
                     cout << "报名成功！" << endl;
                 else
@@ -83,7 +85,7 @@ int main()
             if (Input == 'Y' || Input == 'y')
             {
                 int HTTPResponseCode = 0;
-                GetDataToFile("https://wx1.pdlib.com/pudonglib-weixin/activity/signup/cancel", "Header.tmp", "Body.tmp", true, "activityId=" + to_string(ActiveID), NULL, &HTTPResponseCode);
+                GetDataToFile("https://wx1.pdlib.com/pudonglib-weixin/activity/signup/cancel", "Header.tmp", "Body.tmp", true, "activityId=" + to_string(ActiveID), NULL, &HTTPResponseCode, "application/x-www-form-urlencoded");
                 if (json::parse(GetDataFromFileToString())["success"].as_bool())
                     cout << "取消报名成功！" << endl;
                 else
@@ -93,14 +95,19 @@ int main()
         }
         else if (Data.find("<button type=\"button\" class=\"air_button\">已报满</button>") != string::npos)
         {
-            cout << "已报满" << endl;
+            cout << "已报满";
+        }
+        else if (Data.find("<button type=\"button\" class=\"air_button\">不在报名时间内</button>") != string::npos)
+        {
+            cout << "不在报名时间内";
         }
         else
         {
-            cout << "未知" << endl;
+            cout << "未知";
         }
-        cout << "  \r" << endl;
-        sleep(1000000);
+        cout << "          \r";
+        fflush(stdout);
+        sleep(1000);
         GetDataToFile("https://wx1.pdlib.com/pudonglib-weixin/activity/detail?id=" + to_string(ActiveID) + "&src=list");
         string Data = GetDataFromFileToString();
     }

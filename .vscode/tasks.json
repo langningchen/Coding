@@ -14,14 +14,14 @@
                 "-lcurl",
                 "-lstdc++",
                 "-lpthread",
-                "-lz",
+                // "-lz",
                 "-lm",
-                // "-O2",
+                "-O2",
                 "-Wall",
                 "-Wcast-align",
                 "-Wsign-compare",
                 "-Wunreachable-code",
-                "-Winline",
+                // "-Winline",
                 "-Wdisabled-optimization"
             ],
             "options": {
