@@ -104,7 +104,7 @@
     },
     "C_Cpp.errorSquiggles": "Disabled",
     "terminal.integrated.defaultProfile.linux": "fish",
-    "winopacity.opacity": 256,
+    "winopacity.opacity": 150,
     "cSpell.words": [
         "onclick",
         "texttt"
