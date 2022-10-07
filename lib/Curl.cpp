@@ -6,8 +6,8 @@
 using namespace std;
 using namespace configor;
 string CurrentDir;
-string UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:103.0) Gecko/20100101 Firefox/103.0";
-int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyFileName = "Body.tmp", bool IsPost = false, string PostData = "", curl_slist *HeaderList = NULL, int *HTTPResponseCode = NULL, string PostContentType = "application/json")
+string UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) Gecko/20100101 Firefox/104.0";
+int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyFileName = "Body.tmp", bool IsPost = false, string PostData = "", curl_slist *HeaderList = NULL, int *HTTPResponseCode = NULL, string PostContentType = "application/json", string Cookie = "")
 {
     FILE *HeaderFilePointer = fopen((CurrentDir + HeaderFileName).c_str(), "w");
     FILE *BodyFilePointer = fopen((CurrentDir + BodyFileName).c_str(), "w");
@@ -25,6 +25,8 @@ int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyF
     curl_easy_setopt(Curl, CURLOPT_SSL_VERIFYSTATUS, false);
     curl_easy_setopt(Curl, CURLOPT_HEADERDATA, HeaderFilePointer);
     curl_easy_setopt(Curl, CURLOPT_WRITEDATA, BodyFilePointer);
+    if (Cookie != "")
+        curl_easy_setopt(Curl, CURLOPT_COOKIELIST, Cookie.c_str());
     curl_easy_setopt(Curl, CURLOPT_COOKIEFILE, (CurrentDir + "Cookies.tmp").c_str());
     curl_easy_setopt(Curl, CURLOPT_COOKIEJAR, (CurrentDir + "Cookies.tmp").c_str());
     curl_easy_setopt(Curl, CURLOPT_URL, URL.c_str());

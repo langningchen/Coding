@@ -104,12 +104,19 @@
     },
     "C_Cpp.errorSquiggles": "Disabled",
     "terminal.integrated.defaultProfile.linux": "fish",
-    "winopacity.opacity": 150,
+    "winopacity.opacity": 255,
     "cSpell.words": [
+        "Decryptor",
+        "Encryptor",
         "Etiger",
+        "getline",
         "Langning",
+        "lodepng",
+        "longlife",
         "Luogu",
+        "negbin",
         "onclick",
-        "texttt"
+        "texttt",
+        "ximalaya"
     ]
 }
