@@ -2,10 +2,11 @@
 #include <string>
 #include <sstream>
 #include <bitset>
+#include <string.h>
 #include <math.h>
 using namespace std;
 long long pad[75] = {0};
-int lenth_pad = 0;
+int length_pad = 0;
 
 bitset<32> Kt[4] = {0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6};
 bitset<32> Ht[5] = {0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0};
@@ -29,6 +30,7 @@ bitset<32> Ft(int t, bitset<32> B, bitset<32> C, bitset<32> D)
     {
         return (B ^ C ^ D);
     }
+    return 0;
 }
 
 //字符串的拓展函数
@@ -60,7 +62,7 @@ void SHA_PAD(string x)
     {
         pad[i + 7 - a] = 0;
     }
-    lenth_pad = i + 7;
+    length_pad = i + 7;
 }
 
 //循环左移函数
@@ -131,6 +133,17 @@ void DO(bitset<512> M)
 }
 string SHA1(string Input)
 {
+    memset(pad, 0, sizeof(pad));
+    length_pad = 0;
+    Kt[0] = 0x5A827999;
+    Kt[1] = 0x6ED9EBA1;
+    Kt[2] = 0x8F1BBCDC;
+    Kt[3] = 0xCA62C1D6;
+    Ht[0] = 0x67452301;
+    Ht[1] = 0xEFCDAB89;
+    Ht[2] = 0x98BADCFE;
+    Ht[3] = 0x10325476;
+    Ht[4] = 0xC3D2E1F0;
     SHA_PAD(Input);
     size_t l = 0;
     //循环体
@@ -146,8 +159,8 @@ string SHA1(string Input)
         l += 64;
         if (i == Input.length())
         {
-            if (lenth_pad <= 63)
-                for (int n = 0; n <= lenth_pad; n++)
+            if (length_pad <= 63)
+                for (int n = 0; n <= length_pad; n++)
                 {
                     bitset<8> mark = pad[n];
                     Sx += mark.to_string();
@@ -164,7 +177,7 @@ string SHA1(string Input)
                 bitset<512> Mx(Sx);
                 DO(Mx);
                 string last_Sx;
-                for (; n <= lenth_pad; n++)
+                for (; n <= length_pad; n++)
                 {
                     bitset<8> mark = pad[n];
                     last_Sx += mark.to_string();
