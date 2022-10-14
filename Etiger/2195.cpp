@@ -19,8 +19,8 @@ void Mul(ll d[N][N], ll a[N][N], ll b[N][N])
 }
 int main()
 {
-    // freopen("magic.in", "r", stdin);
-    // freopen("magic.out", "w", stdout);
+    freopen("magic.in", "r", stdin);
+    freopen("magic.out", "w", stdout);
     cin >> n >> m >> k;
     memset(dis, 0x3F, sizeof(dis));
     for (ll i = 1; i <= m; i++)
