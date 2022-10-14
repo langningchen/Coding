@@ -107,6 +107,7 @@
     "winopacity.opacity": 255,
     "cSpell.words": [
         "Decryptor",
+        "documentformat",
         "Encryptor",
         "Etiger",
         "getline",
@@ -116,7 +117,10 @@
         "Luogu",
         "negbin",
         "onclick",
+        "scanline",
+        "scanlines",
         "texttt",
+        "wjson",
         "ximalaya"
     ]
 }

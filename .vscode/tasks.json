@@ -16,7 +16,7 @@
                 "-lpthread",
                 "-lcryptopp",
                 "-L/usr/local/lib",
-                // "-lz",
+                "-lz",
                 "-lm",
                 "-O2",
                 "-Wall",
