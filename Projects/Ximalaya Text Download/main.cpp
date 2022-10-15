@@ -376,8 +376,7 @@ int main()
         }
     OutputFileStream << "\\par}" << endl;
     OutputFileStream.close();
-    cout << string("/mnt/c/Program\\ Files/Microsoft\\ Office/root/Office16/WINWORD.EXE " + WindowsFilePath + RTFTitle + ".rtf") << endl;
-    system(string("/mnt/c/Program\\ Files/Microsoft\\ Office/root/Office16/WINWORD.EXE " + WindowsFilePath + RTFTitle + ".rtf").c_str());
+    system(string("/mnt/c/Program\\ Files/Microsoft\\ Office/root/Office16/WINWORD.EXE \"" + WindowsFilePath + RTFTitle + ".rtf\"").c_str());
     Clean();
     return 0;
 }

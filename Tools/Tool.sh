@@ -1,13 +1,13 @@
 #!/bin/fish
-LuoguPattern=".*Luogu.*"
-LuoguUsername="langningc2009"
-LuoguPassword="1!2@3#qQwWeE"
-EtigerPattern=".*Etiger.*"
-EtigerUsername="18117121393"
-EtigerPassword="LangNing0117"
-UVaPattern=".*UVa.*"
-UVaUsername="langningc2009"
-UVaPassword="1!2@3#qQwWeE"
+set LuoguPattern ".*Luogu.*"
+set LuoguUsername "langningc2009"
+set LuoguPassword "1!2@3#qQwWeE"
+set EtigerPattern ".*Etiger.*"
+set EtigerUsername "18117121393"
+set EtigerPassword "LangNing0117"
+set UVaPattern ".*UVa.*"
+set UVaUsername "langningc2009"
+set UVaPassword "1!2@3#qQwWeE"
 if [[ $1 =~ $EtigerPattern ]]
 then
     /workspaces/Coding/Tools/Tool Etiger $EtigerUsername $EtigerPassword $2 ${1:0-8:4}
