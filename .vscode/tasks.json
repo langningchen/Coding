@@ -14,7 +14,6 @@
                 "-lcurl",
                 "-lstdc++",
                 "-lpthread",
-                "-lcryptopp",
                 "-L/usr/local/lib",
                 "-lz",
                 "-lm",
