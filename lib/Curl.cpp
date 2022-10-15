@@ -27,8 +27,8 @@ int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyF
     curl_easy_setopt(Curl, CURLOPT_WRITEDATA, BodyFilePointer);
     if (Cookie != "")
         curl_easy_setopt(Curl, CURLOPT_COOKIELIST, Cookie.c_str());
-    curl_easy_setopt(Curl, CURLOPT_COOKIEFILE, (CurrentDir + "Cookies.tmp").c_str());
-    curl_easy_setopt(Curl, CURLOPT_COOKIEJAR, (CurrentDir + "Cookies.tmp").c_str());
+    curl_easy_setopt(Curl, CURLOPT_COOKIEFILE, "/workspaces/Coding/Keys/Cookies.tmp");
+    curl_easy_setopt(Curl, CURLOPT_COOKIEJAR, "/workspaces/Coding/Keys/Cookies.tmp");
     curl_easy_setopt(Curl, CURLOPT_URL, URL.c_str());
     if (IsPost)
     {

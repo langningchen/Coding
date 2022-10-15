@@ -17,10 +17,10 @@ int main()
     string EntryId = HTMLData.substr(EntryIdStartPos, EntryIdEndPos - EntryIdStartPos);
     GetDataToFile(string("https://docs.microsoft.com/api/video/public/v1/entries/" + EntryId));
     json JSONData = json::parse(GetDataFromFileToString());
-    GetDataToFile(string(JSONData["publicVideo"]["highQualityVideoUrl"].as_string()), "Header.tmp", string(JSONData["title"] + ".mp4"));
+    GetDataToFile(string(JSONData["publicVideo"]["highQualityVideoUrl"].as_string()), "Header.tmp", string(JSONData["title"].as_string() + ".mp4"));
     for (json::iterator jit = JSONData["publicVideo"]["captions"].begin(); jit != JSONData["publicVideo"]["captions"].end(); jit++)
-        if (jit.value["language"].as_string() == "en-us")
-            GetDataToFile(jit.value()["url"], string(JSONData["title"] + ".vtt"));
+        if (jit.value()["language"].as_string() == "en-us")
+            GetDataToFile(jit.value()["url"], string(JSONData["title"].as_string() + ".vtt"));
     Clean();
     return 0;
 }

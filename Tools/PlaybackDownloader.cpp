@@ -185,7 +185,7 @@ int main()
     CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
     string CourseID;
     cin >> CourseID;
-    Login("langningc2009", "1!2@3#qQwWeE");
+    Login(GetDataFromFileToString("../Keys/LuoguUsername.tmp"), GetDataFromFileToString("../Keys/LuoguPassword.tmp"));
     DownloadVideo(CourseID);
     Clean();
     return 0;

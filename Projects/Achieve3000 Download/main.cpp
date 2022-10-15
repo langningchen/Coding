@@ -1,15 +1,6 @@
 #include "../../lib/Curl.cpp"
 #include <regex>
 #include <unistd.h>
-string StringReplaceAll(string Data, string Before, string After)
-{
-    size_t FoundedPos;
-    while ((FoundedPos = Data.find(Before)) != Data.npos)
-    {
-        Data.replace(FoundedPos, Before.size(), After);
-    }
-    return Data;
-}
 string NormalizeString(string Data)
 {
     Data = regex_replace(Data, regex("(<[/]?[^>]*>|\n|\t)"), "");
@@ -56,6 +47,7 @@ int main()
     if (Index >= Counter)
     {
         cout << "Input invalid" << endl;
+        Clean();
         return 0;
     }
 
@@ -352,5 +344,6 @@ int main()
     cin >> DeleteOrNot;
     if (DeleteOrNot == 'y' || DeleteOrNot == 'Y')
         system(string(string("rm -f /mnt/c/Users/Son/Desktop/") + FileName + ".html").c_str());
+    Clean();
     return 0;
 }

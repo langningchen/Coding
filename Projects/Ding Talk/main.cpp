@@ -20,5 +20,6 @@ int main()
             break;
         }
     }
+    Clean();
     return 0;
 }

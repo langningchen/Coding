@@ -73,6 +73,7 @@ int main()
                 else
                     cout << "报名失败！" << endl;
             }
+            Clean();
             return 0;
         }
         else if (Data.find("<button type=\"button\" class=\"air_button\" onclick=\"cancelSign(" + to_string(ActiveID) + ")\">取消报名</button>") != string::npos)
@@ -91,6 +92,7 @@ int main()
                 else
                     cout << "取消报名失败！" << endl;
             }
+            Clean();
             return 0;
         }
         else if (Data.find("<button type=\"button\" class=\"air_button\">已报满</button>") != string::npos)
@@ -111,5 +113,6 @@ int main()
         GetDataToFile("https://wx1.pdlib.com/pudonglib-weixin/activity/detail?id=" + to_string(ActiveID) + "&src=list");
         string Data = GetDataFromFileToString();
     }
+    Clean();
     return 0;
 }

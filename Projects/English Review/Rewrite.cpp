@@ -1,6 +1,10 @@
-#include "../../lib/Curl.cpp"
+#include <iostream>
+#include <fstream>
 #include <termio.h>
 #include <unistd.h>
+#include "../../lib/configor/json.hpp"
+using namespace std;
+using namespace configor;
 int main()
 {
     srand(time(NULL));
