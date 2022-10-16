@@ -17,7 +17,8 @@ int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyF
         cout << "libcurl初始化失败，错误代码：" << CurlCode << "。" << endl;
         fclose(BodyFilePointer);
         fclose(HeaderFilePointer);
-        return -1;
+        getchar();
+        exit(0);
     }
     CURL *Curl = curl_easy_init();
     curl_easy_setopt(Curl, CURLOPT_SSL_VERIFYHOST, false);
@@ -42,7 +43,8 @@ int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyF
     if (CurlCode != 0)
     {
         cout << "请求发送失败，错误代码：" << CurlCode << "。" << endl;
-        return -1;
+        getchar();
+        exit(0);
     }
     if (HTTPResponseCode != NULL)
         curl_easy_getinfo(Curl, CURLINFO_RESPONSE_CODE, HTTPResponseCode);
