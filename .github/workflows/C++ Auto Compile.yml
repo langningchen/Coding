@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Install opnessl
+    - name: Install openssl
       run: |
         wget https://www.openssl.org/source/openssl-3.0.5.tar.gz
         tar -zxf openssl-3.0.5.tar.gz
