@@ -455,8 +455,8 @@ namespace Etiger
         DifficultyName[1] = make_pair("入门难度", "#979797");
         DifficultyName[2] = make_pair("普及-", "#79d479");
         DifficultyName[3] = make_pair("普及/提高-", "#4191ff");
-        DifficultyName[4] = make_pair("普及+/提高", "yellowgren");
-        DifficultyName[5] = make_pair("提高+/省选-", "plum");
+        DifficultyName[4] = make_pair("普及+/提高", "yellowgreen");
+        DifficultyName[5] = make_pair("提高+/省选-", "plu20m");
         DifficultyName[6] = make_pair("省选+/NOI", "goldenrod");
         DifficultyName[7] = make_pair("NOI+/CTSC/IOI", "orange");
         DifficultyName[8] = make_pair("传说", "red");
