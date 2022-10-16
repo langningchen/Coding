@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: update libc
+      run: sudo apt install libc6 libc-bin
     - name: ClockIn for Etiger
       run: ./Tools/Tool Etiger 18117121393 LangNing0117 ClockIn
     - name: ClockIn for Luogu
