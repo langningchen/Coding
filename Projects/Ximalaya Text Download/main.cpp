@@ -174,8 +174,8 @@ int main()
             {
                 cout << "多次失败，请重新运行程序重试" << endl;
                 Clean();
-                char tmp;
-                cin >> tmp;
+                getchar();
+                getchar();
                 return 0;
             }
             string CaptchaSessionId = "xm_" + ToString36(time(NULL)) + "000000";
@@ -268,8 +268,8 @@ int main()
         {
             cout << "验证码发送失败 " << AuthJSONResponse["msg"].as_string() << endl;
             Clean();
-            char tmp;
-            cin >> tmp;
+            getchar();
+            getchar();
             return 0;
         }
         bool CheckCodeSuccess = false;
@@ -304,8 +304,8 @@ int main()
         {
             cout << "登录失败 " << LoginJSONResponse["msg"].as_string() << endl;
             Clean();
-            char tmp;
-            cin >> tmp;
+            getchar();
+            getchar();
             return 0;
         }
     }
@@ -316,8 +316,8 @@ int main()
     {
         cout << "获取合集信息失败 " << AlbumJSONResponse["msg"] << endl;
         Clean();
-        char tmp;
-        cin >> tmp;
+        getchar();
+        getchar();
         return 0;
     }
     int TrackIndex;
@@ -327,8 +327,8 @@ int main()
     {
         cout << "请输入大于1小于" << AlbumJSONResponse["data"]["trackTotalCount"] << "的数字" << endl;
         Clean();
-        char tmp;
-        cin >> tmp;
+        getchar();
+        getchar();
         return 0;
     }
     GetDataToFile("https://www.ximalaya.com/revision/album/v1/getTracksList?albumId=" + AlbumID + "&pageNum=" + to_string(TrackIndex / AlbumJSONResponse["data"]["pageSize"].as_integer() + 1), "Header.tmp", "Body.tmp", false, "", GetBasicHeaderList("www", "https://www.ximalaya.com/album/" + AlbumID, true));
@@ -337,8 +337,8 @@ int main()
     {
         cout << "获取合集信息失败 " << AlbumJSONResponse["msg"].as_string() << endl;
         Clean();
-        char tmp;
-        cin >> tmp;
+        getchar();
+        getchar();
         return 0;
     }
     string TrackID = AlbumJSONResponse["data"]["tracks"][TrackIndex % AlbumJSONResponse["data"]["pageSize"].as_integer() - 1]["trackId"].as_string();
@@ -348,8 +348,8 @@ int main()
     {
         cout << "获取音频信息失败 " << TrackJSONResponse["msg"] << endl;
         Clean();
-        char tmp;
-        cin >> tmp;
+        getchar();
+        getchar();
         return 0;
     }
     string Content = TrackJSONResponse["data"]["trackInfo"]["richIntro"].as_string();
@@ -378,8 +378,8 @@ int main()
     {
         cout << "打开输出文件失败" << endl;
         Clean();
-        char tmp;
-        cin >> tmp;
+        getchar();
+        getchar();
         return 0;
     }
     OutputFileStream << "{\\rtf1\\paperw12240\\paperh15840\\margl720\\margr720\\margt720\\margb720" << endl

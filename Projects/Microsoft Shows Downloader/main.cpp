@@ -1,7 +1,7 @@
 #include "../../lib/Curl.cpp"
 int main()
 {
-    GetDataToFile("https://docs.microsoft.com/zh-cn/shows/vs-code-livestreams/release-party-v1-70");
+    GetDataToFile("https://learn.microsoft.com/zh-cn/shows/vs-code-livestreams/release-party-v1-70");
     string HTMLData = GetDataFromFileToString();
     string EntryIdStartString = "<meta name=\"entryId\" content=\"";
     unsigned int EntryIdStartPos = HTMLData.find(EntryIdStartString);
@@ -15,12 +15,15 @@ int main()
     while (EntryIdEndPos < HTMLData.npos && HTMLData[EntryIdEndPos] != '"')
         EntryIdEndPos++;
     string EntryId = HTMLData.substr(EntryIdStartPos, EntryIdEndPos - EntryIdStartPos);
-    GetDataToFile(string("https://docs.microsoft.com/api/video/public/v1/entries/" + EntryId));
+    cout << EntryId << endl;
+    GetDataToFile(string("https://learn.microsoft.com/api/video/public/v1/entries/" + EntryId));
     json JSONData = json::parse(GetDataFromFileToString());
-    GetDataToFile(string(JSONData["publicVideo"]["highQualityVideoUrl"].as_string()), "Header.tmp", string(JSONData["title"].as_string() + ".mp4"));
+    cout << "开始下载  ";
+    GetDataToFile(StringReplaceAll(string("https://learn.microsoft.com" + JSONData["publicVideo"]["audioUrl"].as_string()), " ", "%20"), "Header.tmp", string(JSONData["title"].as_string() + ".mp4"));
+    cout << "结束" << endl;
     for (json::iterator jit = JSONData["publicVideo"]["captions"].begin(); jit != JSONData["publicVideo"]["captions"].end(); jit++)
         if (jit.value()["language"].as_string() == "en-us")
-            GetDataToFile(jit.value()["url"], string(JSONData["title"].as_string() + ".vtt"));
+            GetDataToFile("https://learn.microsoft.com" + jit.value()["url"].as_string(), "Header.tmp", string(JSONData["title"].as_string() + ".vtt"));
     Clean();
     return 0;
 }
