@@ -15,7 +15,6 @@
                 "-lstdc++",
                 "-lpthread",
                 "-L/usr/local/lib",
-                "-lz",
                 "-lm",
                 "-O2",
                 "-Wall",
