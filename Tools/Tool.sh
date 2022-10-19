@@ -1,9 +1,9 @@
-EtigerUsername=$(cat /workspaces/Coding/Keys/EtigerUsername.tmp);
-EtigerPassword=$(cat /workspaces/Coding/Keys/EtigerPassword.tmp);
-LuoguUsername=$(cat /workspaces/Coding/Keys/LuoguUsername.tmp);
-LuoguPassword=$(cat /workspaces/Coding/Keys/LuoguPassword.tmp);
-UVaUsername=$(cat /workspaces/Coding/Keys/UVaUsername.tmp);
-UVaPassword=$(cat /workspaces/Coding/Keys/UVaPassword.tmp);
+EtigerUsername=$(cat /workspaces/Coding/Keys/EtigerUsername);
+EtigerPassword=$(cat /workspaces/Coding/Keys/EtigerPassword);
+LuoguUsername=$(cat /workspaces/Coding/Keys/LuoguUsername);
+LuoguPassword=$(cat /workspaces/Coding/Keys/LuoguPassword);
+UVaUsername=$(cat /workspaces/Coding/Keys/UVaUsername);
+UVaPassword=$(cat /workspaces/Coding/Keys/UVaPassword);
 if echo "$1" | grep "Etiger" > /dev/null
 then
     /workspaces/Coding/Tools/Tool Etiger $EtigerUsername $EtigerPassword $2 ${1:0-8:4}
