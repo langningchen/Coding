@@ -11,16 +11,16 @@ jobs:
     - uses: actions/checkout@v3
     - name: Install openssl
       run: |
-        wget https://www.openssl.org/source/openssl-3.0.5.tar.gz
-        tar -zxf openssl-3.0.5.tar.gz
-        rm openssl-3.0.5.tar.gz
-        cd ./openssl-3.0.5/
+        wget https://www.openssl.org/source/old/1.1.1/openssl-1.1.1q.tar.gz
+        tar -zxf openssl-1.1.1q.tar.gz
+        rm openssl-1.1.1q.tar.gz
+        cd ./openssl-1.1.1q/
         ./config
         make
         make test
         sudo make install
         cd ../
-        rm -f -r ./openssl-3.0.5/
+        rm -f -r ./openssl-1.1.1q/
         sudo cp /usr/local/lib64/libssl.* /usr/lib
     - name: Install libcurl
       run: |
