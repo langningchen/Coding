@@ -21,6 +21,7 @@ jobs:
         sudo make install
         cd ../
         rm -f -r ./openssl-3.0.5/
+        sudo cp /usr/local/lib64/libssl.* /usr/lib
     - name: Install libcurl
       run: |
         wget https://curl.se/download/curl-7.85.0.tar.gz
@@ -33,6 +34,7 @@ jobs:
         sudo make install
         cd ../
         rm -f -r ./curl-7.85.0/
+        sudo cp /usr/local/lib/libcurl.* /usr/lib
     - name: Install libjpeg
       run: |
         wget http://www.ijg.org/files/jpegsrc.v9e.tar.gz
@@ -45,6 +47,10 @@ jobs:
         sudo make install
         cd ../
         rm -f -r ./jpeg-9e/
+        sudo cp /usr/local/lib/libjpeg.* /usr/lib
+    - name: Install libcrypto
+      run: |
+        sudo cp /usr/local/lib64/libcrypto.* /usr/lib
     - name: Send mail when starts
       uses: dawidd6/action-send-mail@master
       with:

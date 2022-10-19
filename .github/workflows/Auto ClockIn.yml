@@ -11,6 +11,6 @@ jobs:
     - name: update libc
       run: sudo apt install libc6 libc-bin
     - name: ClockIn for Etiger
-      run: ./Tools/Tool Etiger 18117121393 LangNing0117 ClockIn
+      run: ./Tools/Tool Etiger ${{ secrets.ETIGER_USERNAME }} ${{ secrets.ETIGER_PASSWORD }}  ClockIn
     - name: ClockIn for Luogu
-      run: ./Tools/Tool Luogu langningc2009 1\!2@3#qQwWeE ClockIn
+      run: ./Tools/Tool Luogu ${{ secrets.LUOGU_USERNAME }} ${{ secrets.LUOGU_PASSWORD }} ClockIn
