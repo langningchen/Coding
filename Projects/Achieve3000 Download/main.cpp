@@ -60,8 +60,8 @@ int main()
     HeaderList = curl_slist_append(HeaderList, string("X-ACHIEVE-SESSION: " + Data["session"]["resumeSessionId"].as_string()).c_str());
     HeaderList = curl_slist_append(HeaderList, string("X-ACHIEVE-SESSION-KEY: " + Data["session"]["resumeSessionToken"].as_string()).c_str());
     HeaderList = curl_slist_append(HeaderList, string("X-XSRF-TOKEN: " + Data["session"]["csrfToken"].as_string()).c_str());
-    GetDataToFile(string("https://portal.achieve3000.com/api/v1/lessonactivity/fetch?lesson_id=" + LessonID + "&category_id=" + CategoryID + "&step_id=14&progress=true").c_str(), "Header.tmp", "Body.tmp", false, "", HeaderList);
-    json QuestionData = json::parse(GetDataFromFileToString());
+    // GetDataToFile(string("https://portal.achieve3000.com/api/v1/lessonactivity/fetch?lesson_id=" + LessonID + "&category_id=" + CategoryID + "&step_id=14&progress=true").c_str(), "Header.tmp", "Body.tmp", false, "", HeaderList);
+    // json QuestionData = json::parse(GetDataFromFileToString());
     string FileName = regex_replace(NormalizeString(Data["lessonInfo"]["lessonName"].as_string()), regex("(\\?|\"|/|\\|\\|<|>|:|\\*)"), "");
     ofstream OutputFileStream("/mnt/c/Users/Son/Desktop/" + FileName + ".html");
     OutputFileStream << "<html>" << endl
@@ -220,7 +220,7 @@ int main()
                      << "  <br />" << endl
                      << "  <br />" << endl;
     Counter = 0;
-    for (json::iterator jit = QuestionData["activities"][0]["questions"].begin(); jit != QuestionData["activities"][0]["questions"].end(); jit++)
+    for (json::iterator jit = Data["activities"]["14"][0]["questions"].begin(); jit != Data["activities"]["14"][0]["questions"].end(); jit++)
     {
         OutputFileStream << "  <span class=\"Big3\">" << endl
                          << "    Question " << Counter + 1 << endl
@@ -242,7 +242,7 @@ int main()
         OutputFileStream << Question << endl
                          << "  <br />" << endl;
         short Counter2 = 0;
-        for (json::iterator jit2 = QuestionData["activities"][0]["questions"][Counter]["collection"][0]["items"].begin(); jit2 != QuestionData["activities"][0]["questions"][Counter]["collection"][0]["items"].end(); jit2++)
+        for (json::iterator jit2 = Data["activities"]["14"][0]["questions"][Counter]["collection"][0]["items"].begin(); jit2 != Data["activities"]["14"][0]["questions"][Counter]["collection"][0]["items"].end(); jit2++)
         {
             string Item = jit2.value()["label"].as_string();
             Item = regex_replace(Item, regex("<div.*class=\"screenreader-only\">[^<]*</div>"), "");
