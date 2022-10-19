@@ -37,7 +37,7 @@ void Compile(int ID)
         ThreadCompileList[ID].erase(ThreadCompileList[ID].begin());
         string DestFileName = SourceFileName.substr(0, SourceFileName.size() - 4);
         string CompileOutput = "";
-        FILE *PipePointer = popen(string("gcc \"" + SourceFileName + "\" -o \"" + DestFileName + "\" -O2 -lstdc++ -lm -lpthread 2>&1").c_str(), "r");
+        FILE *PipePointer = popen(string("gcc -g \"" + SourceFileName + "\" -o \"" + DestFileName + "\" -ljpeg -lcurl -lstdc++ -lm -lpthread -L/usr/local/lib -O2 2>&1").c_str(), "r");
         while (!feof(PipePointer))
             CompileOutput.push_back(fgetc(PipePointer));
         while (CompileOutput.size() != 0 && (CompileOutput[CompileOutput.size() - 1] == '\r' || CompileOutput[CompileOutput.size() - 1] == '\n' || CompileOutput[CompileOutput.size() - 1] == 0 || CompileOutput[CompileOutput.size() - 1] == -1))
