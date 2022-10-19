@@ -21,7 +21,7 @@ jobs:
         sudo make install
         cd ../
         rm -f -r ./openssl-1.1.1q/
-        sudo cp /usr/local/lib64/libssl.* /usr/lib
+        sudo cp /usr/local/lib/libssl.* /usr/lib
     - name: Install libcurl
       run: |
         wget https://curl.se/download/curl-7.85.0.tar.gz
@@ -50,7 +50,7 @@ jobs:
         sudo cp /usr/local/lib/libjpeg.* /usr/lib
     - name: Install libcrypto
       run: |
-        sudo cp /usr/local/lib64/libcrypto.* /usr/lib
+        sudo cp /usr/local/lib/libcrypto.* /usr/lib
     - name: Send mail when starts
       uses: dawidd6/action-send-mail@master
       with:
