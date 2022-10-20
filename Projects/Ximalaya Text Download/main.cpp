@@ -1,8 +1,8 @@
 #include "../../lib/Curl.cpp"
 #include "../../lib/lodepng.cpp"
 #include "../../lib/jpeg/jpeglib.h"
-#include "SHA1.cpp"
-#include "MD5.cpp"
+#include "../../lib/SHA1.cpp"
+#include "../../lib/MD5.cpp"
 #include <locale>
 const string WEBSign = "WEB-V1-PRODUCT-E7768904917C4154A925FBE1A3848BC3E84E2C7770744E56AFBC9600C267891F";
 const string LinuxFilePath = "/mnt/e/Ming/易经/易经(一)文字（单集到107）/";
