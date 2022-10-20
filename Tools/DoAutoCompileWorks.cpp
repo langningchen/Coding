@@ -118,14 +118,14 @@ int main()
         else
         {
             string AfterPoint = sit->substr(PointPos + 1, sit->npos);
-            if (AfterPoint == "cpp" && *sit != "./DoAutoCompileWorks.cpp" && *sit != "./Tool.cpp" && *sit != "./OI.cpp")
+            if (AfterPoint == "cpp" && sit->find("OI") == sit->npos)
             {
                 CompileList.insert(*sit);
                 ThreadCompileList[Counter % ThreadCount].insert(*sit);
                 Counter++;
             }
-            else if ((sit->find("Etiger") != sit->npos && sit->find("总结") == sit->npos && (AfterPoint == "in" || AfterPoint == "out" || AfterPoint == "md")) ||
-                     (sit->find("Luogu") != sit->npos && (AfterPoint == "md")))
+            else if ((sit->find("Etiger") != sit->npos && (AfterPoint == "in" || AfterPoint == "out" || AfterPoint == "md")) ||
+                     (sit->find("Luogu") != sit->npos && AfterPoint == "md"))
                 remove(sit->c_str());
         }
     }
