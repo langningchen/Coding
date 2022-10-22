@@ -35,10 +35,10 @@ private:
 
 public:
     string MySystem(string Command, FILE *InputRedirect = NULL, FILE *OutputRedirect = NULL, int *Status = NULL);
-    struct TESTPOINT
+    struct TEST_POINT
     {
-        string StanderdInput = "";
-        string StanderdOutput = "";
+        string StanderInput = "";
+        string StanderOutput = "";
         string UserOutput = "";
         int MemoryLimit = 128 * 1024;
         int MemoryUsed = 0;
@@ -50,15 +50,15 @@ public:
     int Score = 0;
     string SourceCode = "";
     string IOFileName = "";
-    string JudegeFolderName = "";
-    string StanderdInputFileName = "Answer.in";
+    string JudgeFolderName = "";
+    string StanderInputFileName = "Answer.in";
     string UserOutputFileName = "Answer.out";
     string SourceCodeName = "main.cpp";
     string ExecutableFileName = "main";
     bool Compiled = false;
     bool RunFinished = false;
     bool Accepted = false;
-    vector<TESTPOINT> TestPoints;
+    vector<TEST_POINT> TestPoints;
     void Init();
     void Compile();
     void Judge();
@@ -146,10 +146,10 @@ void JUDGE::Init()
     struct timezone TimeZone;
     if (gettimeofday(&TimeVal, &TimeZone) != 0)
         SE;
-    JudegeFolderName = to_string(TimeVal.tv_sec * 1000000 + TimeVal.tv_usec);
-    if (mkdir(JudegeFolderName.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0)
+    JudgeFolderName = to_string(TimeVal.tv_sec * 1000000 + TimeVal.tv_usec);
+    if (mkdir(JudgeFolderName.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0)
         SE;
-    if (chdir(JudegeFolderName.c_str()) != 0)
+    if (chdir(JudgeFolderName.c_str()) != 0)
         SE;
     FILE *SourceOutputFilePointer = fopen(SourceCodeName.c_str(), "w");
     if (SourceOutputFilePointer == NULL)
@@ -160,7 +160,7 @@ void JUDGE::Init()
         SE;
     if (IOFileName != "")
     {
-        StanderdInputFileName = IOFileName + ".in";
+        StanderInputFileName = IOFileName + ".in";
         UserOutputFileName = IOFileName + ".out";
     }
     Status = 1;
@@ -222,14 +222,14 @@ void *JUDGE::_Judge(void *This)
 }
 void JUDGE::__Judge()
 {
-    FILE *InputFileRedirect = fopen(string(CurrentDir + JudegeFolderName + "/" + StanderdInputFileName).c_str(), "r");
+    FILE *InputFileRedirect = fopen(string(CurrentDir + JudgeFolderName + "/" + StanderInputFileName).c_str(), "r");
     if (InputFileRedirect == NULL)
         return;
-    FILE *OutputFileRedirect = fopen(string(CurrentDir + JudegeFolderName + "/" + UserOutputFileName).c_str(), "w");
+    FILE *OutputFileRedirect = fopen(string(CurrentDir + JudgeFolderName + "/" + UserOutputFileName).c_str(), "w");
     if (OutputFileRedirect == NULL)
         return;
     int ExitNumber = 0;
-    MySystem(CurrentDir + JudegeFolderName + "/" + ExecutableFileName, InputFileRedirect, OutputFileRedirect, &ExitNumber);
+    MySystem(CurrentDir + JudgeFolderName + "/" + ExecutableFileName, InputFileRedirect, OutputFileRedirect, &ExitNumber);
     fclose(InputFileRedirect);
     fclose(OutputFileRedirect);
     TempExitNumberTransfer = ExitNumber;
@@ -242,12 +242,12 @@ void JUDGE::Judge()
         return;
     for (unsigned int i = 0; i < TestPoints.size(); i++)
     {
-        FILE *StanderdInputFilePointer = fopen(StanderdInputFileName.c_str(), "w");
-        if (StanderdInputFilePointer == NULL)
+        FILE *StanderInputFilePointer = fopen(StanderInputFileName.c_str(), "w");
+        if (StanderInputFilePointer == NULL)
             SE;
-        if (fprintf(StanderdInputFilePointer, "%s", TestPoints[i].StanderdInput.c_str()) < 0)
+        if (fprintf(StanderInputFilePointer, "%s", TestPoints[i].StanderInput.c_str()) < 0)
             SE;
-        if (fclose(StanderdInputFilePointer) != 0)
+        if (fclose(StanderInputFilePointer) != 0)
             SE;
         // rlimit Limit;
         // Limit.rlim_cur = TestPoints[i].MemoryLimit;
@@ -297,7 +297,7 @@ void JUDGE::Judge()
             TestPoints[i].Status = "RTE";
             TestPoints[i].ErrorMessage = string("Run time error, Program has stopped with code " + to_string(WSTOPSIG(TempExitNumberTransfer)) + ". ");
         }
-        else if (TestPoints[i].UserOutput == TestPoints[i].StanderdOutput)
+        else if (TestPoints[i].UserOutput == TestPoints[i].StanderOutput)
         {
             TestPoints[i].Status = "AC";
             TestPoints[i].ErrorMessage = "Accepted. ";
@@ -322,7 +322,7 @@ void JUDGE::Clean()
     closedir(DirPointer);
     if (chdir("..") != 0)
         SE;
-    if (rmdir(JudegeFolderName.c_str()) != 0)
+    if (rmdir(JudgeFolderName.c_str()) != 0)
         SE;
     Status = 4;
 }
@@ -361,19 +361,19 @@ int main()
     })";
 
     JudgeStatus.IOFileName = "output";
-    JUDGE::TESTPOINT Temp;
+    JUDGE::TEST_POINT Temp;
     Temp.TimeLimit = 1 * CLOCKS_PER_SEC;
-    Temp.StanderdInput = Temp.StanderdOutput = "1";
+    Temp.StanderInput = Temp.StanderOutput = "1";
     JudgeStatus.TestPoints.push_back(Temp);
-    Temp.StanderdInput = Temp.StanderdOutput = "2";
+    Temp.StanderInput = Temp.StanderOutput = "2";
     JudgeStatus.TestPoints.push_back(Temp);
-    Temp.StanderdInput = Temp.StanderdOutput = "3";
+    Temp.StanderInput = Temp.StanderOutput = "3";
     JudgeStatus.TestPoints.push_back(Temp);
-    Temp.StanderdInput = Temp.StanderdOutput = "4";
+    Temp.StanderInput = Temp.StanderOutput = "4";
     JudgeStatus.TestPoints.push_back(Temp);
-    Temp.StanderdInput = Temp.StanderdOutput = "5";
+    Temp.StanderInput = Temp.StanderOutput = "5";
     JudgeStatus.TestPoints.push_back(Temp);
-    Temp.StanderdInput = Temp.StanderdOutput = "6";
+    Temp.StanderInput = Temp.StanderOutput = "6";
     JudgeStatus.TestPoints.push_back(Temp);
     JudgeStatus.Init();
     JudgeStatus.Compile();
