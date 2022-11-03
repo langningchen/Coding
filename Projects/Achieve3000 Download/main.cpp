@@ -1,4 +1,4 @@
-#include "../../lib/Curl.cpp"
+#include "../../Lib/Curl.cpp"
 #include <regex>
 #include <unistd.h>
 string NormalizeString(string Data)

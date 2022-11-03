@@ -1,4 +1,4 @@
-#include "../../lib/Curl.cpp"
+#include "../../Lib/Curl.cpp"
 #include <unistd.h>
 int main()
 {

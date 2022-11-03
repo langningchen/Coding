@@ -2,7 +2,7 @@
 #include <fstream>
 #include <termio.h>
 #include <unistd.h>
-#include "../../lib/configor/json.hpp"
+#include "../../Lib/configor/json.hpp"
 using namespace std;
 using namespace configor;
 int main()

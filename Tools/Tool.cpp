@@ -1,10 +1,10 @@
 #include <iostream>
 #include <unistd.h>
-#include "../lib/tidy/tidy.h"
-#include "../lib/tidy/tidybuffio.h"
+#include "../Lib/tidy/tidy.h"
+#include "../Lib/tidy/tidybuffio.h"
 #include <stdio.h>
 #include <errno.h>
-#include "../lib/Curl.cpp"
+#include "../Lib/Curl.cpp"
 void Usage()
 {
     cout << R"(
