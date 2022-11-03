@@ -629,6 +629,33 @@ namespace Etiger
         }
     }
 }
+namespace CodeForces
+{
+    void Login(string Username, string Password)
+    {
+        int *HTTPResponseCode = new int;
+        GetDataToFile("https://codeforces.com/enter?back=%2F", "Header.tmp", "Body.tmp", false, "", NULL, HTTPResponseCode);
+        if (*HTTPResponseCode == 302)
+            return;
+        *HTTPResponseCode = 0;
+        GetDataToFile("https://codeforces.com/enter", "Header.tmp", "Body.tmp", true, "csrf_token=" + GetStringBetween(GetDataFromFileToString(), "<input type='hidden' name='csrf_token' value='", "'/>") + "&action=enter&ftaa=snu04km665qfsnd5v3&bfaa=7777fa0ed068d56802debff1d9b39380&handleOrEmail=" + URLEncode(Username) + "&password=" + URLEncode(Password) + "&_tta=239", NULL, HTTPResponseCode, "application/x-www-form-urlencoded");
+        if (*HTTPResponseCode != 302)
+            cout << "登录失败" << endl;
+        delete HTTPResponseCode;
+    }
+    void GetQuestionDetail(string QuestionID)
+    {
+        GetDataToFile("https://codeforces.com/problemset/problem/" + QuestionID.substr(0, QuestionID.size() - 1) + "/" + QuestionID.substr(QuestionID.size() - 1));
+        string QuestionHTMLData = GetDataFromFileToString();
+        string Title = GetStringBetween(QuestionHTMLData, "<div class=\"title\">", "</div>");
+        string TimeLimit = GetStringBetween(QuestionHTMLData, "<div class=\"time-limit\"><div class=\"property-title\">time limit per test</div>", " second</div>");
+        if (TimeLimit == "")
+            TimeLimit = GetStringBetween(QuestionHTMLData, "<div class=\"time-limit\"><div class=\"property-title\">time limit per test</div>", " seconds</div>");
+        string MemoryLimit = GetStringBetween(QuestionHTMLData, "<div class=\"memory-limit\"><div class=\"property-title\">memory limit per test</div>", " megabytes</div>");
+        string InputFile = GetQuestionDetail(QuestionHTMLData, "<div class=\"input-file\"><div class=\"property-title\">input</div>", "</div>");
+        string OutputFile = GetQuestionDetail(QuestionHTMLData, "<div class=\"output-file\"><div class=\"property-title\">output</div>", "</div>");
+    }
+}
 namespace UVa
 {
     void Init()
@@ -650,14 +677,16 @@ namespace UVa
 }
 int main(int argc, char **argv)
 {
-    if (argc != 5 && argc != 6)
-        Usage();
     int BufferSize = 1024;
     char *Buffer = new char[BufferSize];
     readlink("/proc/self/exe", Buffer, BufferSize);
     CurrentDir = Buffer;
     delete Buffer;
     CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
+    CodeForces::Login("langningc2009@163.com", "1!2@3#qQwWeE");
+    return 0;
+    if (argc != 5 && argc != 6)
+        Usage();
     if (string(argv[1]) == "Luogu")
     {
         using namespace Luogu;

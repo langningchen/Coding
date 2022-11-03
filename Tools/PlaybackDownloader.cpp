@@ -122,6 +122,7 @@ void DownloadVideo(string CourseID)
             cout << "无法打开输出文件" << endl;
             return;
         }
+        queue<string> TSURLList;
         for (unsigned int i = 0; i < M3U8Detail.size(); i++)
         {
             unsigned int LineStartPos = i;
@@ -129,31 +130,39 @@ void DownloadVideo(string CourseID)
             while (LineEndPos < M3U8Detail.size() && M3U8Detail[LineEndPos] != '\n')
                 LineEndPos++;
             string Line = M3U8Detail.substr(LineStartPos, LineEndPos - LineStartPos);
-            if (Line.size() > 0 && Line[0] != '#')
-            {
-                GetDataToFile(string("https://class.luogu.com.cn/api/live/signReplay?url=https://video.class.luogu.com.cn/yugu-live/" + CourseID + "/" + Line));
-                json TSURLInfo = json::parse(GetDataFromFileToString());
-                cout << TSURLInfo["url"].as_string() << endl;
-                if (GetDataToFile(TSURLInfo["url"].as_string(), "Header.tmp", string(CourseInfo["currentData"]["lesson"]["name"].as_string() + "/" + to_string(TSCounter) + ".ts")) == -1)
-                {
-                    i--;
-                    continue;
-                }
-                OutputFileStream << TSCounter << ".ts" << endl;
-                TSCounter++;
-            }
+            if (Line.size() > 0)
+                if (Line[0] != '#')
+                    TSCounter++;
+                else if (Line.find("https://class.luogu.com.cn/") != Line.npos && Line.find("https://class.luogu.com.cn/api/") == Line.npos)
+                    Line.replace(Line.find("https://class.luogu.com.cn/"), 27, "https://class.luogu.com.cn/api/");
+            TSURLList.push(Line);
+            i = LineEndPos;
+        }
+        int CurrentTSIndex = 0;
+        while (!TSURLList.empty())
+        {
+            if (TSURLList.front()[0] == '#')
+                OutputFileStream << TSURLList.front() << endl;
             else
             {
-                if (Line.find("https://class.luogu.com.cn/") != Line.npos)
-                    Line.replace(Line.find("https://class.luogu.com.cn/"), 27, "https://class.luogu.com.cn/api/");
-                OutputFileStream << Line << endl;
+                GetDataToFile(string("https://class.luogu.com.cn/api/live/signReplay?url=https://video.class.luogu.com.cn/yugu-live/" + CourseID + "/" + TSURLList.front()));
+                json TSURLInfo = json::parse(GetDataFromFileToString());
+                cout << "\r" << CurrentTSIndex << "/" << TSCounter;
+                fflush(stdout);
+                if (GetDataToFile(TSURLInfo["url"].as_string(), "Header.tmp", string(CourseInfo["currentData"]["lesson"]["name"].as_string() + "/" + to_string(CurrentTSIndex) + ".ts")) == -1)
+                {
+                    CurrentTSIndex--;
+                    continue;
+                }
+                OutputFileStream << CurrentTSIndex << ".ts" << endl;
+                CurrentTSIndex++;
             }
-            i = LineEndPos;
+            TSURLList.pop();
         }
         OutputFileStream.close();
         if (system(string("ffmpeg -protocol_whitelist concat,file,http,https,tcp,tls,crypto -i \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.m3u8\" \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\"").c_str()) == 0)
         {
-            if (system(string("cp \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\" \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "_" + to_string(M3U8Counter) + ".mp4\"").c_str()) == 0)
+            if (system(string("cp \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\" \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + (CourseInfo["currentData"]["replayFiles"].size() == 1 ? "" : "_" + to_string(M3U8Counter)) + ".mp4\"").c_str()) == 0)
             {
                 if (system(string("rm -r \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "\"").c_str()) != 0)
                 {
@@ -185,7 +194,7 @@ int main()
     CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
     string CourseID;
     cin >> CourseID;
-    Login(GetDataFromFileToString("../Keys/LuoguUsername.tmp"), GetDataFromFileToString("../Keys/LuoguPassword.tmp"));
+    Login(GetDataFromFileToString("../Keys/LuoguUsername"), GetDataFromFileToString("../Keys/LuoguPassword"));
     DownloadVideo(CourseID);
     Clean();
     return 0;
