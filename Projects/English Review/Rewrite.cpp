@@ -8,10 +8,10 @@ using namespace configor;
 int main()
 {
     srand(time(NULL));
-    ifstream InputFileStream("/mnt/d/01_8A/03_英语/默写.json");
+    ifstream InputFileStream("/workspaces/Coding/Projects/English Review/Data.json");
     json Data = json::parse(InputFileStream);
     InputFileStream.close();
-    string QuestionSet = "2022/9/20";
+    string QuestionSet = "My daily life";
     while (1)
     {
         system("clear");
@@ -21,11 +21,11 @@ int main()
         {
             for (size_t j = 0; j < Data[QuestionSet][Index]["English"][i].as_string().size(); j++)
             {
-                // if ((Data[QuestionSet][Index]["English"][i].as_string()[j] >= 'a' && Data[QuestionSet][Index]["English"][i].as_string()[j] <= 'z') ||
-                //     (Data[QuestionSet][Index]["English"][i].as_string()[j] >= 'A' && Data[QuestionSet][Index]["English"][i].as_string()[j] <= 'Z'))
-                // cout << "_";
-                // else
-                //     cout << Data[QuestionSet][Index]["English"][i].as_string()[j];
+                if ((Data[QuestionSet][Index]["English"][i].as_string()[j] >= 'a' && Data[QuestionSet][Index]["English"][i].as_string()[j] <= 'z') ||
+                    (Data[QuestionSet][Index]["English"][i].as_string()[j] >= 'A' && Data[QuestionSet][Index]["English"][i].as_string()[j] <= 'Z'))
+                    cout << "_";
+                else
+                    cout << Data[QuestionSet][Index]["English"][i].as_string()[j];
             }
             cout << endl;
             string Input;

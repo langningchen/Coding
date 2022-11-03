@@ -65,16 +65,6 @@ int main()
         c2 = c1;
         n2 = n1;
     }
-    int l = 0, r = 1e9, ans = -1;
-    while (l <= r)
-    {
-        int mid = (l + r) >> 1;
-        int cost = F(mid);
-        if (cost != -1)
-            ans = cost, r = mid - 1;
-        else
-            l = mid + 1;
-    }
-    cout << ans << endl;
+    cout << F(m) << endl;
     return 0;
 }

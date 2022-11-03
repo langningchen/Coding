@@ -3,6 +3,7 @@ int ListenSocket = -1;
 sockaddr_in ServerAddress;
 vector<queue<Message>> SendMessageList;
 vector<queue<Message>> ReceiveMessageList;
+vector<thread> ThreadList;
 void Do(int ID, int Socket, sockaddr_in ClientAddress)
 {
     cout << "Connected: " << inet_ntoa(ClientAddress.sin_addr) << endl;
@@ -54,7 +55,7 @@ int main()
     memset(&ServerAddress, 0, sizeof(ServerAddress));
     ServerAddress.sin_family = AF_INET;
     ServerAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    ServerAddress.sin_port = SERVER_PORT;
+    ServerAddress.sin_port = htons(SERVER_PORT);
     ASSERT(bind(ListenSocket, (sockaddr *)&ServerAddress, sizeof(ServerAddress)) == 0);
     ASSERT(listen(ListenSocket, 5) == 0);
     while (1)
@@ -63,10 +64,10 @@ int main()
         int ClientAddressSize = sizeof(sockaddr_in);
         int CurrentSocket = accept(ListenSocket, (sockaddr *)&ClientAddress, (socklen_t *)&ClientAddressSize);
         ASSERT(CurrentSocket != -1);
-        Message HelloMessage;
-        HelloMessage.DataType = HelloMessage.HELLO;
-        SendMessageList[SendMessageList.size()].push(HelloMessage);
-        thread(Do, SendMessageList.size() - 1, CurrentSocket, ClientAddress);
+        // Message HelloMessage;
+        // HelloMessage.DataType = HelloMessage.HELLO;
+        // SendMessageList[SendMessageList.size()].push(HelloMessage);
+        ThreadList.push_back(thread(Do, SendMessageList.size() - 1, CurrentSocket, ClientAddress));
     }
     close(ListenSocket);
     return 0;

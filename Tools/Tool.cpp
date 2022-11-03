@@ -1,5 +1,9 @@
 #include <iostream>
 #include <unistd.h>
+#include "../lib/tidy/tidy.h"
+#include "../lib/tidy/tidybuffio.h"
+#include <stdio.h>
+#include <errno.h>
 #include "../lib/Curl.cpp"
 void Usage()
 {
@@ -75,6 +79,24 @@ void Usage()
 )" << endl;
     Clean();
     exit(0);
+}
+string Tidy(string Input)
+{
+    TidyBuffer OutputBuffer = {0};
+    TidyBuffer ErrorBuffer = {0};
+    TidyDoc TidyDocument = tidyCreate();
+    tidyOptSetBool(TidyDocument, TidyXmlOut, yes);
+    tidySetErrorBuffer(TidyDocument, &ErrorBuffer);
+    tidyParseString(TidyDocument, Input.c_str());
+    tidyCleanAndRepair(TidyDocument);
+    tidyRunDiagnostics(TidyDocument);
+    tidyOptSetBool(TidyDocument, TidyForceOutput, yes);
+    tidySaveBuffer(TidyDocument, &OutputBuffer);
+    string Output = string(reinterpret_cast<const char *>(OutputBuffer.bp));
+    tidyBufFree(&OutputBuffer);
+    tidyBufFree(&ErrorBuffer);
+    tidyRelease(TidyDocument);
+    return Output;
 }
 namespace Luogu
 {
@@ -634,7 +656,7 @@ namespace CodeForces
     void Login(string Username, string Password)
     {
         int *HTTPResponseCode = new int;
-        GetDataToFile("https://codeforces.com/enter?back=%2F", "Header.tmp", "Body.tmp", false, "", NULL, HTTPResponseCode);
+        GetDataToFile("https://codeforces.com/enter", "Header.tmp", "Body.tmp", false, "", NULL, HTTPResponseCode);
         if (*HTTPResponseCode == 302)
             return;
         *HTTPResponseCode = 0;
@@ -652,8 +674,20 @@ namespace CodeForces
         if (TimeLimit == "")
             TimeLimit = GetStringBetween(QuestionHTMLData, "<div class=\"time-limit\"><div class=\"property-title\">time limit per test</div>", " seconds</div>");
         string MemoryLimit = GetStringBetween(QuestionHTMLData, "<div class=\"memory-limit\"><div class=\"property-title\">memory limit per test</div>", " megabytes</div>");
-        string InputFile = GetQuestionDetail(QuestionHTMLData, "<div class=\"input-file\"><div class=\"property-title\">input</div>", "</div>");
-        string OutputFile = GetQuestionDetail(QuestionHTMLData, "<div class=\"output-file\"><div class=\"property-title\">output</div>", "</div>");
+        string InputFile = GetStringBetween(QuestionHTMLData, "<div class=\"input-file\"><div class=\"property-title\">input</div>", "</div>");
+        string OutputFile = GetStringBetween(QuestionHTMLData, "<div class=\"output-file\"><div class=\"property-title\">output</div>", "</div>");
+        cout << Title << endl
+             << TimeLimit << "s/" << MemoryLimit << "MB" << endl
+             << "Input file: " << InputFile << endl
+             << "Output file: " << OutputFile << endl;
+        // QuestionHTMLData = StringReplaceAll(QuestionHTMLData, "≤", "\\leq");
+        // QuestionHTMLData = StringReplaceAll(QuestionHTMLData, "≥", "\\geq");
+        // QuestionHTMLData = StringReplaceAll(QuestionHTMLData, "<sup class=\"upper-index\">", "^{");
+        // QuestionHTMLData = StringReplaceAll(QuestionHTMLData, "</sup>", "}");
+        // QuestionHTMLData = StringReplaceAll(QuestionHTMLData, "<span class=\"tex-span\">", "$");
+        // QuestionHTMLData = StringReplaceAll(QuestionHTMLData, "</span>", "$");
+        // http://www.grinninglizard.com/tinyxml/index.html
+        cout << Tidy(QuestionHTMLData) << endl;
     }
 }
 namespace UVa
@@ -683,7 +717,8 @@ int main(int argc, char **argv)
     CurrentDir = Buffer;
     delete Buffer;
     CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
-    CodeForces::Login("langningc2009@163.com", "1!2@3#qQwWeE");
+    CodeForces::Login("langningc2009@163.com", "Cx_,\"j>$AC\\NqQ+c");
+    CodeForces::GetQuestionDetail("1A");
     return 0;
     if (argc != 5 && argc != 6)
         Usage();

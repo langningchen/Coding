@@ -8,10 +8,20 @@ int main()
     CurrentDir = Buffer;
     delete Buffer;
     CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
+    string Name, cardCode, phone;
+    // cout << "姓名：";
+    // cin >> Name;
+    // cout << "身份证号：";
+    // cin >> cardCode;
+    // cout << "手机号：";
+    // cin >> phone;
+    Name = "陈朗宁";
+    cardCode = "370112200901170017";
+    phone = "18018511393";
     UA = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36 NetType/WIFI MicroMessenger/7.0.20.1781(0x6700143B) WindowsWechat(0x6307062c)";
     // GetDataToFile("https://wx1.pdlib.com/pudonglib-weixin/activity/list/load1?pageSize=10&currentPage=1&categoryid=33", "Header.tmp", "Body.tmp", true);
     // json ListData = json::parse(GetDataFromFileToString());
-    int ActiveID = 3109;
+    int ActiveID = 3131;
     GetDataToFile("https://wx1.pdlib.com/pudonglib-weixin/activity/detail?id=" + to_string(ActiveID) + "&src=list");
     string Data = GetDataFromFileToString();
     Data = StringReplaceAll(Data, "\t", "");
@@ -41,19 +51,10 @@ int main()
                  << endl
                  << "是否报名？(Y/N)" << endl;
             char Input;
-            cin >> Input;
+            // cin >> Input;
+            Input = 'Y';
             if (Input == 'Y' || Input == 'y')
             {
-                string Name, cardCode, phone;
-                // cout << "姓名：";
-                // cin >> Name;
-                Name = "陈朗宁";
-                // cout << "身份证号：";
-                // cin >> cardCode;
-                cardCode = "370112200901170017";
-                // cout << "手机号：";
-                // cin >> phone;
-                phone = "18018511393";
                 int HTTPResponseCode = 0;
                 GetDataToFile("https://wx1.pdlib.com/pudonglib-weixin/activity/signup/submit", "Header.tmp", "Body.tmp", true,
                               "activityId=" + to_string(ActiveID) +
@@ -109,9 +110,16 @@ int main()
         }
         cout << "          \r";
         fflush(stdout);
-        sleep(3);
+        sleep(5);
         GetDataToFile("https://wx1.pdlib.com/pudonglib-weixin/activity/detail?id=" + to_string(ActiveID) + "&src=list");
-        string Data = GetDataFromFileToString();
+        Data = GetDataFromFileToString();
+        Data = StringReplaceAll(Data, "\t", "");
+        Data = StringReplaceAll(Data, "\r", "");
+        Data = StringReplaceAll(Data, "\n", "");
+        Data = StringReplaceAll(Data, "< ", "<");
+        Data = StringReplaceAll(Data, " <", "<");
+        Data = StringReplaceAll(Data, "> ", ">");
+        Data = StringReplaceAll(Data, " >", ">");
     }
     Clean();
     return 0;

@@ -16,6 +16,7 @@
                 "-lpthread",
                 "-L/usr/local/lib",
                 "-lm",
+                "-ltidy",
                 "-O2",
                 "-Wall",
                 "-Wcast-align",
