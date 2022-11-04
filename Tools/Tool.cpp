@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "../Lib/Curl.cpp"
+#include "../Lib/TinyXML.cpp"
 void Usage()
 {
     cout << R"(
@@ -85,7 +86,7 @@ string Tidy(string Input)
     TidyBuffer OutputBuffer = {0};
     TidyBuffer ErrorBuffer = {0};
     TidyDoc TidyDocument = tidyCreate();
-    tidyOptSetBool(TidyDocument, TidyXmlOut, yes);
+    tidyOptSetBool(TidyDocument, TidyXhtmlOut, yes);
     tidySetErrorBuffer(TidyDocument, &ErrorBuffer);
     tidyParseString(TidyDocument, Input.c_str());
     tidyCleanAndRepair(TidyDocument);
@@ -687,7 +688,13 @@ namespace CodeForces
         // QuestionHTMLData = StringReplaceAll(QuestionHTMLData, "<span class=\"tex-span\">", "$");
         // QuestionHTMLData = StringReplaceAll(QuestionHTMLData, "</span>", "$");
         // http://www.grinninglizard.com/tinyxml/index.html
-        cout << Tidy(QuestionHTMLData) << endl;
+        TiXmlDocument lActionXML;
+        lActionXML.Parse(Tidy(QuestionHTMLData));
+        if (lActionXML.Error())
+        {
+            cout << "输入参数不是标准的xml格式";
+            return;
+        }
     }
 }
 namespace UVa

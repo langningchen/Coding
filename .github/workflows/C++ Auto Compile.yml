@@ -51,17 +51,27 @@ jobs:
     - name: Install libcrypto
       run: |
         sudo cp /usr/local/lib/libcrypto.* /usr/lib
-    - name: Install libtidy
+    # - name: Install libtidy
+    #   run: |
+    #     wget https://codeload.github.com/htacg/tidy-html5/zip/refs/heads/next
+    #     unzip tidy-html5-next.zip
+    #     cd ./tidy-html5-next/build/cmake
+    #     cmake ../.. -DCMAKE_BUILD_TYPE=Release
+    #     make
+    #     sudo make install
+    #     cd ../../
+    #     rm -f -r ./tidy-html5-next/
+    #     sudo cp /usr/local/lib/libtidy.* /usr/lib
+    - name: Install libtinyxml
       run: |
-        wget https://codeload.github.com/htacg/tidy-html5/zip/refs/heads/next
-        unzip tidy-html5-next.zip
-        cd ./tidy-html5-next/build/cmake
-        cmake ../.. -DCMAKE_BUILD_TYPE=Release
+        wget https://nchc.dl.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip
+        unzip tinyxml_2_6_2.zip
+        rm tinyxml_2_6_2.zip
+        cd ./tinyxml/
+        make clean
         make
-        sudo make install
-        cd ../../
-        rm -f -r ./tidy-html5-next/
-        sudo cp /usr/local/lib/libtidy.* /usr/lib
+        ./xmltest
+
     - name: Send mail when starts
       uses: dawidd6/action-send-mail@master
       with:
