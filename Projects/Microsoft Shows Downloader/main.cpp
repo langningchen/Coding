@@ -3,18 +3,7 @@ int main()
 {
     GetDataToFile("https://learn.microsoft.com/zh-cn/shows/vs-code-livestreams/release-party-v1-70");
     string HTMLData = GetDataFromFileToString();
-    string EntryIdStartString = "<meta name=\"entryId\" content=\"";
-    unsigned int EntryIdStartPos = HTMLData.find(EntryIdStartString);
-    if (EntryIdStartPos == HTMLData.npos)
-    {
-        cout << "Can not find Entry ID start pos. " << endl;
-        return 0;
-    }
-    EntryIdStartPos += EntryIdStartString.size();
-    unsigned int EntryIdEndPos = EntryIdStartPos + 1;
-    while (EntryIdEndPos < HTMLData.npos && HTMLData[EntryIdEndPos] != '"')
-        EntryIdEndPos++;
-    string EntryId = HTMLData.substr(EntryIdStartPos, EntryIdEndPos - EntryIdStartPos);
+    string EntryId = GetStringBetween(HTMLData, "<meta name=\"entryId\" content=\"", "\"");
     cout << EntryId << endl;
     GetDataToFile(string("https://learn.microsoft.com/api/video/public/v1/entries/" + EntryId));
     json JSONData = json::parse(GetDataFromFileToString());

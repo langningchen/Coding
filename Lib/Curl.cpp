@@ -7,8 +7,29 @@ using namespace std;
 using namespace configor;
 string CurrentDir;
 string UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) Gecko/20100101 Firefox/104.0";
-int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyFileName = "Body.tmp", bool IsPost = false, string PostData = "", curl_slist *HeaderList = NULL, int *HTTPResponseCode = NULL, string PostContentType = "application/json", string Cookie = "")
+void GetCurrentDir()
 {
+    int BufferSize = 1024;
+    char *Buffer = new char[BufferSize];
+    if (readlink("/proc/self/exe", Buffer, BufferSize) == 0)
+        return;
+    CurrentDir = Buffer;
+    delete Buffer;
+    CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
+}
+int GetDataToFile(string URL,
+                  string HeaderFileName = "Header.tmp",
+                  string BodyFileName = "Body.tmp",
+                  bool IsPost = false,
+                  string PostData = "",
+                  curl_slist *HeaderList = NULL,
+                  int *HTTPResponseCode = NULL,
+                  string PostContentType = "application/json",
+                  string Cookie = "",
+                  CURLU *URL2 = NULL)
+{
+    if (CurrentDir == "")
+        GetCurrentDir();
     FILE *HeaderFilePointer = fopen((CurrentDir + HeaderFileName).c_str(), "w");
     FILE *BodyFilePointer = fopen((CurrentDir + BodyFileName).c_str(), "w");
     CURLcode CurlCode = curl_global_init(CURL_GLOBAL_ALL);
@@ -30,7 +51,10 @@ int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyF
         curl_easy_setopt(Curl, CURLOPT_COOKIELIST, Cookie.c_str());
     curl_easy_setopt(Curl, CURLOPT_COOKIEFILE, "/workspaces/Coding/Keys/Cookies.tmp");
     curl_easy_setopt(Curl, CURLOPT_COOKIEJAR, "/workspaces/Coding/Keys/Cookies.tmp");
-    curl_easy_setopt(Curl, CURLOPT_URL, URL.c_str());
+    if (URL == "")
+        curl_easy_setopt(Curl, CURLOPT_CURLU, URL2);
+    else
+        curl_easy_setopt(Curl, CURLOPT_URL, URL.c_str());
     if (IsPost)
     {
         HeaderList = curl_slist_append(HeaderList, string("Content-Type: " + PostContentType).c_str());
@@ -55,6 +79,8 @@ int GetDataToFile(string URL, string HeaderFileName = "Header.tmp", string BodyF
 }
 string GetDataFromFileToString(string FileName = "Body.tmp")
 {
+    if (CurrentDir == "")
+        GetCurrentDir();
     string Data = "";
     FILE *BodyFilePointer = fopen((CurrentDir + FileName).c_str(), "r");
     while (!feof(BodyFilePointer))
@@ -83,6 +109,8 @@ string EraseHTMLElement(string Data)
 }
 void Clean()
 {
+    if (CurrentDir == "")
+        GetCurrentDir();
     remove((CurrentDir + "Body.tmp").c_str());
     remove((CurrentDir + "Header.tmp").c_str());
 }
@@ -183,4 +211,20 @@ string GetStringBetween(string Data, string Start, string End)
     if (EndPos == -1)
         return "";
     return Data.substr(StartPos, EndPos - StartPos);
+}
+string Find302Location()
+{
+    if (CurrentDir == "")
+        GetCurrentDir();
+    string Header = GetDataFromFileToString("Header.tmp");
+    string RedirectURL = GetStringBetween(Header, "Location: ", "\n");
+    if (RedirectURL == "")
+        RedirectURL = GetStringBetween(Header, "location: ", "\n");
+    if (RedirectURL == "")
+    {
+        cout << "无法找到重定向位置" << endl;
+        getchar();
+        exit(0);
+    }
+    return RedirectURL.substr(0, RedirectURL.size() - 1);
 }

@@ -106,6 +106,7 @@
     "terminal.integrated.defaultProfile.linux": "fish",
     "winopacity.opacity": 255,
     "cSpell.words": [
+        "Codeforces",
         "configor",
         "Decryptor",
         "documentformat",
@@ -123,6 +124,7 @@
         "scanline",
         "scanlines",
         "texttt",
+        "TINYXML",
         "wjson",
         "ximalaya"
     ]

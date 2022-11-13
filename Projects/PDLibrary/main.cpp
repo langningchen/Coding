@@ -2,22 +2,16 @@
 #include <regex>
 int main()
 {
-    int BufferSize = 1024;
-    char *Buffer = new char[BufferSize];
-    readlink("/proc/self/exe", Buffer, BufferSize);
-    CurrentDir = Buffer;
-    delete Buffer;
-    CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
-    string Name, cardCode, phone;
+    string Name, IDCardNumber, PhoneNumber;
     // cout << "姓名：";
     // cin >> Name;
     // cout << "身份证号：";
-    // cin >> cardCode;
+    // cin >> IDCardNumber;
     // cout << "手机号：";
-    // cin >> phone;
-    Name = "陈朗宁";
-    cardCode = "370112200901170017";
-    phone = "18018511393";
+    // cin >> PhoneNumber;
+    Name = GetDataToFile("../../Keys/Name");
+    IDCardNumber = GetDataToFile("../../Keys/IDCardNumber");
+    PhoneNumber = GetDataToFile("../../Keys/PhoneNumber1");
     UA = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36 NetType/WIFI MicroMessenger/7.0.20.1781(0x6700143B) WindowsWechat(0x6307062c)";
     // GetDataToFile("https://wx1.pdlib.com/pudonglib-weixin/activity/list/load1?pageSize=10&currentPage=1&categoryid=33", "Header.tmp", "Body.tmp", true);
     // json ListData = json::parse(GetDataFromFileToString());
@@ -63,8 +57,8 @@ int main()
                                   "&selectedSeatIds=" +
                                   "&name=" + URLEncode(Base64Encode(URLEncode(Name))) +
                                   "&cardType=0" +
-                                  "&cardCode=" + URLEncode(Base64Encode(cardCode)) +
-                                  "&phone=" + URLEncode(Base64Encode(phone)) +
+                                  "&cardCode=" + URLEncode(Base64Encode(IDCardNumber)) +
+                                  "&phone=" + URLEncode(Base64Encode(PhoneNumber)) +
                                   "&smscode=0000" +
                                   "&canvasStr=0000" +
                                   "&num=0",

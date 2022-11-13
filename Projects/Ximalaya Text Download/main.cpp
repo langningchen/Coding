@@ -156,12 +156,6 @@ string EncodeWString(wstring Input)
 }
 int main()
 {
-    int BufferSize = 1024;
-    char *Buffer = new char[BufferSize];
-    readlink("/proc/self/exe", Buffer, BufferSize);
-    CurrentDir = Buffer;
-    delete Buffer;
-    CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
     GetDataToFile("https://www.ximalaya.com/revision/my/getCurrentUserInfo", "Header.tmp", "Body.tmp", false, "", GetBasicHeaderList("www", "https://www.ximalaya.com/my/subscribed", true));
     if (json::parse(GetDataFromFileToString())["ret"].as_integer() != 200)
     {
@@ -255,7 +249,7 @@ int main()
             remove(string(CurrentDir + "Captcha-Background.jpg").c_str());
             remove(string(CurrentDir + "Captcha-Foreground.png").c_str());
         }
-        string PhoneNumber = "18001921393";
+        string PhoneNumber = GetDataFromFileToString("../../Lib/PhoneNumber2");
         string Nonce = GetNonce();
         json AuthJSON;
         AuthJSON["mobile"] = PhoneNumber;
@@ -382,7 +376,7 @@ int main()
         getchar();
         return 0;
     }
-    OutputFileStream << "{\\rtf1\\paperw12240\\paperh15840\\margl720\\margr720\\margt720\\margb720" << endl
+    OutputFileStream << "{\\rtf1\\paperw12240\\paperh15840\\margl720\\margr720\\margt360\\margb360" << endl
                      << EncodeWString(StringToWString(TrackJSONResponse["data"]["trackInfo"]["title"].as_string())) << endl;
     for (size_t Pos = 0; Pos < Content.size(); Pos++)
         if (Content[Pos] == '\n')
@@ -392,7 +386,11 @@ int main()
         }
     OutputFileStream << "\\par}" << endl;
     OutputFileStream.close();
-    system(string("/mnt/c/Program\\ Files/Microsoft\\ Office/root/Office16/WINWORD.EXE \"" + WindowsFilePath + RTFTitle + ".rtf\"").c_str());
+    if (system(string("/mnt/c/Program\\ Files/Microsoft\\ Office/root/Office16/WINWORD.EXE \"" + WindowsFilePath + RTFTitle + ".rtf\"").c_str()))
+    {
+        cout << "执行失败" << endl;
+        return 0;
+    }
     Clean();
     return 0;
 }

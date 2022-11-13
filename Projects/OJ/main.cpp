@@ -328,13 +328,6 @@ void JUDGE::Clean()
 }
 int main()
 {
-    int BufferSize = 1024;
-    char *Buffer = new char[BufferSize];
-    readlink("/proc/self/exe", Buffer, BufferSize);
-    CurrentDir = Buffer;
-    delete Buffer;
-    CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
-
     JUDGE JudgeStatus;
 
     JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>

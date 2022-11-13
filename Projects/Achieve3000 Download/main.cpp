@@ -10,13 +10,6 @@ string NormalizeString(string Data)
 }
 int main()
 {
-    int BufferSize = 1024;
-    char *Buffer = new char[BufferSize];
-    readlink("/proc/self/exe", Buffer, BufferSize);
-    CurrentDir = Buffer;
-    delete Buffer;
-    CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
-
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
     GetDataToFile("https://portal.achieve3000.com/util/login.php", "Header.tmp", "Body.tmp", true, "debug=0&login_goto=&lang=1&ajax_yn=Y&flash_version=&login_name=langning.chen&wz=0&cli=0&login_url=portal.achieve3000.com%2Findex&password=special&cdn=VIDEOCDN%3A0%3BAUDIOCDN%3A0%3BIMAGECDN%3A0%3BDOCSCDN%3A0%3BIMAGEASSETSCDN%3A0%3BAPPASSETSCDN%3A0%3BJSASSETSCDN%3A0%3BCSSASSETSCDN%3A0&banner=1&redirectedFromLE=&login_page_type=&domain_id=1&walkme=&lid=&login_error_message=&login_name1=&password1=&lost_login_name=&isAjax=Y", NULL, NULL, "application/x-www-form-urlencoded; charset=UTF-8");
@@ -338,12 +331,22 @@ int main()
                      << "  </script>" << endl
                      << "</body>" << endl
                      << "</html>" << endl;
-    system(string("\"/mnt/c/Program Files/Google/Chrome/Application/chrome.exe\" --kiosk-printing --kiosk \"C:\\Users\\Son\\Desktop\\" + FileName + ".html\"").c_str());
+    if (system(string("\"/mnt/c/Program Files/Google/Chrome/Application/chrome.exe\" --kiosk-printing --kiosk \"C:\\Users\\Son\\Desktop\\" + FileName + ".html\"").c_str()))
+    {
+        cout << "执行失败" << endl;
+        Clean();
+        return 0;
+    }
     char DeleteOrNot;
     cout << "Delete to html file(y=Yes other=No)? ";
     cin >> DeleteOrNot;
     if (DeleteOrNot == 'y' || DeleteOrNot == 'Y')
-        system(string(string("rm -f /mnt/c/Users/Son/Desktop/") + FileName + ".html").c_str());
+        if (system(string(string("rm -f /mnt/c/Users/Son/Desktop/") + FileName + ".html").c_str()))
+        {
+            cout << "执行失败" << endl;
+            Clean();
+            return 0;
+        }
     Clean();
     return 0;
 }

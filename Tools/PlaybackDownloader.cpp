@@ -20,24 +20,7 @@ void Login(string Username, string Password)
     GetDataToFile("https://www.luogu.com.cn/auth/login", "Header.tmp", "Body.tmp", false, "", NULL, &HTTPResponseCode);
     if (HTTPResponseCode != 302)
     {
-        string LoginPageData = GetDataFromFileToString();
-        string TokenStartString = "<meta name=\"csrf-token\" content=\"";
-        unsigned int TokenStartPos = LoginPageData.find(TokenStartString);
-        if (TokenStartPos == LoginPageData.npos)
-        {
-            cout << "无法找到登录密钥开始位置。" << endl;
-            return;
-        }
-        TokenStartPos += TokenStartString.size();
-        unsigned int TokenEndPos = TokenStartPos + 1;
-        while (TokenEndPos < LoginPageData.size() && LoginPageData[TokenEndPos] != '"')
-            TokenEndPos++;
-        if (TokenEndPos == LoginPageData.size())
-        {
-            cout << "无法找到登录密钥结束位置。" << endl;
-            return;
-        }
-        string Token = LoginPageData.substr(TokenStartPos, TokenEndPos - TokenStartPos);
+        string Token = GetStringBetween(GetDataFromFileToString(), "<meta name=\"csrf-token\" content=\"", "\"");
         int ErrorCounter = 0;
         while (1)
         {
@@ -77,23 +60,15 @@ void Login(string Username, string Password)
     {
         GetDataToFile("https://www.luogu.com.cn/api/OAuth2/authorize?response_type=code&client_id=lgclass.luoguclass&scope=oauth2.login&redirect_uri=https%3A%2F%2Fclass.luogu.com.cn%2Flogin%2Fcheck-luogu");
         string HeaderData = GetDataFromFileToString("Header.tmp");
-        string LocationStartString = "Location: ";
-        size_t LocationStartPos = HeaderData.find(LocationStartString);
-        if (LocationStartPos == HeaderData.npos)
+        string RedirectURL = GetStringBetween(HeaderData, "Location: ", "\n");
+        if (RedirectURL == "")
+            RedirectURL = GetStringBetween(HeaderData, "location: ", "\n");
+        if (RedirectURL == "")
         {
-            LocationStartString = "location: ";
-            LocationStartPos = HeaderData.find(LocationStartString);
-            if (LocationStartPos == HeaderData.npos)
-            {
-                cout << "无法找到重定向网址起始位置" << endl;
-                return;
-            }
+            cout << "无法找到重定向网址起始位置" << endl;
+            return;
         }
-        LocationStartPos += LocationStartString.size();
-        size_t LocationEndPos = LocationStartPos + 1;
-        while (HeaderData[LocationEndPos] != '\n' && HeaderData[LocationEndPos] != '\r' && LocationEndPos < HeaderData.size())
-            LocationEndPos++;
-        GetDataToFile(HeaderData.substr(LocationStartPos, LocationEndPos - LocationStartPos));
+        GetDataToFile(RedirectURL);
     }
 }
 void DownloadVideo(string CourseID)
@@ -131,10 +106,12 @@ void DownloadVideo(string CourseID)
                 LineEndPos++;
             string Line = M3U8Detail.substr(LineStartPos, LineEndPos - LineStartPos);
             if (Line.size() > 0)
+            {
                 if (Line[0] != '#')
                     TSCounter++;
                 else if (Line.find("https://class.luogu.com.cn/") != Line.npos && Line.find("https://class.luogu.com.cn/api/") == Line.npos)
                     Line.replace(Line.find("https://class.luogu.com.cn/"), 27, "https://class.luogu.com.cn/api/");
+            }
             TSURLList.push(Line);
             i = LineEndPos;
         }
@@ -186,12 +163,7 @@ void DownloadVideo(string CourseID)
 }
 int main()
 {
-    int BufferSize = 1024;
-    char *Buffer = new char[BufferSize];
-    readlink("/proc/self/exe", Buffer, BufferSize);
-    CurrentDir = Buffer;
-    delete Buffer;
-    CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
+    cout << "请输入课程编号：";
     string CourseID;
     cin >> CourseID;
     Login(GetDataFromFileToString("../Keys/LuoguUsername"), GetDataFromFileToString("../Keys/LuoguPassword"));
