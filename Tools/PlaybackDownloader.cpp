@@ -109,7 +109,7 @@ void DownloadVideo(string CourseID)
             {
                 if (Line[0] != '#')
                     TSCounter++;
-                else if (Line.find("https://class.luogu.com.cn/") != Line.npos && Line.find("https://class.luogu.com.cn/api/") == Line.npos)
+                else if (Line.find("https://class.luogu.com.cn/") != string::npos && Line.find("https://class.luogu.com.cn/api/") == string::npos)
                     Line.replace(Line.find("https://class.luogu.com.cn/"), 27, "https://class.luogu.com.cn/api/");
             }
             TSURLList.push(Line);

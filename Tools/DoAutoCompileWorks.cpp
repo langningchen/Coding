@@ -26,7 +26,7 @@ bool IsFileExists(string FileName)
 void StringReplaceAll(string &Data, string Before, string After)
 {
     size_t FindPos = 0;
-    while ((FindPos = Data.find(Before)) != Data.npos)
+    while ((FindPos = Data.find(Before)) != string::npos)
         Data.replace(FindPos, Before.size(), After);
 }
 void Compile(int ID)
@@ -87,7 +87,7 @@ void Init()
     ExcludeFolderName.insert(".git");
     ExcludeFolderName.insert(".github");
     ExcludeFolderName.insert(".vscode");
-    ExcludeFolderName.insert("lib");
+    ExcludeFolderName.insert("Lib");
     ExcludeFolderName.insert("Tools");
 }
 void OutputSummary(string Data)
@@ -106,8 +106,8 @@ int main()
     readlink("/proc/self/exe", Buffer, BufferSize);
     string CurrentDir = Buffer;
     delete Buffer;
-    CurrentDir.erase(CurrentDir.find_last_of("/"), CurrentDir.npos);
-    CurrentDir.erase(CurrentDir.find_last_of("/"), CurrentDir.npos);
+    CurrentDir.erase(CurrentDir.find_last_of("/"), string::npos);
+    CurrentDir.erase(CurrentDir.find_last_of("/"), string::npos);
     set<string> FileList = GetFiles(CurrentDir);
     int Counter = 0;
     for (set<string>::iterator sit = FileList.begin(); sit != FileList.end(); sit++)
@@ -124,8 +124,7 @@ int main()
                 ThreadCompileList[Counter % ThreadCount].insert(*sit);
                 Counter++;
             }
-            else if ((sit->find("Etiger") != sit->npos && (AfterPoint == "in" || AfterPoint == "out" || AfterPoint == "md")) ||
-                     (sit->find("Luogu") != sit->npos && AfterPoint == "md"))
+            else if ((sit->find("Etiger") != sit->npos && (AfterPoint == "in" || AfterPoint == "out")))
                 remove(sit->c_str());
         }
     }
