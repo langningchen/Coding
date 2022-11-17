@@ -13,7 +13,7 @@ int main()
             return 0;
         }
     }
-    string RedirectURL = Find302Location();
+    string RedirectURL = FindLocation();
     GetDataToFile(RedirectURL);
     json ClassesRequest;
     ClassesRequest["start"] = 1;

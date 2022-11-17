@@ -80,12 +80,12 @@ string JUDGE::MySystem(string Command, FILE *InputRedirect, FILE *OutputRedirect
         int FileNameStartPos = Command.find(" ");
         string FileName = Command.substr(0, FileNameStartPos);
         TempArguments.push(FileName);
-        Command = Command.substr(FileNameStartPos + 1, Command.npos);
+        Command = Command.substr(FileNameStartPos + 1, string::npos);
         while (Command != "")
         {
             int ArgumentStartPos = Command.find(" ");
             TempArguments.push(Command.substr(0, ArgumentStartPos));
-            Command = Command.substr(ArgumentStartPos + 1, Command.npos);
+            Command = Command.substr(ArgumentStartPos + 1, string::npos);
         }
         char **Arguments = new char *[TempArguments.size() + 1];
         int Counter = 0;
@@ -131,7 +131,7 @@ string JUDGE::MySystem(string Command, FILE *InputRedirect, FILE *OutputRedirect
 string JUDGE::StringReplaceAll(string Input, string Before, string After)
 {
     long unsigned int FoundedPos = Input.find(Before);
-    while (FoundedPos != Input.npos)
+    while (FoundedPos != string::npos)
     {
         Input.replace(FoundedPos, Before.size(), After);
         FoundedPos = Input.find(Before);

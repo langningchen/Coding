@@ -12,7 +12,40 @@ int main()
 {
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
-    GetDataToFile("https://portal.achieve3000.com/util/login.php", "Header.tmp", "Body.tmp", true, "debug=0&login_goto=&lang=1&ajax_yn=Y&flash_version=&login_name=langning.chen&wz=0&cli=0&login_url=portal.achieve3000.com%2Findex&password=special&cdn=VIDEOCDN%3A0%3BAUDIOCDN%3A0%3BIMAGECDN%3A0%3BDOCSCDN%3A0%3BIMAGEASSETSCDN%3A0%3BAPPASSETSCDN%3A0%3BJSASSETSCDN%3A0%3BCSSASSETSCDN%3A0&banner=1&redirectedFromLE=&login_page_type=&domain_id=1&walkme=&lid=&login_error_message=&login_name1=&password1=&lost_login_name=&isAjax=Y", NULL, NULL, "application/x-www-form-urlencoded; charset=UTF-8");
+    GetDataToFile("https://portal.achieve3000.com/util/login.php",
+                  "Header.tmp",
+                  "Body.tmp",
+                  true,
+                  string("debug=0") +
+                      "&login_goto=" +
+                      "&lang=1" +
+                      "&ajax_yn=Y" +
+                      "&flash_version=" +
+                      "&login_name=" + GetDataFromFileToString("../../Keys/Achieve3000Username") +
+                      "&wz=0" +
+                      "&cli=0" +
+                      "&login_url=portal.achieve3000.com%2Findex" +
+                      "&password=" + GetDataFromFileToString("../../Keys/Achieve3000Password") +
+                      "&cdn=VIDEOCDN%3A0%3BAUDIOCDN%3A0%3BIMAGECDN%3A0%3BDOCSCDN%3A0%3BIMAGEASSETSCDN%3A0%3BAPPASSETSCDN%3A0%3BJSASSETSCDN%3A0%3BCSSASSETSCDN%3A0" +
+                      "&banner=1" +
+                      "&redirectedFromLE=" +
+                      "&login_page_type=" +
+                      "&domain_id=1" +
+                      "&walkme=" +
+                      "&lid=" +
+                      "&login_error_message=" +
+                      "&login_name1=" +
+                      "&password1=" +
+                      "&lost_login_name=" +
+                      "&isAjax=Y",
+                  NULL,
+                  NULL,
+                  "application/x-www-form-urlencoded; charset=UTF-8");
+    if (GetDataFromFileToString().find("REDIRECT") == string::npos)
+    {
+        cout << "登录失败" << endl;
+        return 0;
+    }
     GetDataToFile("https://portal.achieve3000.com/my_lessons");
     string HTMLData = GetDataFromFileToString();
     vector<pair<string, pair<string, string>>> Lessons;

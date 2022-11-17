@@ -7,6 +7,9 @@ using namespace std;
 using namespace configor;
 string CurrentDir;
 string UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) Gecko/20100101 Firefox/104.0";
+const string FORM = "application/x-www-form-urlencoded";
+const string MULTIPART_BOUNDARY = "---------------------------168017722421737302452463195061";
+const string MULTIPART = "multipart/form-data; boundary=" + MULTIPART_BOUNDARY;
 void GetCurrentDir()
 {
     int BufferSize = 1024;
@@ -15,7 +18,7 @@ void GetCurrentDir()
         return;
     CurrentDir = Buffer;
     delete Buffer;
-    CurrentDir.erase(CurrentDir.find_last_of("/") + 1, CurrentDir.npos);
+    CurrentDir.erase(CurrentDir.find_last_of("/") + 1, string::npos);
 }
 int GetDataToFile(string URL,
                   string HeaderFileName = "Header.tmp",
@@ -212,7 +215,7 @@ string GetStringBetween(string Data, string Start, string End)
         return "";
     return Data.substr(StartPos, EndPos - StartPos);
 }
-string Find302Location()
+string FindLocation()
 {
     if (CurrentDir == "")
         GetCurrentDir();
