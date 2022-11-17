@@ -17,7 +17,7 @@
                 "-L/usr/local/lib",
                 "-lm",
                 "-ltidy",
-                // "-O2",
+                "-O2",
                 "-Wall",
                 "-Wcast-align",
                 "-Wsign-compare",
@@ -39,9 +39,8 @@
         },
         {
             "label": "Run command for OJ",
-            "command": "bash",
+            "command": "/workspaces/Coding/Tools/Tool",
             "args": [
-                "/workspaces/Coding/Tools/Tool.sh",
                 "${file}",
                 "${input:CommandToRun}"
             ],
