@@ -1,20 +1,21 @@
 #include <bits/stdc++.h>
 using namespace std;
-const int INF = 0x7FFFFFFF;
-const int N = 100005;
-int T, n1, n2, c1, c2, p, d[N];
+typedef long long ll;
+const ll N = 100005;
+const ll INF = 0x7FFFFFFF;
+ll T, n1, n2, p, c1, c2, d[N];
 struct Cover
 {
-    int date, num;
+    ll date, num;
 };
-int F(int m)
+ll G(ll m)
 {
-    int cost = 0;
+    ll cost = 0;
     deque<Cover> q1, q2;
-    for (int i = 1; i <= T; i++)
+    for (ll i = 1; i <= T; i++)
     {
-        int demand = d[i];
-        int cnt = min(demand, m);
+        ll demand = d[i];
+        ll cnt = min(demand, m);
         demand -= cnt;
         m -= cnt;
         if (i - n2 > 0)
@@ -45,42 +46,46 @@ int F(int m)
                 q2.pop_back();
         }
         if (demand)
-            return -1;
+            return INF;
     }
-    return cost + m * p;
+    return cost;
+}
+ll F(ll m)
+{
+    return G(m) + m * p;
 }
 int main()
 {
     // freopen("cover.in", "r", stdin);
     // freopen("cover.out", "w", stdout);
     cin >> T >> n1 >> n2 >> c1 >> c2 >> p;
-    for (int i = 1; i <= T; i++)
+    for (ll i = 1; i <= T; i++)
         cin >> d[i];
     int l = 0;
     int r = T * 50;
-    int ans = r * p;
-    while (r - l >= 3)
-    {
-        int ml = l + (r - l) / 2;
-        int mr = ml + 1;
-        int Fml = F(ml);
-        if (Fml == INF)
-        {
-            l = ml + 1;
-            continue;
-        }
-        int Fmr = F(mr);
-        if (Fml < Fmr)
-        {
-            ans = Fml;
-            r = mr - 1;
-        }
-        else
-        {
-            ans = Fmr;
-            l = ml + 1;
-        }
-    }
+    ll ans = r * p;
+    // while (r - l >= 3)
+    // {
+    //     int ml = l + (r - l) / 2;
+    //     int mr = ml + 1;
+    //     int Fml = F(ml);
+    //     if (Fml == INF)
+    //     {
+    //         l = ml + 1;
+    //         continue;
+    //     }
+    //     int Fmr = F(mr);
+    //     if (Fml < Fmr)
+    //     {
+    //         ans = Fml;
+    //         r = mr - 1;
+    //     }
+    //     else
+    //     {
+    //         ans = Fmr;
+    //         l = ml + 1;
+    //     }
+    // }
     for (int i = l; i <= r; i++)
         ans = min(ans, F(i));
     cout << ans << endl;

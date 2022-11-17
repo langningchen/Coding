@@ -68,7 +68,7 @@ int main()
 			{
 				c = ':';
 			}
-			if (check.find(c) == check.npos)
+			if (check.find(c) == string::npos)
 			{
 				flag = 1;
 				break;
