@@ -63,6 +63,6 @@ jobs:
         rm -f -r ./tidy-html5-next/
         sudo cp /usr/local/lib/libtidy.* /usr/lib
     - name: ClockIn for Etiger
-      run: ./Tools/Tool Etiger ${{ secrets.ETIGER_USERNAME }} ${{ secrets.ETIGER_PASSWORD }}  ClockIn
+      run: ./Tools/Tool Etiger ${{ secrets.ETIGER_USERNAME }} ${{ secrets.ETIGER_PASSWORD }}
     - name: ClockIn for Luogu
-      run: ./Tools/Tool Luogu ${{ secrets.LUOGU_USERNAME }} ${{ secrets.LUOGU_PASSWORD }} ClockIn
+      run: ./Tools/Tool Luogu ${{ secrets.LUOGU_USERNAME }} ${{ secrets.LUOGU_PASSWORD }}

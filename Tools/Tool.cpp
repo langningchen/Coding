@@ -1,4 +1,5 @@
 #include <iostream>
+#include <regex>
 #include <unistd.h>
 #include "../Lib/tidy/tidy.h"
 #include "../Lib/tidy/tidybuffio.h"
@@ -22,7 +23,7 @@ private:
         void ClockIn();
         void GetQuestionDetail(string QuestionID);
         void SubmitCode(string QuestionID);
-    } Luogu;
+    };
     class ETIGER
     {
     private:
@@ -35,7 +36,7 @@ private:
         void ClockIn();
         void GetQuestionDetail(string QuestionID);
         void SubmitCode(string QuestionID);
-    } Etiger;
+    };
     class CODEFORCES
     {
     private:
@@ -51,17 +52,18 @@ private:
         void Login(string Username, string Password);
         void GetQuestionDetail(string QuestionID);
         void SubmitCode(string QuestionID);
-    } Codeforces;
+    };
     class UVA
     {
     public:
         void Login(string Username, string Password);
         void GetQuestionDetail(string QuestionID);
         void SubmitCode(string QuestionID);
-    } UVa;
+    };
 
 public:
     TOOL(string FileName, string Operation);
+    TOOL(string ServerName, string Username, string Password);
     ~TOOL();
 };
 TOOL::LUOGU::LUOGU()
@@ -814,7 +816,7 @@ void TOOL::CODEFORCES::Login(string Username, string Password)
                   NULL,
                   &HTTPResponseCode,
                   FORM);
-    if (HTTPResponseCode != 302)
+    if (HTTPResponseCode == 200)
     {
         cout << "登录失败" << endl;
         return;
@@ -900,7 +902,7 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
                   NULL,
                   &HTTPResponseCode,
                   FORM);
-    if (HTTPResponseCode != 302)
+    if (HTTPResponseCode == 200)
     {
         cout << "提交失败" << endl;
         return;
@@ -1021,7 +1023,7 @@ void TOOL::UVA::Login(string Username, string Password)
                   NULL,
                   &HTTPResponseCode,
                   FORM);
-    if (HTTPResponseCode != 302)
+    if (HTTPResponseCode == 200)
     {
         cout << "登录失败" << endl;
         return;
@@ -1032,6 +1034,7 @@ void TOOL::UVA::GetQuestionDetail(string QuestionID)
     string FixedQuestionID = QuestionID;
     while (FixedQuestionID[0] == '0')
         FixedQuestionID.erase(0, 1);
+    cout << QuestionID << endl;
     GetDataToFile("https://onlinejudge.org/external/" +
                       FixedQuestionID.substr(0, FixedQuestionID.size() - 2) +
                       "/p" + FixedQuestionID + ".pdf",
@@ -1042,99 +1045,157 @@ void TOOL::UVA::GetQuestionDetail(string QuestionID)
 }
 void TOOL::UVA::SubmitCode(string QuestionID)
 {
+    GetDataToFile("https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=25&page=submit_problem");
     string FixedQuestionID = QuestionID;
     while (FixedQuestionID[0] == '0')
         FixedQuestionID.erase(0, 1);
-    string Code = GetDataFromFileToString("../UVa/" + FixedQuestionID + ".cpp");
+    string Code = GetDataFromFileToString("../UVa/" + QuestionID + ".cpp");
+    curl_slist *HeaderList = NULL;
+    HeaderList = curl_slist_append(HeaderList, "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
+    HeaderList = curl_slist_append(HeaderList, "Accept-Encoding: gzip, deflate, br");
+    HeaderList = curl_slist_append(HeaderList, "Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2");
+    HeaderList = curl_slist_append(HeaderList, "Origin: https://onlinejudge.org");
+    HeaderList = curl_slist_append(HeaderList, "Sec-Fetch-Dest: document");
+    HeaderList = curl_slist_append(HeaderList, "Sec-Fetch-Mode: navigate");
+    HeaderList = curl_slist_append(HeaderList, "Sec-Fetch-Site: same-origin");
+    HeaderList = curl_slist_append(HeaderList, "Sec-Fetch-User: ?1");
+    HeaderList = curl_slist_append(HeaderList, "Upgrade-Insecure-Requests: 1");
+    HeaderList = curl_slist_append(HeaderList, "Connection: keep-alive");
+    HeaderList = curl_slist_append(HeaderList, "Host: onlinejudge.org");
+    HeaderList = curl_slist_append(HeaderList, "Referer: https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=25&page=submit_problem");
     int HTTPResponseCode = 0;
-    GetDataToFile("https://onlinejudge.org/index.php?option=com_onlinejudge&page=save_submission",
+    string tmp = "--" + MULTIPART_BOUNDARY + "\n" +
+                 "Content-Disposition: form-data; name=\"problemid\"\n" +
+                 "\n" +
+                 "\n" +
+                 "--" + MULTIPART_BOUNDARY + "\n" +
+                 "Content-Disposition: form-data; name=\"category\"\n" +
+                 "\n" +
+                 "\n" +
+                 "--" + MULTIPART_BOUNDARY + "\n" +
+                 "Content-Disposition: form-data; name=\"localid\"\n" +
+                 "\n" +
+                 FixedQuestionID + "\n" +
+                 "--" + MULTIPART_BOUNDARY + "\n" +
+                 "Content-Disposition: form-data; name=\"language\"\n" +
+                 "\n" +
+                 "5\n" +
+                 "--" + MULTIPART_BOUNDARY + "\n" +
+                 "Content-Disposition: form-data; name=\"code\"\n" +
+                 "\n" +
+                 Code + "\n" +
+                 "\n" +
+                 "--" + MULTIPART_BOUNDARY + "\n" + "Content-Disposition: form-data; name=\"codeupl\"; filename=\"\"\n" +
+                 "Content-Type: application/octet-stream\n" +
+                 "\n" +
+                 "\n" +
+                 "--" + MULTIPART_BOUNDARY + "--\n";
+    cout << tmp << endl;
+    GetDataToFile("https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=25&page=save_submission",
                   "Header.tmp",
                   "Body.tmp",
                   true,
-                  MULTIPART_BOUNDARY + "\n" +
-                      "Content-Disposition: form-data; name=\"problemid\"\n" +
-                      "\n" +
-                      "\n" +
-                      MULTIPART_BOUNDARY + "\n" +
-                      "Content-Disposition: form-data; name=\"category\"\n" +
-                      "\n" +
-                      "\n" +
-                      MULTIPART_BOUNDARY + "\n" +
-                      "Content-Disposition: form-data; name=\"localid\"\n" +
-                      "\n" +
-                      FixedQuestionID + "\n" +
-                      MULTIPART_BOUNDARY + "\n" +
-                      "Content-Disposition: form-data; name=\"language\"\n" +
-                      "\n" +
-                      "5\n" +
-                      MULTIPART_BOUNDARY + "\n" +
-                      "Content-Disposition: form-data; name=\"code\"\n" +
-                      "\n" +
-                      Code + "\n" +
-                      "\n" +
-                      MULTIPART_BOUNDARY + "\n" + "Content-Disposition: form-data; name=\"codeupl\"; filename=\"\"\n" +
-                      "Content-Type: application/octet-stream\n" +
-                      "\n" +
-                      "\n" +
-                      MULTIPART_BOUNDARY + "--\n",
-                  NULL,
+                  tmp,
+                  HeaderList,
                   &HTTPResponseCode,
                   MULTIPART);
-    // Referer	https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=25
-    if (HTTPResponseCode != 301)
+    if (HTTPResponseCode == 200)
     {
         cout << "提交失败" << endl;
         return;
     }
     string SubmissionID = FindLocation();
-    SubmissionID = SubmissionID.substr(SubmissionID.find_last_of("+") + 1, string::npos);
-    cout << SubmissionID << endl;
+    SubmissionID = URLDecode(SubmissionID.substr(80, string::npos));
+    if (atoi(SubmissionID.c_str()) == 0)
+    {
+        cout << "提交失败" << endl;
+        return;
+    }
+    GetDataToFile("https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=9");
+    string Data = GetDataFromFileToString();
+    Data = StringReplaceAll(Data, "\t", "");
+    Data = StringReplaceAll(Data, "\r", "");
+    Data = StringReplaceAll(Data, "\n", "");
+    Data = StringReplaceAll(Data, "< ", "<");
+    Data = StringReplaceAll(Data, " <", "<");
+    Data = StringReplaceAll(Data, "> ", ">");
+    Data = StringReplaceAll(Data, " >", ">");
+    ofstream O("Data.tmp");
+    O << Data;
+    O.close();
+    smatch Match;
+    if (regex_search(Data.cbegin(), Data.cend(), Match, regex("<tr class=\"sectiontableentry[0-9]\"><td>" + SubmissionID + "</td><td align=\"right\"><a href=\"index\\.php\\?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=[0-9]*\">[0-9]*</a></td><td><a href=\"index\\.php\\?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=[0-9]*\">[^<]*</a></td><td>([^<]*)</td><td>C\\+\\+11</td><td>([0-9\\.]*)</td><!--<td></td>--><td>[^<]*</td></tr>")))
+        cout << "Verdict: " << Match.str(1) << endl
+             << "Run Time: " << Match.str(2) << endl;
+    else
+        cout << "无法找到提交记录对应的提交信息";
 }
 TOOL::TOOL(string FileName, string Operation)
 {
-    if (FileName.find("Luogu"))
+    if (FileName.find("Luogu") != string::npos)
     {
+        LUOGU Luogu;
         Luogu.Login(GetDataFromFileToString("../Keys/LuoguUsername"), GetDataFromFileToString("../Keys/LuoguPassword"));
         if (Operation == "ClockIn")
             Luogu.ClockIn();
         else if (Operation == "GetQuestionDetail")
-            Luogu.GetQuestionDetail(GetStringBetween(FileName, "Luogu", ".cpp"));
+            Luogu.GetQuestionDetail(GetStringBetween(FileName, "Luogu/", ".cpp"));
         else if (Operation == "SubmitCode")
-            Luogu.SubmitCode(GetStringBetween(FileName, "Luogu", ".cpp"));
+            Luogu.SubmitCode(GetStringBetween(FileName, "Luogu/", ".cpp"));
         else
             cout << "传参错误" << endl;
     }
-    else if (FileName.find("Etiger"))
+    else if (FileName.find("Etiger") != string::npos)
     {
+        ETIGER Etiger;
         Etiger.Login(GetDataFromFileToString("../Keys/EtigerUsername"), GetDataFromFileToString("../Keys/EtigerPassword"));
         if (Operation == "ClockIn")
             Etiger.ClockIn();
         else if (Operation == "GetQuestionDetail")
-            Etiger.GetQuestionDetail(GetStringBetween(FileName, "Etiger", ".cpp"));
+            Etiger.GetQuestionDetail(GetStringBetween(FileName, "Etiger/", ".cpp"));
         else if (Operation == "SubmitCode")
-            Etiger.SubmitCode(GetStringBetween(FileName, "Etiger", ".cpp"));
+            Etiger.SubmitCode(GetStringBetween(FileName, "Etiger/", ".cpp"));
         else
             cout << "传参错误" << endl;
     }
-    else if (FileName.find("UVa"))
+    else if (FileName.find("UVa") != string::npos)
     {
+        UVA UVa;
         UVa.Login(GetDataFromFileToString("../Keys/UVaUsername"), GetDataFromFileToString("../Keys/UVaPassword"));
         if (Operation == "GetQuestionDetail")
-            UVa.GetQuestionDetail(GetStringBetween(FileName, "UVa", ".cpp"));
+            UVa.GetQuestionDetail(GetStringBetween(FileName, "UVa/", ".cpp"));
         else if (Operation == "SubmitCode")
-            UVa.SubmitCode(GetStringBetween(FileName, "UVa", ".cpp"));
+            UVa.SubmitCode(GetStringBetween(FileName, "UVa/", ".cpp"));
         else
             cout << "传参错误" << endl;
     }
-    else if (FileName.find("Codeforces"))
+    else if (FileName.find("Codeforces") != string::npos)
     {
+        CODEFORCES Codeforces;
         Codeforces.Login(GetDataFromFileToString("../Keys/CodeforcesUsername"), GetDataFromFileToString("../Keys/CodeforcesPassword"));
         if (Operation == "GetQuestionDetail")
-            Codeforces.GetQuestionDetail(GetStringBetween(FileName, "Codeforces", ".cpp"));
+            Codeforces.GetQuestionDetail(GetStringBetween(FileName, "Codeforces/", ".cpp"));
         else if (Operation == "SubmitCode")
-            Codeforces.SubmitCode(GetStringBetween(FileName, "Codeforces", ".cpp"));
+            Codeforces.SubmitCode(GetStringBetween(FileName, "Codeforces/", ".cpp"));
         else
             cout << "传参错误" << endl;
+    }
+    else
+        cout << "传参错误" << endl;
+}
+TOOL::TOOL(string ServerName, string Username, string Password)
+{
+    if (ServerName == "Luogu")
+    {
+        LUOGU Luogu;
+        Luogu.Login(Username, Password);
+        Luogu.ClockIn();
+    }
+    else if (ServerName == "Etiger")
+    {
+        ETIGER Etiger;
+        Etiger.Login(Username, Password);
+        Etiger.ClockIn();
     }
     else
         cout << "传参错误" << endl;
@@ -1145,11 +1206,11 @@ TOOL::~TOOL()
 }
 int main(int argc, char **argv)
 {
-    if (argc != 3)
-    {
+    if (argc == 3)
+        TOOL Tool(argv[1], argv[2]);
+    else if (argc == 4)
+        TOOL Tool(argv[1], argv[2], argv[3]);
+    else
         cout << "传参错误" << endl;
-        return 0;
-    }
-    TOOL Tool(argv[1], argv[2]);
     return 0;
 }
