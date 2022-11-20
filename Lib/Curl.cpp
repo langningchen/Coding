@@ -6,9 +6,9 @@
 using namespace std;
 using namespace configor;
 string CurrentDir;
-string UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) Gecko/20100101 Firefox/104.0";
+string UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:107.0) Gecko/20100101 Firefox/107.0";
 const string FORM = "application/x-www-form-urlencoded";
-const string MULTIPART_BOUNDARY = "---------------------------168017722421737302452463195061";
+const string MULTIPART_BOUNDARY = "qv5wyfw459yhugv5swbmq39m8yuw4";
 const string MULTIPART = "multipart/form-data; boundary=" + MULTIPART_BOUNDARY;
 void GetCurrentDir()
 {
@@ -50,6 +50,7 @@ int GetDataToFile(string URL,
     curl_easy_setopt(Curl, CURLOPT_SSL_VERIFYSTATUS, false);
     curl_easy_setopt(Curl, CURLOPT_HEADERDATA, HeaderFilePointer);
     curl_easy_setopt(Curl, CURLOPT_WRITEDATA, BodyFilePointer);
+    curl_easy_setopt(Curl, CURLOPT_TIMEOUT, 10);
     if (Cookie != "")
         curl_easy_setopt(Curl, CURLOPT_COOKIELIST, Cookie.c_str());
     curl_easy_setopt(Curl, CURLOPT_COOKIEFILE, "/workspaces/Coding/Keys/Cookies.tmp");
@@ -80,12 +81,28 @@ int GetDataToFile(string URL,
     fclose(HeaderFilePointer);
     return 0;
 }
+bool IfFileExist(string FileName)
+{
+    if (CurrentDir == "")
+        GetCurrentDir();
+    ifstream InputFileStream(CurrentDir + FileName);
+    if (InputFileStream.bad())
+        return false;
+    InputFileStream.close();
+    return true;
+}
 string GetDataFromFileToString(string FileName = "Body.tmp")
 {
     if (CurrentDir == "")
         GetCurrentDir();
     string Data = "";
     FILE *BodyFilePointer = fopen((CurrentDir + FileName).c_str(), "r");
+    if (BodyFilePointer == NULL)
+    {
+        cout << "无法打开文件" << FileName << endl;
+        getchar();
+        exit(0);
+    }
     while (!feof(BodyFilePointer))
         Data.push_back(fgetc(BodyFilePointer));
     fclose(BodyFilePointer);
@@ -220,6 +237,7 @@ string FindLocation()
     if (CurrentDir == "")
         GetCurrentDir();
     string Header = GetDataFromFileToString("Header.tmp");
+    Header += "\n";
     string RedirectURL = GetStringBetween(Header, "Location: ", "\n");
     if (RedirectURL == "")
         RedirectURL = GetStringBetween(Header, "location: ", "\n");
