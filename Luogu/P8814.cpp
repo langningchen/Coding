@@ -5,8 +5,9 @@ ll k, n, e, d, c;
 bool founded;
 int main()
 {
-    // freopen("decode.in", "r", stdin);
-    // freopen("decode.out", "w", stdout);
+    // freopen("P8814.in", "r", stdin);
+    // freopen("P8814.out", "w", stdout);
+    // freopen("P8814.log", "w", stderr);
     cin >> k;
     for (int i = 0; i < k; i++)
     {
@@ -18,6 +19,7 @@ int main()
             if (n % p == 0)
             {
                 ll q = n / p;
+                // cerr << "p = " << p << " q = " << q << endl;
                 if (p + q == c)
                 {
                     cout << p << " " << q << endl;
