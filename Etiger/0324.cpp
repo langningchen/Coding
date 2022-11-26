@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 map<string, int> money;
-int n, size, times;
+int n, size_mine, times;
 int main()
 {
     freopen("envelope.in", "r", stdin);
@@ -12,12 +12,12 @@ int main()
         string name;
         char temp;
         cin >> name;
-        cin >> size >> temp >> times;
-        money[name] -= size * times;
+        cin >> size_mine >> temp >> times;
+        money[name] -= size_mine * times;
         for (int j = 0; j < times; j++)
         {
             cin >> name;
-            money[name] += size;
+            money[name] += size_mine;
         }
     }
     cout << money.size() << endl;

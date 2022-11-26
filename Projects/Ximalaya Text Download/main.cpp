@@ -1,5 +1,5 @@
 #include "../../Lib/Curl.hpp"
-#include "../../Lib/lodepng.hpp"
+#include "../../Lib/lodepng.cpp"
 #include "../../Lib/jpeg/jpeglib.h"
 #include "../../Lib/SHA1.hpp"
 #include "../../Lib/MD5.hpp"
