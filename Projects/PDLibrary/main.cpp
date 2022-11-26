@@ -1,4 +1,4 @@
-#include "../../Lib/Curl.cpp"
+#include "../../Lib/Curl.hpp"
 #include <regex>
 int main()
 {

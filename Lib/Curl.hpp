@@ -3,23 +3,13 @@
 #include <curl/curl.h>
 #include <unistd.h>
 #include "./configor/json.hpp"
+#include "./StringOperation.hpp"
 using namespace std;
 using namespace configor;
-string CurrentDir;
 string UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:107.0) Gecko/20100101 Firefox/107.0";
 const string FORM = "application/x-www-form-urlencoded";
 const string MULTIPART_BOUNDARY = "qv5wyfw459yhugv5swbmq39m8yuw4";
 const string MULTIPART = "multipart/form-data; boundary=" + MULTIPART_BOUNDARY;
-void GetCurrentDir()
-{
-    int BufferSize = 1024;
-    char *Buffer = new char[BufferSize];
-    if (readlink("/proc/self/exe", Buffer, BufferSize) == 0)
-        return;
-    CurrentDir = Buffer;
-    delete Buffer;
-    CurrentDir.erase(CurrentDir.find_last_of("/") + 1, string::npos);
-}
 int GetDataToFile(string URL,
                   string HeaderFileName = "Header.tmp",
                   string BodyFileName = "Body.tmp",
@@ -81,39 +71,6 @@ int GetDataToFile(string URL,
     fclose(HeaderFilePointer);
     return 0;
 }
-bool IfFileExist(string FileName)
-{
-    if (CurrentDir == "")
-        GetCurrentDir();
-    ifstream InputFileStream(CurrentDir + FileName);
-    if (InputFileStream.bad())
-        return false;
-    InputFileStream.close();
-    return true;
-}
-string GetDataFromFileToString(string FileName = "Body.tmp")
-{
-    if (CurrentDir == "")
-        GetCurrentDir();
-    string Data = "";
-    FILE *BodyFilePointer = fopen((CurrentDir + FileName).c_str(), "r");
-    if (BodyFilePointer == NULL)
-    {
-        cout << "无法打开文件" << FileName << endl;
-        getchar();
-        exit(0);
-    }
-    while (!feof(BodyFilePointer))
-        Data.push_back(fgetc(BodyFilePointer));
-    fclose(BodyFilePointer);
-    while (Data.size() > 0 && (Data[Data.size() - 1] == 0x00 || Data[Data.size() - 1] == 0xFF || Data[Data.size() - 1] == -1 || Data[Data.size() - 1] == '\r' || Data[Data.size() - 1] == '\n'))
-        Data.erase(Data.size() - 1);
-    return Data;
-}
-string FixString(string Data)
-{
-    return (Data[Data.size() - 1] == '\n' ? FixString(Data.erase(Data.size() - 1, 1)) : Data);
-}
 string EraseHTMLElement(string Data)
 {
     int HTMLStartIndex = 0;
@@ -153,13 +110,6 @@ string Base64Encode(string Input)
     else if (Input.size() % 3 == 2)
         Output.replace(Output.size() - 1, 1, "=");
     return Output;
-}
-string StringReplaceAll(string Data, string Before, string After)
-{
-    size_t Index = 0;
-    while ((Index = Data.find(Before)) != string::npos)
-        Data.replace(Index, Before.size(), After);
-    return Data;
 }
 unsigned char ToHex(unsigned char x)
 {
@@ -220,17 +170,6 @@ string URLDecode(string Input)
             Output += Input[i];
     }
     return Output;
-}
-string GetStringBetween(string Data, string Start, string End)
-{
-    int StartPos = Data.find(Start);
-    if (StartPos == -1)
-        return "";
-    StartPos += Start.size();
-    int EndPos = Data.find(End, StartPos + 1);
-    if (EndPos == -1)
-        return "";
-    return Data.substr(StartPos, EndPos - StartPos);
 }
 string FindLocation()
 {

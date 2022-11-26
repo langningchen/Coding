@@ -1,4 +1,4 @@
-#include "../../Lib/Curl.cpp"
+#include "../../Lib/Curl.hpp"
 string LoginURL = "https://cas2.edu.sh.cn/CAS/login?service=https%3A%2F%2Fsmilelogin.shec.edu.cn%2Fsmile-login%2Fauth%2Fcas%2Flogin%3Ftarget%3Dhttps%3A%2F%2Fsmile.shec.edu.cn%2F%3Fpath%3DairClassroomPage";
 int main()
 {

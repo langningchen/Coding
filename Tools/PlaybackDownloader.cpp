@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
-#include "../Lib/Curl.cpp"
+#include "../Lib/Curl.hpp"
 using namespace std;
 string Decode(string Input, int OBFSKEY)
 {

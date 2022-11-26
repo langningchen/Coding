@@ -1,4 +1,4 @@
-#include "../../Lib/BigNumber.cpp"
+#include "../../Lib/BigNumber.hpp"
 #pragma GCC optimize("Ofast,unroll-loops")
 ll CurrentTestNumber, LastCurrentTestNumber = -1, CurrentPow = 1;
 short CalculatedDigits;
