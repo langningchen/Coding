@@ -10,6 +10,203 @@ string UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:107.0) Gecko/20100101 
 const string FORM = "application/x-www-form-urlencoded";
 const string MULTIPART_BOUNDARY = "qv5wyfw459yhugv5swbmq39m8yuw4";
 const string MULTIPART = "multipart/form-data; boundary=" + MULTIPART_BOUNDARY;
+string HTTPResponseString(int HTTPResponseCode)
+{
+    switch (HTTPResponseCode)
+    {
+    case 100:
+        return "Continue";
+        break;
+    case 101:
+        return "Switching Protocols";
+        break;
+    case 102:
+        return "Processing";
+        break;
+    case 103:
+        return "Early Hints";
+        break;
+    case 200:
+        return "OK";
+        break;
+    case 201:
+        return "Created";
+        break;
+    case 202:
+        return "Accepted";
+        break;
+    case 203:
+        return "Non-Authoritative Information";
+        break;
+    case 204:
+        return "No Content";
+        break;
+    case 205:
+        return "Reset Content";
+        break;
+    case 206:
+        return "Partial Content";
+        break;
+    case 207:
+        return "Multi-Status";
+        break;
+    case 208:
+        return "Already Reported";
+        break;
+    case 226:
+        return "IM Used";
+        break;
+    case 300:
+        return "Multiple Choice";
+        break;
+    case 301:
+        return "Moved Permanently";
+        break;
+    case 302:
+        return "Found";
+        break;
+    case 303:
+        return "See Other";
+        break;
+    case 304:
+        return "Not Modified";
+        break;
+    case 305:
+        return "Use Proxy";
+        break;
+    case 306:
+        return "unused";
+        break;
+    case 307:
+        return "Temporary Redirect";
+        break;
+    case 308:
+        return "Permanent Redirect";
+        break;
+    case 400:
+        return "Bad Request";
+        break;
+    case 401:
+        return "Unauthorized";
+        break;
+    case 402:
+        return "Payment Required";
+        break;
+    case 403:
+        return "Forbidden";
+        break;
+    case 404:
+        return "Not Found";
+        break;
+    case 405:
+        return "Method Not Allowed";
+        break;
+    case 406:
+        return "Not Acceptable";
+        break;
+    case 407:
+        return "Proxy Authentication Required";
+        break;
+    case 408:
+        return "Request Timeout";
+        break;
+    case 409:
+        return "Conflict";
+        break;
+    case 410:
+        return "Gone";
+        break;
+    case 411:
+        return "Length Required";
+        break;
+    case 412:
+        return "Precondition Failed";
+        break;
+    case 413:
+        return "Payload Too Large";
+        break;
+    case 414:
+        return "URI Too Long";
+        break;
+    case 415:
+        return "Unsupported Media Type";
+        break;
+    case 416:
+        return "Range Not Satisfiable";
+        break;
+    case 417:
+        return "Expectation Failed";
+        break;
+    case 418:
+        return "I'm a teapot";
+        break;
+    case 421:
+        return "Misdirected Request";
+        break;
+    case 422:
+        return "Unprocessable Entity";
+        break;
+    case 423:
+        return "Locked";
+        break;
+    case 424:
+        return "Failed Dependency";
+        break;
+    case 425:
+        return "Too Early";
+        break;
+    case 426:
+        return "Upgrade Required";
+        break;
+    case 428:
+        return "Precondition Required";
+        break;
+    case 429:
+        return "Too Many Requests";
+        break;
+    case 431:
+        return "Request Header Fields Too Large";
+        break;
+    case 451:
+        return "Unavailable For Legal Reasons";
+        break;
+    case 500:
+        return "Internal Server Error";
+        break;
+    case 501:
+        return "Not Implemented";
+        break;
+    case 502:
+        return "Bad Gateway";
+        break;
+    case 503:
+        return "Service Unavailable";
+        break;
+    case 504:
+        return "Gateway Timeout";
+        break;
+    case 505:
+        return "HTTP Version Not Supported";
+        break;
+    case 506:
+        return "Variant Also Negotiates";
+        break;
+    case 507:
+        return "Insufficient Storage";
+        break;
+    case 508:
+        return "Loop Detected";
+        break;
+    case 510:
+        return "Not Extended";
+        break;
+    case 511:
+        return "Network Authentication Required";
+        break;
+    default:
+        return to_string(HTTPResponseCode);
+    }
+}
 int GetDataToFile(string URL,
                   string HeaderFileName = "Header.tmp",
                   string BodyFileName = "Body.tmp",
@@ -28,7 +225,8 @@ int GetDataToFile(string URL,
     CURLcode CurlCode = curl_global_init(CURL_GLOBAL_ALL);
     if (CurlCode != 0)
     {
-        cout << "libcurl初始化失败，错误代码：" << CurlCode << "。" << endl;
+        cout << "Curl init failed!" << endl
+             << CurlCode << ": " << curl_easy_strerror(CurlCode) << endl;
         fclose(BodyFilePointer);
         fclose(HeaderFilePointer);
         getchar();
@@ -40,7 +238,7 @@ int GetDataToFile(string URL,
     curl_easy_setopt(Curl, CURLOPT_SSL_VERIFYSTATUS, false);
     curl_easy_setopt(Curl, CURLOPT_HEADERDATA, HeaderFilePointer);
     curl_easy_setopt(Curl, CURLOPT_WRITEDATA, BodyFilePointer);
-    curl_easy_setopt(Curl, CURLOPT_TIMEOUT, 10);
+    curl_easy_setopt(Curl, CURLOPT_CONNECTTIMEOUT, 10);
     if (Cookie != "")
         curl_easy_setopt(Curl, CURLOPT_COOKIELIST, Cookie.c_str());
     curl_easy_setopt(Curl, CURLOPT_COOKIEFILE, "/workspaces/Coding/Keys/Cookies.tmp");
@@ -60,12 +258,22 @@ int GetDataToFile(string URL,
     CurlCode = curl_easy_perform(Curl);
     if (CurlCode != 0)
     {
-        cout << "请求发送失败，错误代码：" << CurlCode << "。" << endl;
+        cout << "Request with URL \"" << URL << "\" failed! " << endl
+             << CurlCode << ": " << curl_easy_strerror(CurlCode) << endl;
+        getchar();
+        exit(0);
+    }
+    int TempHTTPResponseCode = 0;
+    curl_easy_getinfo(Curl, CURLINFO_RESPONSE_CODE, &TempHTTPResponseCode);
+    if (TempHTTPResponseCode >= 500)
+    {
+        cout << "Request with URL \"" << URL << "\" failed! " << endl
+             << TempHTTPResponseCode << " " << HTTPResponseString(TempHTTPResponseCode) << endl;
         getchar();
         exit(0);
     }
     if (HTTPResponseCode != NULL)
-        curl_easy_getinfo(Curl, CURLINFO_RESPONSE_CODE, HTTPResponseCode);
+        *HTTPResponseCode = TempHTTPResponseCode;
     curl_easy_cleanup(Curl);
     fclose(BodyFilePointer);
     fclose(HeaderFilePointer);
