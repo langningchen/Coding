@@ -1,25 +1,34 @@
-#include "../../Lib/Curl.cpp"
+#include "../../Lib/Curl.hpp"
 #include <unistd.h>
+string JSONPToJSON(string Input)
+{
+    return Input.substr(Input.find("{"), Input.find_last_of("}") - Input.find("{") + 1);
+}
 int main()
 {
     GetDataToFile("https://login.dingtalk.com/user/qrcode/generate.jsonp");
-    string QRCode = GetDataFromFileToString().substr(42, 36);
-    GetDataToFile("https://www.chitus.com/ewm/createPc?config={%22content%22%3A%22http%3A%2F%2Fqr.dingtalk.com%2Faction%2Flogin%3Fcode%3D" + QRCode + "%22}&k=89758512345678", "Header.tmp", "LoginQRCode.png");
+    json QRCodeResult = json::parse(JSONPToJSON(GetDataFromFileToString()));
+    if (!QRCodeResult["success"].as_bool())
+    {
+        cout << "Login QRCode generate failed!" << endl;
+        return 0;
+    }
+    string QRCodeDetail = QRCodeResult["result"].as_string();
+    GetDataToFile("https://api.qrserver.com/v1/create-qr-code/?size=150%C3%97150&data=" +
+                      URLEncode("http://qr.dingtalk.com/action/login?code=" + QRCodeDetail),
+                  "Header.tmp",
+                  "LoginQRCode.png");
     while (1)
     {
-        GetDataToFile("https://login.dingtalk.com/user/qrcode/is_logged.jsonp?qrcode=" + QRCode);
-        json IsLogged = json::parse(GetDataFromFileToString().substr(16, GetDataFromFileToString().size() - 18));
-        if (!IsLogged["success"].as_bool())
-        {
-            cout << IsLogged["errorCode"].as_integer() << endl
-                 << IsLogged["errorMsg"].as_string() << endl
-                 << endl;
-        }
-        else
+        GetDataToFile("https://login.dingtalk.com/user/qrcode/is_logged.jsonp?qrcode=" + QRCodeDetail);
+        json IsLogged = json::parse(
+            GetDataFromFileToString().substr(
+                16, GetDataFromFileToString().size() - 18));
+        if (IsLogged["success"].as_bool())
         {
             break;
         }
     }
-    Clean();
+    // Clean();
     return 0;
 }

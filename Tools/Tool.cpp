@@ -5,8 +5,8 @@
 #include "../Lib/tidy/tidybuffio.h"
 #include <stdio.h>
 #include <errno.h>
-#include "../Lib/Curl.cpp"
-#include "../Lib/TinyXML.cpp"
+#include "../Lib/Curl.hpp"
+#include "../Lib/TinyXML.hpp"
 class TOOL
 {
 private:

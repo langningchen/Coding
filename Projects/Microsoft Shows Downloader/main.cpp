@@ -1,4 +1,4 @@
-#include "../../Lib/Curl.cpp"
+#include "../../Lib/Curl.hpp"
 int main()
 {
     GetDataToFile("https://learn.microsoft.com/zh-cn/shows/vs-code-livestreams/release-party-v1-70");
