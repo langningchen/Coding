@@ -302,7 +302,7 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
         return;
     }
     OutputFileStream << "# " << QuestionID << " "
-                     << QuestionInfo["currentData"]["problem"]["title"] << endl;
+                     << QuestionInfo["currentData"]["problem"]["title"].as_string() << endl;
     if (QuestionInfo["currentData"]["problem"]["accepted"].as_bool())
         OutputFileStream << "***您已经通过此题！***" << endl
                          << endl;
@@ -444,6 +444,7 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
     {
         GetDataToFile("https://www.luogu.com.cn/record/" + to_string(RecordID) + "?_contentOnly=1");
         RecordInfo = json::parse(GetDataFromFileToString());
+        usleep(500000);
     }
     cout << "Succeed" << endl;
     if (!RecordInfo["currentData"]["record"]["detail"]["compileResult"]["success"].as_bool())
@@ -454,14 +455,14 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
         for (auto jit : RecordInfo["currentData"]
                                   ["record"]
                                   ["detail"]
-                                  ["result"]
+                                  ["judgeResult"]
                                   ["subtasks"])
         {
             cout << "#" << jit["id"] << endl;
             for (auto jit2 : RecordInfo["currentData"]
                                        ["record"]
                                        ["detail"]
-                                       ["result"]
+                                       ["judgeResult"]
                                        ["subtasks"]
                                        [jit["id"].as_integer()]
                                        ["testCases"])
@@ -1274,11 +1275,18 @@ TOOL::~TOOL()
 }
 int main(int argc, char **argv)
 {
-    if (argc == 3)
-        TOOL Tool(argv[1], argv[2]);
-    else if (argc == 4)
-        TOOL Tool(argv[1], argv[2], argv[3]);
-    else
-        cout << "传参错误" << endl;
+    try
+    {
+        if (argc == 3)
+            TOOL Tool(argv[1], argv[2]);
+        else if (argc == 4)
+            TOOL Tool(argv[1], argv[2], argv[3]);
+        else
+            cout << "传参错误" << endl;
+    }
+    catch (const configor::configor_exception &Exception)
+    {
+        cerr << Exception.what() << endl;
+    }
     return 0;
 }
