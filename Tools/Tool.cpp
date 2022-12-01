@@ -468,7 +468,7 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
                                        ["detail"]
                                        ["judgeResult"]
                                        ["subtasks"]
-                                       [jit["id"].as_string()]
+                                       [atoi(jit["id"].as_string().c_str())]
                                        ["testCases"])
                 cout << "    #" << jit2["id"].as_integer() << " "
                      << jit2["score"].as_integer() << "pts "
