@@ -150,10 +150,14 @@ TOOL::LUOGU::LUOGU()
     ColorList["user-color-Red"] = "fe4c61";
     ColorList["user-color-Purple"] = "9d3dcf";
     ColorList["vip"] = "dfc289";
+    cout << "Getting luogu config... " << flush;
     GetDataToFile("https://www.luogu.com.cn/_lfe/config");
     json Config = json::parse(GetDataFromFileToString());
+    cout << "Succeed" << endl
+         << "Getting luogu tags... " << flush;
     GetDataToFile("https://www.luogu.com.cn/_lfe/tags");
     json Tag = json::parse(GetDataFromFileToString());
+    cout << "Succeed" << endl;
     for (auto i : Config["codeLanguages"])
     {
         LanguageName[i["value"].as_integer()] = i["name"].as_string();
@@ -464,7 +468,7 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
                                        ["detail"]
                                        ["judgeResult"]
                                        ["subtasks"]
-                                       [jit["id"].as_integer()]
+                                       [jit["id"].as_string()]
                                        ["testCases"])
                 cout << "    #" << jit2["id"].as_integer() << " "
                      << jit2["score"].as_integer() << "pts "
