@@ -17,12 +17,10 @@
                 "-L/usr/local/lib",
                 "-lm",
                 "-ltidy",
-                // "-O2",
                 "-Wall",
                 "-Wcast-align",
                 "-Wsign-compare",
                 "-Wunreachable-code",
-                // "-Winline",
                 "-Wdisabled-optimization"
             ],
             "options": {
@@ -64,7 +62,8 @@
             "description": "Which command do you want to run?",
             "options": [
                 "GetQuestionDetail",
-                "SubmitCode"
+                "SubmitCode",
+                "GetAnswer"
             ],
             "default": "GetQuestionDetail"
         }
