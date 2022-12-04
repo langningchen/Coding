@@ -63,10 +63,10 @@ jobs:
     #     rm -f -r ./tidy-html5-next/
     #     sudo cp /usr/local/lib/libtidy.* /usr/lib
     - name: debug1
-      run: echo ${{ secrets.ETIGER_USERNAME }} ${{ secrets.ETIGER_PASSWORD }}
+      run: echo "${{ secrets.ETIGER_USERNAME }}" "${{ secrets.ETIGER_PASSWORD }}"
     - name: debug2
-      run: echo ${{ secrets.LUOGU_USERNAME }} ${{ secrets.LUOGU_PASSWORD }}
+      run: echo "${{ secrets.LUOGU_USERNAME }}" "${{ secrets.LUOGU_PASSWORD }}"
     - name: ClockIn for Etiger
-      run: ./Tools/Tool Etiger ${{ secrets.ETIGER_USERNAME }} ${{ secrets.ETIGER_PASSWORD }}
+      run: ./Tools/Tool Etiger "${{ secrets.ETIGER_USERNAME }}" "${{ secrets.ETIGER_PASSWORD }}"
     - name: ClockIn for Luogu
-      run: ./Tools/Tool Luogu ${{ secrets.LUOGU_USERNAME }} ${{ secrets.LUOGU_PASSWORD }}
+      run: ./Tools/Tool Luogu "${{ secrets.LUOGU_USERNAME }}" "${{ secrets.LUOGU_PASSWORD }}"
