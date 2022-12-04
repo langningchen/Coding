@@ -23,6 +23,7 @@ private:
         void ClockIn();
         void GetQuestionDetail(string QuestionID);
         void SubmitCode(string QuestionID);
+        void GetAnswer(string QuestionID);
     };
     class ETIGER
     {
@@ -36,6 +37,7 @@ private:
         void ClockIn();
         void GetQuestionDetail(string QuestionID);
         void SubmitCode(string QuestionID);
+        void GetAnswer(string QuestionID);
     };
     class CODEFORCES
     {
@@ -479,6 +481,48 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
         cout << RecordInfo["currentData"]["record"]["score"].as_integer() << "pts" << endl;
     }
 }
+void TOOL::LUOGU::GetAnswer(string QuestionID)
+{
+    cout << "Getting solution page data... " << flush;
+    GetDataToFile("https://www.luogu.com.cn/problem/solution/" + QuestionID + "?_contentOnly=1");
+    json SolutionInfo = json::parse(GetDataFromFileToString());
+    cout << "Succeed" << endl;
+    for (auto i : SolutionInfo["currentData"]["solutions"]["result"])
+    {
+        string Answer = "";
+        vector<string> Spilt = StringSpilt(i["content"].as_string(), "```");
+        for (size_t j = 0; j < Spilt.size(); j++)
+        {
+            if (j % 2)
+            {
+                string CurrentAnswer = Spilt[j];
+                size_t k = 0;
+                while (k < CurrentAnswer.size() && CurrentAnswer[k] != '\n')
+                    k++;
+                CurrentAnswer = CurrentAnswer.substr(k + 1, string::npos);
+                if (CurrentAnswer.find("main") != string::npos &&
+                    CurrentAnswer.find("include") != string::npos &&
+                    CurrentAnswer.find("return") != string::npos &&
+                    CurrentAnswer.find(";") != string::npos &&
+                    CurrentAnswer.size() > Answer.size())
+                    Answer = CurrentAnswer;
+            }
+        }
+        Answer = FixString(Answer);
+        if (Answer != "")
+        {
+            SetDataFromStringToFile("../Luogu/" + QuestionID + ".cpp",
+                                    FixString(GetDataFromFileToString("../Luogu/" + QuestionID + ".cpp")) +
+                                        "\n" +
+                                        "\n" +
+                                        "/*\n" +
+                                        Answer +
+                                        "\n*/" +
+                                        "\n");
+            break;
+        }
+    }
+}
 TOOL::ETIGER::ETIGER()
 {
     DifficultyName[1] = make_pair("入门难度", "#979797");
@@ -692,6 +736,41 @@ void TOOL::ETIGER::SubmitCode(string QuestionID)
         }
     }
     cout << SubmitInfo["data"]["grade"] << "pts" << endl;
+}
+void TOOL::ETIGER::GetAnswer(string QuestionID)
+{
+    curl_slist *HeaderList = NULL;
+    HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json;charset=utf-8");
+    HeaderList = curl_slist_append(HeaderList, "lang: zh");
+    HeaderList = curl_slist_append(HeaderList, "Host: www.etiger.vip");
+    HeaderList = curl_slist_append(HeaderList, string("Token: " + Token).c_str());
+    cout << "Getting comments page data... " << flush;
+    GetDataToFile("https://www.etiger.vip/thrall-web/comment/getByQuestionForPage?questionId=" + QuestionID + "&cpage=1&pagesize=10",
+                  "Header.tmp",
+                  "Body.tmp",
+                  false,
+                  "",
+                  HeaderList);
+    json CommentsData = json::parse(GetDataFromFileToString());
+    if (CommentsData["code"] != 200)
+    {
+        cout << "Failed" << endl
+             << "Error number: " << CommentsData["code"].as_integer() << endl
+             << "Error message: " << CommentsData["msg"].as_string() << endl;
+        return;
+    }
+    cout << "Success" << endl;
+    string Comments = "";
+    for (auto i : CommentsData["data"]["records"])
+        Comments += FixString(i["content"].as_string()) + "\n";
+    SetDataFromStringToFile("../Etiger/" + QuestionID + ".cpp",
+                            FixString(GetDataFromFileToString("../Etiger/" + QuestionID + ".cpp")) +
+                                "\n" +
+                                "\n" +
+                                "/*\n" +
+                                Comments +
+                                "*/" +
+                                "\n");
 }
 string TOOL::CODEFORCES::GetCRSF()
 {
@@ -1215,6 +1294,8 @@ TOOL::TOOL(string FileName, string Operation)
             Luogu.GetQuestionDetail(GetStringBetween(FileName, "Luogu/", ".cpp"));
         else if (Operation == "SubmitCode")
             Luogu.SubmitCode(GetStringBetween(FileName, "Luogu/", ".cpp"));
+        else if (Operation == "GetAnswer")
+            Luogu.GetAnswer(GetStringBetween(FileName, "Luogu/", ".cpp"));
         else
             cout << "传参错误" << endl;
     }
@@ -1228,6 +1309,8 @@ TOOL::TOOL(string FileName, string Operation)
             Etiger.GetQuestionDetail(GetStringBetween(FileName, "Etiger/", ".cpp"));
         else if (Operation == "SubmitCode")
             Etiger.SubmitCode(GetStringBetween(FileName, "Etiger/", ".cpp"));
+        else if (Operation == "GetAnswer")
+            Etiger.GetAnswer(GetStringBetween(FileName, "Etiger/", ".cpp"));
         else
             cout << "传参错误" << endl;
     }

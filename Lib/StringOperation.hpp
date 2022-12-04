@@ -91,5 +91,5 @@ void SetDataFromStringToFile(string FileName, string Data)
 }
 string FixString(string Data)
 {
-    return (Data[Data.size() - 1] == '\n' ? FixString(Data.erase(Data.size() - 1, 1)) : Data);
+    return (Data[Data.size() - 1] == '\n' || Data[Data.size() - 1] == ' ' ? FixString(Data.erase(Data.size() - 1, 1)) : Data);
 }
