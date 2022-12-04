@@ -445,11 +445,13 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
     int RecordID = SubmitInfo["rid"].as_integer();
     json RecordInfo;
     cout << "Judging... " << flush;
-    while (!RecordInfo["currentData"]["record"]["status"].is_number() ||
-           RecordInfo["currentData"]["record"]["status"].as_integer() < 2)
+    while (1)
     {
         GetDataToFile("https://www.luogu.com.cn/record/" + to_string(RecordID) + "?_contentOnly=1");
         RecordInfo = json::parse(GetDataFromFileToString());
+        if (RecordInfo["currentData"]["record"]["status"].is_number() &&
+            RecordInfo["currentData"]["record"]["status"].as_integer() >= 2)
+            break;
         usleep(500000);
     }
     cout << "Succeed" << endl;
@@ -464,19 +466,20 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
                                   ["judgeResult"]
                                   ["subtasks"])
         {
-            cout << "#" << jit["id"] << endl;
+            cout << "#" << jit["id"].as_string() << endl;
             for (auto jit2 : RecordInfo["currentData"]
                                        ["record"]
                                        ["detail"]
                                        ["judgeResult"]
                                        ["subtasks"]
-                                       [atoi(jit["id"].as_string().c_str())]
+                                       [jit["id"].as_string()]
                                        ["testCases"])
-                cout << "    #" << jit2["id"].as_integer() << " "
-                     << jit2["score"].as_integer() << "pts "
-                     << RecordName[jit2["status"].as_integer()].second << " "
-                     << jit2["time"].as_integer() << "ms "
-                     << jit2["memory"].as_integer() << "KB" << endl;
+                cout
+                    << "    #" << jit2["id"].as_integer() << " "
+                    << jit2["score"].as_integer() << "pts "
+                    << RecordName[jit2["status"].as_integer()].second << " "
+                    << jit2["time"].as_integer() << "ms "
+                    << jit2["memory"].as_integer() << "KB" << endl;
         }
         cout << RecordInfo["currentData"]["record"]["score"].as_integer() << "pts" << endl;
     }
