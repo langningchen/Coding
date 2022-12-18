@@ -1,4 +1,5 @@
 #include <string>
+#include <unistd.h>
 #include <vector>
 using namespace std;
 string CurrentDir;
@@ -6,6 +7,7 @@ void GetCurrentDir()
 {
     int BufferSize = 1024;
     char *Buffer = new char[BufferSize];
+    memset(Buffer, 0, sizeof(char) * BufferSize);
     if (readlink("/proc/self/exe", Buffer, BufferSize) == 0)
         return;
     CurrentDir = Buffer;

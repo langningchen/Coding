@@ -394,5 +394,5 @@ string FindLocation()
         getchar();
         exit(0);
     }
-    return RedirectURL.substr(0, RedirectURL.size() - 1);
+    return RedirectURL.substr(0, RedirectURL.size());
 }
