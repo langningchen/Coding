@@ -7,6 +7,7 @@
 #include <errno.h>
 #include "../Lib/Curl.hpp"
 #include "../Lib/TinyXML.hpp"
+bool Failed = false;
 class TOOL
 {
 private:
@@ -242,6 +243,7 @@ void TOOL::LUOGU::Login(string Username, string Password)
         {
             if (LoginInfo["currentData"]["errorMessage"].as_string() != "验证码错误" && ErrorCounter < 5)
             {
+                Failed = true;
                 cout << "Failed" << endl
                      << "Error number: " << LoginInfo["status"].as_integer() << endl
                      << "Error message: " << LoginInfo["data"].as_string() << endl;
@@ -281,6 +283,7 @@ void TOOL::LUOGU::ClockIn()
     json ClockInInfo = json::parse(GetDataFromFileToString());
     if (ClockInInfo["code"].as_integer() != 200)
     {
+        Failed = true;
         cout << "Failed" << endl
              << "Error number: " << ClockInInfo["code"].as_integer() << endl
              << "Error message: " << ClockInInfo["message"].as_string() << endl;
@@ -295,6 +298,7 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
     json QuestionInfo = json::parse(GetDataFromFileToString());
     if (QuestionInfo["code"].as_integer() != 200)
     {
+        Failed = true;
         cout << "Failed" << endl
              << "Error number: " << QuestionInfo["code"].as_integer() << endl
              << "Error message: " << QuestionInfo["currentData"]["errorMessage"].as_string() << endl;
@@ -302,7 +306,7 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
     }
     cout << "Succeed" << endl;
     ofstream OutputFileStream(string("/workspaces/Coding/Luogu/" + QuestionID + ".md").c_str());
-    if (OutputFileStream.bad())
+    if (OutputFileStream.bad() || !OutputFileStream.is_open())
     {
         cout << "Can not open output file \"/workspaces/Coding/Luogu/" << QuestionID << ".md\"" << endl;
         return;
@@ -436,6 +440,7 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
     json SubmitInfo = json::parse(GetDataFromFileToString());
     if (!SubmitInfo["status"].is_null())
     {
+        Failed = true;
         cout << "Failed" << endl
              << "Error number: " << SubmitInfo["status"].as_integer() << endl
              << "Error message: " << SubmitInfo["errorMessage"].as_string() << endl;
@@ -502,6 +507,8 @@ void TOOL::LUOGU::GetAnswer(string QuestionID)
                 size_t k = 0;
                 while (k < CurrentAnswer.size() && CurrentAnswer[k] != '\n')
                     k++;
+                if (k == CurrentAnswer.size())
+                    continue;
                 CurrentAnswer = CurrentAnswer.substr(k + 1, string::npos);
                 if (CurrentAnswer.find("main") != string::npos &&
                     CurrentAnswer.find("include") != string::npos &&
@@ -556,6 +563,7 @@ void TOOL::ETIGER::Login(string Username, string Password)
     json LoginInfo = json::parse(GetDataFromFileToString());
     if (LoginInfo["code"] != 200)
     {
+        Failed = true;
         cout << "Failed" << endl
              << "Error number: " << LoginInfo["code"].as_integer() << endl
              << "Error message: " << LoginInfo["msg"].as_string() << endl;
@@ -581,6 +589,7 @@ void TOOL::ETIGER::ClockIn()
     json ClockInInfo = json::parse(GetDataFromFileToString());
     if (ClockInInfo["code"] != 200)
     {
+        Failed = true;
         cout << "Failed" << endl
              << "Error number: " << ClockInInfo["code"].as_integer() << endl
              << "Error message: " << ClockInInfo["msg"].as_string() << endl;
@@ -605,6 +614,7 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
     json QuestionInfo = json::parse(GetDataFromFileToString());
     if (QuestionInfo["code"] != 200)
     {
+        Failed = true;
         cout << "Failed" << endl
              << "Error number: " << QuestionInfo["code"].as_integer() << endl
              << "Error message: " << QuestionInfo["msg"].as_string() << endl;
@@ -612,7 +622,7 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
     }
     cout << "Succeed" << endl;
     ofstream OutputFileStream(string("/workspaces/Coding/Etiger/" + QuestionID + ".md"));
-    if (OutputFileStream.bad())
+    if (OutputFileStream.bad() || !OutputFileStream.is_open())
     {
         cout << "Can not open output file \"/workspaces/Coding/Etiger/" << QuestionID << ".md\"" << endl;
         return;
@@ -717,6 +727,7 @@ void TOOL::ETIGER::SubmitCode(string QuestionID)
     json SubmitInfo = json::parse(GetDataFromFileToString());
     if (SubmitInfo["code"] != 200)
     {
+        Failed = true;
         cout << "Failed" << endl
              << "Error number: " << SubmitInfo["code"].as_integer() << endl
              << "Error message: " << SubmitInfo["msg"].as_string() << endl;
@@ -757,6 +768,7 @@ void TOOL::ETIGER::GetAnswer(string QuestionID)
     json CommentsData = json::parse(GetDataFromFileToString());
     if (CommentsData["code"] != 200)
     {
+        Failed = true;
         cout << "Failed" << endl
              << "Error number: " << CommentsData["code"].as_integer() << endl
              << "Error message: " << CommentsData["msg"].as_string() << endl;
@@ -948,8 +960,37 @@ void TOOL::CODEFORCES::Login(string Username, string Password)
                   FORM);
     if (HTTPResponseCode == 200)
     {
-        cout << "Failed" << endl;
-        return;
+        string LoginPageData = GetDataFromFileToString();
+        if (LoginPageData.find("toNumbers"))
+        {
+            SetDataFromStringToFile("Run.js", GetDataFromFileToString("aes.min.js") + "\n\n\n\nfunction " + StringReplaceAll(GetStringBetween(LoginPageData, "<script>function ", "document.location.href="), "document.cookie", "var Output") + "\n\nconsole.log(Output);\n");
+            system(string("nodejs " + CurrentDir + "Run.js >> " + CurrentDir + "Output.tmp").c_str());
+            unlink(string(CurrentDir + "Run.js").c_str());
+            GetDataToFile(GetStringBetween(LoginPageData, "document.location.href=\"", "\";</script>"),
+                          "Header.tmp",
+                          "Body.tmp",
+                          true,
+                          string("csrf_token=" + GetCRSF() +
+                                 "&action=enter" +
+                                 "&ftaa=" + ftaa +
+                                 "&bfaa=" + bfaa +
+                                 "&handleOrEmail=" + URLEncode(Username.c_str()) +
+                                 "&password=" + URLEncode(Password.c_str()) +
+                                 "&_tta=176" +
+                                 "&remember=on")
+                              .c_str(),
+                          NULL,
+                          &HTTPResponseCode,
+                          FORM,
+                          "#HttpOnly_codeforces.com\tFALSE\t/\tFALSE\t0\tRCPC\t" + GetStringBetween(GetDataFromFileToString("Output.tmp"), "RCPC=", ";"));
+            unlink(string(CurrentDir + "Output.tmp").c_str());
+            if (HTTPResponseCode == 200)
+            {
+                Failed = true;
+                cout << "Failed" << endl;
+                return;
+            }
+        }
     }
     cout << "Succeed" << endl;
 }
@@ -968,7 +1009,7 @@ void TOOL::CODEFORCES::GetQuestionDetail(string QuestionID)
         return;
     }
     ofstream OutputFileStream(string("/workspaces/Coding/Codeforces/" + QuestionID + "/" + QuestionID + ".md").c_str());
-    if (OutputFileStream.bad())
+    if (OutputFileStream.bad() || !OutputFileStream.is_open())
     {
         cout << "Can not open output file \"/workspaces/Coding/Codeforces/" << QuestionID << "/" << QuestionID << ".md\"" << endl;
         return;
@@ -1040,6 +1081,7 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
                   FORM);
     if (HTTPResponseCode == 200)
     {
+        Failed = true;
         cout << "Failed" << endl;
         return;
     }
@@ -1100,7 +1142,7 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
     {
         ofstream OutputFileStream("/workspaces/Coding/Codeforces/" + QuestionID + "/" +
                                   QuestionID + "_" + to_string(i) + ".in");
-        if (OutputFileStream.bad())
+        if (OutputFileStream.bad() || !OutputFileStream.is_open())
             cout << "Can not open output file \"/workspaces/COding/Codeforces/" << QuestionID << "/" << QuestionID << "_" << i << ".in\"" << endl;
         else
         {
@@ -1109,7 +1151,7 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
         }
         OutputFileStream = ofstream("/workspaces/Coding/Codeforces/" + QuestionID + "/" +
                                     QuestionID + "_" + to_string(i) + ".out");
-        if (OutputFileStream.bad())
+        if (OutputFileStream.bad() || !OutputFileStream.is_open())
             cout << "Can not open output file \"/workspaces/COding/Codeforces/" << QuestionID << "/" << QuestionID << "_" << i << ".out\"" << endl;
         else
         {
@@ -1172,6 +1214,7 @@ void TOOL::UVA::Login(string Username, string Password)
                   FORM);
     if (HTTPResponseCode == 200)
     {
+        Failed = true;
         cout << "Failed" << endl;
         return;
     }
@@ -1241,7 +1284,6 @@ void TOOL::UVA::SubmitCode(string QuestionID)
                  "\n" +
                  "\n" +
                  "--" + MULTIPART_BOUNDARY + "--\n";
-    cout << tmp << endl;
     cout << "Submitting... " << flush;
     GetDataToFile("https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=25&page=save_submission",
                   "Header.tmp",
@@ -1253,37 +1295,51 @@ void TOOL::UVA::SubmitCode(string QuestionID)
                   MULTIPART);
     if (HTTPResponseCode == 200)
     {
+        Failed = true;
         cout << "Failed" << endl;
         return;
     }
     string SubmissionID = FindLocation();
-    SubmissionID = URLDecode(SubmissionID.substr(80, string::npos));
+    SubmissionID = SubmissionID.substr(SubmissionID.find_last_of('+') + 1);
     if (atoi(SubmissionID.c_str()) == 0)
     {
+        Failed = true;
         cout << "Failed" << endl;
         return;
     }
     cout << "Succeed" << endl;
-    cout << "Getting Judge result... " << flush;
-    GetDataToFile("https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=9");
-    cout << "Succeed" << endl;
-    string Data = GetDataFromFileToString();
-    Data = StringReplaceAll(Data, "\t", "");
-    Data = StringReplaceAll(Data, "\r", "");
-    Data = StringReplaceAll(Data, "\n", "");
-    Data = StringReplaceAll(Data, "< ", "<");
-    Data = StringReplaceAll(Data, " <", "<");
-    Data = StringReplaceAll(Data, "> ", ">");
-    Data = StringReplaceAll(Data, " >", ">");
-    ofstream O("Data.tmp");
-    O << Data;
-    O.close();
-    smatch Match;
-    if (regex_search(Data.cbegin(), Data.cend(), Match, regex("<tr class=\"sectiontableentry[0-9]\"><td>" + SubmissionID + "</td><td align=\"right\"><a href=\"index\\.php\\?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=[0-9]*\">[0-9]*</a></td><td><a href=\"index\\.php\\?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=[0-9]*\">[^<]*</a></td><td>([^<]*)</td><td>C\\+\\+11</td><td>([0-9\\.]*)</td><!--<td></td>--><td>[^<]*</td></tr>")))
-        cout << "Verdict: " << Match.str(1) << endl
-             << "Run Time: " << Match.str(2) << endl;
-    else
-        cout << "无法找到提交记录对应的提交信息";
+    cout << "Judging... " << flush;
+    while (1)
+    {
+        GetDataToFile("https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=9");
+        string Data = GetDataFromFileToString();
+        Data = StringReplaceAll(Data, "\t", "");
+        Data = StringReplaceAll(Data, "\r", "");
+        Data = StringReplaceAll(Data, "\n", "");
+        Data = StringReplaceAll(Data, "< ", "<");
+        Data = StringReplaceAll(Data, " <", "<");
+        Data = StringReplaceAll(Data, "> ", ">");
+        Data = StringReplaceAll(Data, " >", ">");
+        ofstream O("Data.tmp");
+        O << Data;
+        O.close();
+        smatch Match;
+        if (regex_search(Data.cbegin(), Data.cend(), Match, regex("<tr class=\"sectiontableentry[0-9]\"><td>" + SubmissionID + "</td><td align=\"right\"><a href=\"index\\.php\\?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=[0-9]*\">[0-9]*</a></td><td><a href=\"index\\.php\\?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=[0-9]*\">[^<]*</a></td><td>([^<]*)</td><td>C\\+\\+11</td><td>([0-9\\.]*)</td><!--<td></td>--><td>[^<]*</td></tr>")))
+        {
+            string Verdict = Match[1];
+            if (Verdict == "In judge queue")
+                usleep(500000);
+            else
+            {
+                cout << "Succeed" << endl
+                     << "Verdict: " << Verdict << endl
+                     << "Run Time: " << Match[2] << "s" << endl;
+                break;
+            }
+        }
+        else
+            cout << "无法找到提交记录对应的提交信息";
+    }
 }
 TOOL::TOOL(string FileName, string Operation)
 {
@@ -1291,6 +1347,8 @@ TOOL::TOOL(string FileName, string Operation)
     {
         LUOGU Luogu;
         Luogu.Login(GetDataFromFileToString("../Keys/LuoguUsername"), GetDataFromFileToString("../Keys/LuoguPassword"));
+        if (Failed)
+            return;
         if (Operation == "ClockIn")
             Luogu.ClockIn();
         else if (Operation == "GetQuestionDetail")
@@ -1301,11 +1359,15 @@ TOOL::TOOL(string FileName, string Operation)
             Luogu.GetAnswer(GetStringBetween(FileName, "Luogu/", ".cpp"));
         else
             cout << "传参错误" << endl;
+        if (Failed)
+            return;
     }
     else if (FileName.find("Etiger") != string::npos)
     {
         ETIGER Etiger;
         Etiger.Login(GetDataFromFileToString("../Keys/EtigerUsername"), GetDataFromFileToString("../Keys/EtigerPassword"));
+        if (Failed)
+            return;
         if (Operation == "ClockIn")
             Etiger.ClockIn();
         else if (Operation == "GetQuestionDetail")
@@ -1316,28 +1378,38 @@ TOOL::TOOL(string FileName, string Operation)
             Etiger.GetAnswer(GetStringBetween(FileName, "Etiger/", ".cpp"));
         else
             cout << "传参错误" << endl;
+        if (Failed)
+            return;
     }
     else if (FileName.find("UVa") != string::npos)
     {
         UVA UVa;
         UVa.Login(GetDataFromFileToString("../Keys/UVaUsername"), GetDataFromFileToString("../Keys/UVaPassword"));
+        if (Failed)
+            return;
         if (Operation == "GetQuestionDetail")
             UVa.GetQuestionDetail(GetStringBetween(FileName, "UVa/", ".cpp"));
         else if (Operation == "SubmitCode")
             UVa.SubmitCode(GetStringBetween(FileName, "UVa/", ".cpp"));
         else
             cout << "传参错误" << endl;
+        if (Failed)
+            return;
     }
     else if (FileName.find("Codeforces") != string::npos)
     {
         CODEFORCES Codeforces;
         Codeforces.Login(GetDataFromFileToString("../Keys/CodeforcesUsername"), GetDataFromFileToString("../Keys/CodeforcesPassword"));
+        if (Failed)
+            return;
         if (Operation == "GetQuestionDetail")
-            Codeforces.GetQuestionDetail(GetStringBetween(FileName, "Codeforces/", ".cpp"));
+            Codeforces.GetQuestionDetail(GetStringBetween(GetStringBetween(FileName, "Codeforces/", ".cpp"), "", "/"));
         else if (Operation == "SubmitCode")
-            Codeforces.SubmitCode(GetStringBetween(FileName, "Codeforces/", ".cpp"));
+            Codeforces.SubmitCode(GetStringBetween(GetStringBetween(FileName, "Codeforces/", ".cpp"), "", "/"));
         else
             cout << "传参错误" << endl;
+        if (Failed)
+            return;
     }
     else
         cout << "传参错误" << endl;
@@ -1361,7 +1433,7 @@ TOOL::TOOL(string ServerName, string Username, string Password)
 }
 TOOL::~TOOL()
 {
-    Clean();
+    // Clean();
 }
 int main(int argc, char **argv)
 {
