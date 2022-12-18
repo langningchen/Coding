@@ -1416,6 +1416,13 @@ TOOL::TOOL(string FileName, string Operation)
 }
 TOOL::TOOL(string ServerName, string Username, string Password)
 {
+    while (Username[Username.size() - 1] == '\n' ||
+           Username[Username.size() - 1] == '\r')
+        Username.erase(Username.size() - 1, 1);
+    while (Password[Password.size() - 1] == '\n' ||
+           Password[Password.size() - 1] == '\r')
+        Password.erase(Password.size() - 1, 1);
+    cout << ServerName << " " << Username << " " << Password << endl;
     if (ServerName == "Luogu")
     {
         LUOGU Luogu;
