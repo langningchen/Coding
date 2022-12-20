@@ -7,6 +7,7 @@
 #include <errno.h>
 #include "../Lib/Curl.hpp"
 #include "../Lib/TinyXML.hpp"
+#include <fcntl.h>
 bool Failed = false;
 class TOOL
 {
@@ -241,7 +242,7 @@ void TOOL::LUOGU::Login(string Username, string Password)
         json LoginInfo = json::parse(GetDataFromFileToString());
         if (!LoginInfo["status"].is_null())
         {
-            if (LoginInfo["currentData"]["errorMessage"].as_string() != "验证码错误" && ErrorCounter < 5)
+            if (LoginInfo["data"].as_string() != "验证码错误" && ErrorCounter < 5)
             {
                 Failed = true;
                 cout << "Failed" << endl
@@ -1444,6 +1445,9 @@ TOOL::~TOOL()
 }
 int main(int argc, char **argv)
 {
+    GetCurrentDir();
+    system(string("mkdir " + CurrentDir + "../Keys").c_str());
+    system(string("touch " + CurrentDir + "../Keys/Cookies.tmp").c_str());
     try
     {
         if (argc == 3)
