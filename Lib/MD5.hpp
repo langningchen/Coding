@@ -76,6 +76,11 @@ public:
     // 编码函数
     string encode(string src)
     {
+        tempA = A;
+        tempB = B;
+        tempC = C;
+        tempD = D;
+        strlength = 0;
         vector<unsigned int> rec = padding(src);
         for (unsigned int i = 0; i < strlength / 16; i++)
         {

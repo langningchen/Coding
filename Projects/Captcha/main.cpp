@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string.h>
 #include <map>
+#include <set>
 #include "../../Lib/jpeg/jpeglib.h"
 #include "../../Lib/jpeg/jerror.h"
 using namespace std;
@@ -86,9 +87,135 @@ int dfs(int x, int y, bool Do = false)
     }
     return Size;
 }
+void Fix1()
+{
+    for (int i = 0; i < Picture.Height; i++)
+    {
+        for (int j = 0; j < Picture.Width; j++)
+        {
+            int Counter = 0;
+            int Valid = 0;
+            if (i > 0 && j > 0)
+                Valid++, Counter += Picture.Data[i - 1][j - 1].IsShow;
+            if (i > 0)
+                Valid++, Counter += Picture.Data[i - 1][j].IsShow;
+            if (i > 0 && j < Picture.Width - 1)
+                Valid++, Counter += Picture.Data[i - 1][j + 1].IsShow;
+            if (j > 0)
+                Valid++, Counter += Picture.Data[i][j - 1].IsShow;
+            if (j > Picture.Width - 1)
+                Valid++, Counter += Picture.Data[i][j + 1].IsShow;
+            if (i < Picture.Height - 1 && j > 0)
+                Valid++, Counter += Picture.Data[i + 1][j - 1].IsShow;
+            if (i < Picture.Height - 1)
+                Valid++, Counter += Picture.Data[i + 1][j].IsShow;
+            if (i < Picture.Height - 1 && j < Picture.Width - 1)
+                Valid++, Counter += Picture.Data[i + 1][j + 1].IsShow;
+            if (Counter * 1.0 / Valid <= 0.4)
+                Picture.Data[i][j].IsShow = false;
+            if (Counter * 1.0 / Valid >= 0.6)
+                Picture.Data[i][j].IsShow = true;
+        }
+    }
+}
+void Fix2()
+{
+    for (int i = 0; i < Picture.Height; i++)
+    {
+        for (int j = 0; j < Picture.Width; j++)
+        {
+            memset(vst, 0, sizeof(vst));
+            if (dfs(i, j) <= 200)
+            {
+                memset(vst, 0, sizeof(vst));
+                dfs(i, j, true);
+            }
+        }
+    }
+}
+void Fix3()
+{
+    int FirstHaveData = 0;
+    for (int i = 0; i < Picture.Height; i++)
+    {
+        bool HaveData = false;
+        for (int j = 0; j < Picture.Width; j++)
+            if (Picture.Data[i][j].IsShow)
+            {
+                HaveData = true;
+                break;
+            }
+        if (HaveData)
+        {
+            FirstHaveData = i;
+            break;
+        }
+    }
+    for (int i = FirstHaveData; i < Picture.Height; i++)
+        for (int j = 0; j < Picture.Width; j++)
+            Picture.Data[i - FirstHaveData][j] = Picture.Data[i][j];
+    Picture.Height -= FirstHaveData;
+
+    FirstHaveData = 0;
+    for (int i = Picture.Height - 1; i >= 0; i--)
+    {
+        bool HaveData = false;
+        for (int j = 0; j < Picture.Width; j++)
+            if (Picture.Data[i][j].IsShow)
+            {
+                HaveData = true;
+                break;
+            }
+        if (HaveData)
+        {
+            FirstHaveData = i;
+            break;
+        }
+    }
+    Picture.Height -= Picture.Height - FirstHaveData;
+
+    FirstHaveData = 0;
+    for (int i = Picture.Width - 1; i >= 0; i--)
+    {
+        bool HaveData = false;
+        for (int j = 0; j < Picture.Width; j++)
+            if (Picture.Data[i][j].IsShow)
+            {
+                HaveData = true;
+                break;
+            }
+        if (HaveData)
+        {
+            FirstHaveData = i;
+            break;
+        }
+    }
+    Picture.Height -= Picture.Height - FirstHaveData;
+}
+void Output()
+{
+    for (int i = 0; i < Picture.Height; i++)
+    {
+        for (int j = 0; j < Picture.Width; j++)
+        {
+            if (Picture.Data[i][j].IsShow)
+                cout << "■";
+            else
+                cout << "□";
+        }
+        cout << endl;
+    }
+    cout << endl
+         << endl
+         << endl
+         << endl
+         << endl;
+}
 int main()
 {
-    // system("curl https://www.luogu.com.cn/api/verify/captcha -o captcha.jpeg");
+    for (int i = 0; i < 150; i++)
+        system(string("curl https://www.luogu.com.cn/api/verify/captcha -o " + to_string(i) + ".jpeg").c_str());
+    return 0;
     ReadJpegFile("captcha.jpeg");
     freopen("captcha.html", "w", stdout);
     int MaxRed = 0, MaxGreen = 0, MaxBlue = 0, Max = 0;
@@ -108,32 +235,37 @@ int main()
                 abs(Picture.Data[i][j].g - MaxGreen) < 50 ||
                 abs(Picture.Data[i][j].b - MaxBlue) < 50)
                 Picture.Data[i][j].IsShow = false;
-    for (int i = 0; i < Picture.Height; i++)
+    Fix1();
+    Output();
+    Fix2();
+    Output();
+    Fix3();
+    Output();
+    set<pair<int, int>>
+        Count;
+    for (int k = 0; k < 3; k++)
     {
-        for (int j = 0; j < Picture.Width; j++)
+        for (int i = Picture.Width / 7 * (k * 2 + 1) - 20; i < Picture.Width / 7 * (k * 2 + 2) + 20; i++)
         {
-            memset(vst, 0, sizeof(vst));
-            if (dfs(i, j) <= 500)
-            {
-                memset(vst, 0, sizeof(vst));
-                dfs(i, j, true);
-            }
+            int Counter = 0;
+            for (int j = 0; j < Picture.Height; j++)
+                if (Picture.Data[j][i].IsShow)
+                    Counter++;
+            if (Counter != 0)
+                Count.insert({Counter, i});
         }
     }
-    for (int i = 0; i < Picture.Height; i++)
+    set<pair<int, int>>::iterator sit = Count.begin();
+    for (int i = 0; i < 10; i++)
     {
         for (int j = 0; j < Picture.Width; j++)
-        {
-            // if (Picture.Data[i][j].IsShow)
-            //     cout << "<font style=\"color: rgb(" << (int)Picture.Data[i][j].r << "," << (int)Picture.Data[i][j].g << "," << (int)Picture.Data[i][j].b << ")\">哦</font>";
-            // else
-            //     cout << "<font style=\"color: rgba(0,0,0,0)\">哦</font>";
-            if (Picture.Data[i][j].IsShow)
-                cout << "哦";
-            else
-                cout << "  ";
-        }
-        cout << endl;
+            Picture.Data[j][sit->second].IsShow = false;
+        sit++;
     }
+    Output();
+    Fix1();
+    Output();
+    Fix2();
+    Output();
     return 0;
 }
