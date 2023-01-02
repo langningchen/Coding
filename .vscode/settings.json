@@ -104,7 +104,7 @@
     },
     "C_Cpp.errorSquiggles": "Disabled",
     "terminal.integrated.defaultProfile.linux": "fish",
-    "winopacity.opacity": 240,
+    "winopacity.opacity": 180,
     "cSpell.words": [
         "codeforces",
         "configor",

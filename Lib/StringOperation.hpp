@@ -1,4 +1,5 @@
 #include <string>
+#include <string.h>
 #include <unistd.h>
 #include <vector>
 using namespace std;
@@ -93,5 +94,5 @@ void SetDataFromStringToFile(string FileName, string Data)
 }
 string FixString(string Data)
 {
-    return (Data[Data.size() - 1] == '\n' || Data[Data.size() - 1] == ' ' ? FixString(Data.erase(Data.size() - 1, 1)) : Data);
+    return (Data[Data.size() - 1] == '\n' || Data[Data.size() - 1] == '\r' || Data[Data.size() - 1] == ' ' ? FixString(Data.erase(Data.size() - 1, 1)) : Data);
 }

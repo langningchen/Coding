@@ -24,11 +24,14 @@ void Login(string Username, string Password)
         int ErrorCounter = 0;
         while (1)
         {
-            GetDataToFile("https://www.luogu.com.cn/api/verify/captcha");
+            GetDataToFile("https://www.luogu.com.cn/api/verify/captcha", "Header.tmp", "Captcha.jpeg");
             curl_slist *HeaderList = NULL;
             HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json");
-            GetDataToFile("https://luogu-captcha-bypass.piterator.com/predict/", "Header.tmp", "Body.tmp", true, string("data:image/jpeg;base64," + Base64Encode(GetDataFromFileToString())), HeaderList);
-            string Captcha = GetDataFromFileToString();
+            // GetDataToFile("https://luogu-captcha-bypass.piterator.com/predict/", "Header.tmp", "Body.tmp", true, string("data:image/jpeg;base64," + Base64Encode(GetDataFromFileToString())), HeaderList);
+            // string Captcha = GetDataFromFileToString();
+            string Captcha;
+            cout << "Please input the captcha: ";
+            cin >> Captcha;
             json LoginRequest;
             LoginRequest["username"] = Username;
             LoginRequest["password"] = Password;
@@ -59,15 +62,7 @@ void Login(string Username, string Password)
     if (HTTPResponseCode != 200)
     {
         GetDataToFile("https://www.luogu.com.cn/api/OAuth2/authorize?response_type=code&client_id=lgclass.luoguclass&scope=oauth2.login&redirect_uri=https%3A%2F%2Fclass.luogu.com.cn%2Flogin%2Fcheck-luogu");
-        string HeaderData = GetDataFromFileToString("Header.tmp");
-        string RedirectURL = GetStringBetween(HeaderData, "Location: ", "\n");
-        if (RedirectURL == "")
-            RedirectURL = GetStringBetween(HeaderData, "location: ", "\n");
-        if (RedirectURL == "")
-        {
-            cout << "无法找到重定向网址起始位置" << endl;
-            return;
-        }
+        string RedirectURL = FindLocation();
         GetDataToFile(RedirectURL);
     }
 }

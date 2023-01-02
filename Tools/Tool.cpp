@@ -7,6 +7,7 @@
 #include <errno.h>
 #include "../Lib/Curl.hpp"
 #include "../Lib/TinyXML.hpp"
+#include "../Lib/MD5.hpp"
 bool Failed = false;
 class TOOL
 {
@@ -305,7 +306,38 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
         return;
     }
     cout << "Succeed" << endl;
-    ofstream OutputFileStream(string("/workspaces/Coding/Luogu/" + QuestionID + ".md").c_str());
+    MD5 MD5Encoder;
+    json CPHData;
+    CPHData["name"] = QuestionInfo["currentData"]["title"].as_string();
+    CPHData["group"] = "Luogu - test";
+    CPHData["url"] = "https://www.luogu.com.cn/problem/" + QuestionID;
+    CPHData["interactive"] = false;
+    CPHData["memoryLimit"] = 0;
+    for (auto i : QuestionInfo["currentData"]["problem"]["limits"]["memory"])
+        CPHData["memoryLimit"] = max(CPHData["memoryLimit"].as_integer(), i.as_integer());
+    CPHData["timeLimit"] = 0;
+    for (auto i : QuestionInfo["currentData"]["problem"]["limits"]["time"])
+        CPHData["timeLimit"] = max(CPHData["timeLimit"].as_integer(), i.as_integer());
+    for (size_t i = 0; i < QuestionInfo["currentData"]["problem"]["samples"].size(); i++)
+    {
+        CPHData["tests"][i]["id"] = i;
+        CPHData["tests"][i]["input"] = QuestionInfo["currentData"]["problem"]["samples"][i][0].as_string();
+        CPHData["tests"][i]["output"] = QuestionInfo["currentData"]["problem"]["samples"][i][1].as_string();
+    }
+    CPHData["local"] = false;
+    CPHData["srcPath"] = "/workspaces/Coding/Luogu/" + QuestionID + ".cpp";
+    CPHData["testType"] = "single";
+    CPHData["input"]["type"] = "stdin";
+    CPHData["output"]["type"] = "stdout";
+    CPHData["languages"]["java"]["mainClass"] = "Main";
+    CPHData["languages"]["java"]["taskClass"] = "GCastleDefense";
+    CPHData["batch"]["id"] = MD5Encoder.encode(QuestionID);
+    CPHData["batch"]["size"] = 1;
+    cout << string("/workspaces/Coding/Luogu/" + QuestionID + ".cpp") << endl;
+    ofstream OutputFileStream("/workspaces/Coding/CPH/." + QuestionID + ".cpp_" + MD5Encoder.encode("/workspaces/Coding/Luogu/" + QuestionID + ".cpp") + ".prob");
+    OutputFileStream << CPHData.dump();
+    OutputFileStream.close();
+    OutputFileStream = ofstream(string("/workspaces/Coding/Luogu/" + QuestionID + ".md").c_str());
     if (OutputFileStream.bad() || !OutputFileStream.is_open())
     {
         cout << "Can not open output file \"/workspaces/Coding/Luogu/" << QuestionID << ".md\"" << endl;
@@ -477,7 +509,7 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
                                        ["detail"]
                                        ["judgeResult"]
                                        ["subtasks"]
-                                       [jit["id"].as_string()]
+                                       [atoi(jit["id"].as_string().c_str())]
                                        ["testCases"])
                 cout
                     << "    #" << jit2["id"].as_integer() << " "
@@ -621,7 +653,38 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
         return;
     }
     cout << "Succeed" << endl;
-    ofstream OutputFileStream(string("/workspaces/Coding/Etiger/" + QuestionID + ".md"));
+    MD5 MD5Encoder;
+    json CPHData;
+    CPHData["name"] = QuestionInfo["data"]["title"].as_string();
+    CPHData["group"] = "Etiger - test";
+    CPHData["url"] = "https://etiger.vip";
+    CPHData["interactive"] = false;
+    CPHData["memoryLimit"] = QuestionInfo["data"]["memLimit"].as_integer();
+    CPHData["timeLimit"] = QuestionInfo["data"]["timeLimit"].as_integer() * 1000;
+    string InputSample = QuestionInfo["data"]["inputSample"].as_string();
+    string OutputSample = QuestionInfo["data"]["outputSample"].as_string();
+    vector<string> InputSamples = StringSpilt(InputSample, ";");
+    vector<string> OutputSamples = StringSpilt(OutputSample, ";");
+    for (size_t i = 0; i < InputSamples.size(); i++)
+    {
+        CPHData["tests"][i]["input"] = InputSamples[i];
+        CPHData["tests"][i]["output"] = OutputSamples[i];
+        CPHData["tests"][i]["id"] = i;
+    }
+    CPHData["local"] = false;
+    CPHData["srcPath"] = "/workspaces/Coding/Etiger/" + QuestionID + ".cpp";
+    CPHData["testType"] = "single";
+    CPHData["input"]["type"] = "stdin";
+    CPHData["output"]["type"] = "stdout";
+    CPHData["languages"]["java"]["mainClass"] = "Main";
+    CPHData["languages"]["java"]["taskClass"] = "GCastleDefense";
+    CPHData["batch"]["id"] = MD5Encoder.encode(QuestionID);
+    CPHData["batch"]["size"] = 1;
+    cout << string("/workspaces/Coding/Etiger/" + QuestionID + ".cpp") << endl;
+    ofstream OutputFileStream("/workspaces/Coding/CPH/." + QuestionID + ".cpp_" + MD5Encoder.encode("/workspaces/Coding/Etiger/" + QuestionID + ".cpp") + ".prob");
+    OutputFileStream << CPHData.dump();
+    OutputFileStream.close();
+    OutputFileStream = ofstream(string("/workspaces/Coding/Etiger/" + QuestionID + ".md"));
     if (OutputFileStream.bad() || !OutputFileStream.is_open())
     {
         cout << "Can not open output file \"/workspaces/Coding/Etiger/" << QuestionID << ".md\"" << endl;
@@ -649,8 +712,6 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
     OutputFileStream << "## 输入输出样例" << endl
                      << endl;
     int Counter = 1;
-    string InputSample = QuestionInfo["data"]["inputSample"].as_string();
-    string OutputSample = QuestionInfo["data"]["outputSample"].as_string();
     while (InputSample.find(";") != string::npos && OutputSample.find(";") != string::npos)
     {
         if (FixString(InputSample.substr(0, InputSample.find(";"))) != "无")
