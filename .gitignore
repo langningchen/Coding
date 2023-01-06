@@ -1,7 +1,22 @@
+# Ignore files without extension
+*
+!*.*
+!*/
+
+# Ignore secret files
 Keys/
 Tools/LockAndUnlock.cpp
-Tools/LockAndUnlock
+
+# Ingore generated files
 Tools/LGR*
-**/Header.tmp
-**/Body.tmp
-**/*
+
+# Ignore temp files
+**/*.tmp
+CPH/
+
+# Ignore libraries
+Lib/
+
+# Ignore debug files
+Debug/
+Release/
