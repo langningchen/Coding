@@ -88,7 +88,6 @@ void Init()
     ExcludeFolderName.insert(".github");
     ExcludeFolderName.insert(".vscode");
     ExcludeFolderName.insert("Lib");
-    ExcludeFolderName.insert("Tools");
 }
 void OutputSummary(string Data)
 {
