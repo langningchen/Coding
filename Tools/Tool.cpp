@@ -1069,10 +1069,10 @@ void TOOL::CODEFORCES::GetQuestionDetail(string QuestionID)
         cout << "Formatting problem data error, error message: " << QuestionXmlDocument.ErrorDesc() << endl;
         return;
     }
-    ofstream OutputFileStream(string("/workspaces/Coding/Codeforces/" + QuestionID + "/" + QuestionID + ".md").c_str());
+    ofstream OutputFileStream(string("/workspaces/Coding/Codeforces/" + QuestionID + ".md").c_str());
     if (OutputFileStream.bad() || !OutputFileStream.is_open())
     {
-        cout << "Can not open output file \"/workspaces/Coding/Codeforces/" << QuestionID << "/" << QuestionID << ".md\"" << endl;
+        cout << "Can not open output file \"/workspaces/Coding/Codeforces/" << QuestionID << ".md\"" << endl;
         return;
     }
     TiXmlHandle QuestionXmlHandle = TiXmlHandle(&QuestionXmlDocument)
@@ -1110,12 +1110,12 @@ void TOOL::CODEFORCES::GetQuestionDetail(string QuestionID)
                      << "|Output|" << QuestionXmlHandle.Child(0).Child(4).Child(1).ToText()->Value() << "|" << endl
                      << endl;
     OutputFileStream.close();
-    if (system(string("code /workspaces/Coding/Codeforces/" + QuestionID + "/" + QuestionID + ".md").c_str()))
-        cout << "Open file \"/workspaces/Coding/Codeforces/" << QuestionID << "/" << QuestionID << ".md\" failed, please open it manually" << endl;
+    if (system(string("code /workspaces/Coding/Codeforces/" + QuestionID + ".md").c_str()))
+        cout << "Open file \"/workspaces/Coding/Codeforces/" << QuestionID << ".md\" failed, please open it manually" << endl;
 }
 void TOOL::CODEFORCES::SubmitCode(string QuestionID)
 {
-    string Code = GetDataFromFileToString("../Codeforces/" + QuestionID + "/" + QuestionID + ".cpp");
+    string Code = GetDataFromFileToString("../Codeforces/" + QuestionID + ".cpp");
     Code += "\n\n// " + to_string(time(NULL));
     cout << "Getting submit page data... " << flush;
     GetDataToFile("https://codeforces.com/problemset/submit");
@@ -1201,19 +1201,17 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
     int TestNumber = atoi(result["testCount"].as_string().c_str());
     for (int i = 1; i <= TestNumber; i++)
     {
-        ofstream OutputFileStream("/workspaces/Coding/Codeforces/" + QuestionID + "/" +
-                                  QuestionID + "_" + to_string(i) + ".in");
+        ofstream OutputFileStream("/workspaces/Coding/Codeforces/" + QuestionID + "_" + to_string(i) + ".in");
         if (OutputFileStream.bad() || !OutputFileStream.is_open())
-            cout << "Can not open output file \"/workspaces/COding/Codeforces/" << QuestionID << "/" << QuestionID << "_" << i << ".in\"" << endl;
+            cout << "Can not open output file \"/workspaces/COding/Codeforces/" << QuestionID << "_" << i << ".in\"" << endl;
         else
         {
             OutputFileStream << result["input#" + to_string(i)].as_string();
             OutputFileStream.close();
         }
-        OutputFileStream = ofstream("/workspaces/Coding/Codeforces/" + QuestionID + "/" +
-                                    QuestionID + "_" + to_string(i) + ".out");
+        OutputFileStream = ofstream("/workspaces/Coding/Codeforces/" + QuestionID + "_" + to_string(i) + ".out");
         if (OutputFileStream.bad() || !OutputFileStream.is_open())
-            cout << "Can not open output file \"/workspaces/COding/Codeforces/" << QuestionID << "/" << QuestionID << "_" << i << ".out\"" << endl;
+            cout << "Can not open output file \"/workspaces/COding/Codeforces/" << QuestionID << "_" << i << ".out\"" << endl;
         else
         {
             OutputFileStream << result["answer#" + to_string(i)].as_string();
