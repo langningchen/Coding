@@ -1,110 +1,110 @@
-name: C++ Auto Compile
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-jobs:
-  Compile:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Install openssl
-      run: |
-        wget https://www.openssl.org/source/old/1.1.1/openssl-1.1.1q.tar.gz
-        tar -zxf openssl-1.1.1q.tar.gz
-        rm openssl-1.1.1q.tar.gz
-        cd ./openssl-1.1.1q/
-        ./config
-        make
-        make test
-        sudo make install
-        cd ../
-        rm -f -r ./openssl-1.1.1q/
-        sudo cp /usr/local/lib/libssl.* /usr/lib
-    - name: Install libcurl
-      run: |
-        wget https://curl.se/download/curl-7.85.0.tar.gz
-        tar -zxf curl-7.85.0.tar.gz
-        rm curl-7.85.0.tar.gz
-        cd ./curl-7.85.0/
-        ./configure --with-openssl
-        make
-        make test
-        sudo make install
-        cd ../
-        rm -f -r ./curl-7.85.0/
-        sudo cp /usr/local/lib/libcurl.* /usr/lib
-    - name: Install libjpeg
-      run: |
-        wget http://www.ijg.org/files/jpegsrc.v9e.tar.gz
-        tar -zxf jpegsrc.v9e.tar.gz
-        rm jpegsrc.v9e.tar.gz
-        cd ./jpeg-9e/
-        ./configure
-        make
-        make test
-        sudo make install
-        cd ../
-        rm -f -r ./jpeg-9e/
-        sudo cp /usr/local/lib/libjpeg.* /usr/lib
-    - name: Install libcrypto
-      run: |
-        sudo cp /usr/local/lib/libcrypto.* /usr/lib
-    - name: Install libtidy
-      run: |
-        wget https://codeload.github.com/htacg/tidy-html5/zip/refs/heads/next
-        unzip next
-        rm next
-        cd ./tidy-html5-next/build/cmake
-        cmake ../.. -DCMAKE_BUILD_TYPE=Release
-        make
-        sudo make install
-        cd ../../../
-        rm -f -r ./tidy-html5-next/
-        sudo cp /usr/local/lib/libtidy.* /usr/lib
-    - name: Install libtinyxml
-      run: |
-        wget https://nchc.dl.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip
-        unzip tinyxml_2_6_2.zip
-        rm tinyxml_2_6_2.zip
-        cd ./tinyxml/
-        make clean
-        make
-        ./xmltest
-        cd ../
-        rm -f -r tinyxml/
-    - name: Send mail when starts
-      uses: dawidd6/action-send-mail@master
-      with:
-        server_address: smtp.office365.com
-        server_port: 587
-        username: ${{ secrets.MAILUSERNAME }}
-        password: ${{ secrets.MAILPASSWORD }}
-        subject: Action Runs Start
-        body: Action Runs Start, Tips From Github Actions
-        from: ${{ secrets.MAILUSERNAME }}
-        to: ${{ secrets.MAILUSERNAME }}
-    - name: Run
-      run: ./Tools/DoAutoCompileWorks
-    - name: Send mail when ends
-      uses: dawidd6/action-send-mail@master
-      with:
-        server_address: smtp.office365.com
-        server_port: 587
-        username: ${{ secrets.MAILUSERNAME }}
-        password: ${{ secrets.MAILPASSWORD }}
-        subject: Action Runs End
-        body: file://mail.txt
-        from: ${{ secrets.MAILUSERNAME }}
-        to: ${{ secrets.MAILUSERNAME }}
-    - name: Upload Artifact 1
-      uses: actions/upload-artifact@v1.0.0
-      with:
-        name: Etiger
-        path: Etiger.zip
-    - name: Upload Artifact 2
-      uses: actions/upload-artifact@v1.0.0
-      with:
-        name: Luogu
-        path: Luogu.zip
+# name: C++ Auto Compile
+# on:
+#   push:
+#     branches: [ main ]
+#   pull_request:
+#     branches: [ main ]
+# jobs:
+#   Compile:
+#     runs-on: ubuntu-latest
+#     steps:
+#     - uses: actions/checkout@v3
+#     - name: Install openssl
+#       run: |
+#         wget https://www.openssl.org/source/old/1.1.1/openssl-1.1.1q.tar.gz
+#         tar -zxf openssl-1.1.1q.tar.gz
+#         rm openssl-1.1.1q.tar.gz
+#         cd ./openssl-1.1.1q/
+#         ./config
+#         make
+#         make test
+#         sudo make install
+#         cd ../
+#         rm -f -r ./openssl-1.1.1q/
+#         sudo cp /usr/local/lib/libssl.* /usr/lib
+#     - name: Install libcurl
+#       run: |
+#         wget https://curl.se/download/curl-7.85.0.tar.gz
+#         tar -zxf curl-7.85.0.tar.gz
+#         rm curl-7.85.0.tar.gz
+#         cd ./curl-7.85.0/
+#         ./configure --with-openssl
+#         make
+#         make test
+#         sudo make install
+#         cd ../
+#         rm -f -r ./curl-7.85.0/
+#         sudo cp /usr/local/lib/libcurl.* /usr/lib
+#     - name: Install libjpeg
+#       run: |
+#         wget http://www.ijg.org/files/jpegsrc.v9e.tar.gz
+#         tar -zxf jpegsrc.v9e.tar.gz
+#         rm jpegsrc.v9e.tar.gz
+#         cd ./jpeg-9e/
+#         ./configure
+#         make
+#         make test
+#         sudo make install
+#         cd ../
+#         rm -f -r ./jpeg-9e/
+#         sudo cp /usr/local/lib/libjpeg.* /usr/lib
+#     - name: Install libcrypto
+#       run: |
+#         sudo cp /usr/local/lib/libcrypto.* /usr/lib
+#     - name: Install libtidy
+#       run: |
+#         wget https://codeload.github.com/htacg/tidy-html5/zip/refs/heads/next
+#         unzip next
+#         rm next
+#         cd ./tidy-html5-next/build/cmake
+#         cmake ../.. -DCMAKE_BUILD_TYPE=Release
+#         make
+#         sudo make install
+#         cd ../../../
+#         rm -f -r ./tidy-html5-next/
+#         sudo cp /usr/local/lib/libtidy.* /usr/lib
+#     - name: Install libtinyxml
+#       run: |
+#         wget https://nchc.dl.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip
+#         unzip tinyxml_2_6_2.zip
+#         rm tinyxml_2_6_2.zip
+#         cd ./tinyxml/
+#         make clean
+#         make
+#         ./xmltest
+#         cd ../
+#         rm -f -r tinyxml/
+#     - name: Send mail when starts
+#       uses: dawidd6/action-send-mail@master
+#       with:
+#         server_address: smtp.office365.com
+#         server_port: 587
+#         username: ${{ secrets.MAILUSERNAME }}
+#         password: ${{ secrets.MAILPASSWORD }}
+#         subject: Action Runs Start
+#         body: Action Runs Start, Tips From Github Actions
+#         from: ${{ secrets.MAILUSERNAME }}
+#         to: ${{ secrets.MAILUSERNAME }}
+#     - name: Run
+#       run: ./Tools/DoAutoCompileWorks
+#     - name: Send mail when ends
+#       uses: dawidd6/action-send-mail@master
+#       with:
+#         server_address: smtp.office365.com
+#         server_port: 587
+#         username: ${{ secrets.MAILUSERNAME }}
+#         password: ${{ secrets.MAILPASSWORD }}
+#         subject: Action Runs End
+#         body: file://mail.txt
+#         from: ${{ secrets.MAILUSERNAME }}
+#         to: ${{ secrets.MAILUSERNAME }}
+#     - name: Upload Artifact 1
+#       uses: actions/upload-artifact@v1.0.0
+#       with:
+#         name: Etiger
+#         path: Etiger.zip
+#     - name: Upload Artifact 2
+#       uses: actions/upload-artifact@v1.0.0
+#       with:
+#         name: Luogu
+#         path: Luogu.zip
