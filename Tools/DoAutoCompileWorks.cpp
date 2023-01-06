@@ -44,6 +44,7 @@ void Compile(int ID)
             CompileOutput.erase(CompileOutput.size() - 1, 1);
         if (!IsFileExists(DestFileName))
         {
+            水电费
             SummaryList.push_back("### File " + SourceFileName + " compile failed!");
             SummaryList.push_back("");
             SummaryList.push_back("<pre><code>");
