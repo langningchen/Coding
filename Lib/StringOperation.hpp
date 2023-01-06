@@ -15,6 +15,7 @@ void GetCurrentDir()
     delete Buffer;
     CurrentDir.erase(CurrentDir.find_last_of("/") + 1, string::npos);
 }
+#ifndef QT_VERSION_STR
 string StringReplaceAll(string Data, string Before, string After)
 {
     size_t Index = 0;
@@ -22,6 +23,15 @@ string StringReplaceAll(string Data, string Before, string After)
         Data.replace(Index, Before.size(), After);
     return Data;
 }
+#else
+QString StringReplaceAll(string Data, string Before, string After)
+{
+    size_t Index = 0;
+    while ((Index = Data.find(Before)) != string::npos)
+        Data.replace(Index, Before.size(), After);
+    return Data;
+}
+#endif
 string GetStringBetween(string Data, string Start, string End)
 {
     int StartPos = Data.find(Start);

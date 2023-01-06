@@ -1,16 +1,13 @@
-#include <iostream>
-#include <fstream>
 #include <curl/curl.h>
 #include <unistd.h>
 #include "./configor/json.hpp"
-#include "./StringOperation.hpp"
-using namespace std;
+#include "./StringOperation-QT.hpp"
 using namespace configor;
-string UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:107.0) Gecko/20100101 Firefox/107.0";
-const string FORM = "application/x-www-form-urlencoded";
-const string MULTIPART_BOUNDARY = "qv5wyfw459yhugv5swbmq39m8yuw4";
-const string MULTIPART = "multipart/form-data; boundary=" + MULTIPART_BOUNDARY;
-string HTTPResponseString(int HTTPResponseCode)
+QString UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:107.0) Gecko/20100101 Firefox/107.0";
+const QString FORM = "application/x-www-form-urlencoded";
+const QString MULTIPART_BOUNDARY = "qv5wyfw459yhugv5swbmq39m8yuw4";
+const QString MULTIPART = "multipart/form-data; boundary=" + MULTIPART_BOUNDARY;
+QString HTTPResponseString(int HTTPResponseCode)
 {
     switch (HTTPResponseCode)
     {
@@ -204,63 +201,57 @@ string HTTPResponseString(int HTTPResponseCode)
         return "Network Authentication Required";
         break;
     default:
-        return to_string(HTTPResponseCode);
+        return QString::number(HTTPResponseCode);
     }
 }
-int GetDataToFile(string URL,
-                  string HeaderFileName = "Header.tmp",
-                  string BodyFileName = "Body.tmp",
+int GetDataToFile(QString URL,
+                  QString HeaderFileName = "Header.tmp",
+                  QString BodyFileName = "Body.tmp",
                   bool IsPost = false,
-                  string PostData = "",
+                  QString PostData = "",
                   curl_slist *HeaderList = NULL,
                   int *HTTPResponseCode = NULL,
-                  string PostContentType = "application/json",
-                  string Cookie = "",
+                  QString PostContentType = "application/json",
+                  QString Cookie = "",
                   CURLU *URL2 = NULL)
 {
     if (CurrentDir == "")
         GetCurrentDir();
-    FILE *HeaderFilePointer = fopen((CurrentDir + HeaderFileName).c_str(), "w");
-    FILE *BodyFilePointer = fopen((CurrentDir + BodyFileName).c_str(), "w");
     CURLcode CurlCode = curl_global_init(CURL_GLOBAL_ALL);
     if (CurlCode != 0)
     {
-        fclose(BodyFilePointer);
-        fclose(HeaderFilePointer);
-        cout << "Curl init failed!" << endl
-             << CurlCode << ": " << curl_easy_strerror(CurlCode) << endl;
-        getchar();
+        QMessageBox::critical(NULL, QTranslator::tr("Error"), QTranslator::tr("Curl init failed!\n") + QString::number(CurlCode) + QTranslator::tr(": ") + curl_easy_strerror(CurlCode));
         exit(0);
     }
+    QFile HeaderFile(CurrentDir + HeaderFileName);
+    QFile BodyFile(CurrentDir + BodyFileName);
     CURL *Curl = curl_easy_init();
     curl_easy_setopt(Curl, CURLOPT_SSL_VERIFYHOST, false);
     curl_easy_setopt(Curl, CURLOPT_SSL_VERIFYPEER, false);
     curl_easy_setopt(Curl, CURLOPT_SSL_VERIFYSTATUS, false);
-    curl_easy_setopt(Curl, CURLOPT_HEADERDATA, HeaderFilePointer);
-    curl_easy_setopt(Curl, CURLOPT_WRITEDATA, BodyFilePointer);
+    curl_easy_setopt(Curl, CURLOPT_HEADERDATA, fdopen(HeaderFile.handle(), "w"));
+    curl_easy_setopt(Curl, CURLOPT_WRITEDATA, fdopen(BodyFile.handle(), "w"));
     curl_easy_setopt(Curl, CURLOPT_CONNECTTIMEOUT, 10);
     if (Cookie != "")
-        curl_easy_setopt(Curl, CURLOPT_COOKIELIST, Cookie.c_str());
+        curl_easy_setopt(Curl, CURLOPT_COOKIELIST, Cookie.toStdString().c_str());
     curl_easy_setopt(Curl, CURLOPT_COOKIEFILE, "/workspaces/Coding/Keys/Cookies.tmp");
     curl_easy_setopt(Curl, CURLOPT_COOKIEJAR, "/workspaces/Coding/Keys/Cookies.tmp");
     if (URL == "")
         curl_easy_setopt(Curl, CURLOPT_CURLU, URL2);
     else
-        curl_easy_setopt(Curl, CURLOPT_URL, URL.c_str());
+        curl_easy_setopt(Curl, CURLOPT_URL, URL.toStdString().c_str());
     if (IsPost)
     {
-        HeaderList = curl_slist_append(HeaderList, string("Content-Type: " + PostContentType).c_str());
+        HeaderList = curl_slist_append(HeaderList, QString("Content-Type: " + PostContentType).toStdString().c_str());
         curl_easy_setopt(Curl, CURLOPT_POST, true);
-        curl_easy_setopt(Curl, CURLOPT_POSTFIELDS, PostData.c_str());
+        curl_easy_setopt(Curl, CURLOPT_POSTFIELDS, PostData.toStdString().c_str());
     }
-    HeaderList = curl_slist_append(HeaderList, string("User-Agent: " + UA).c_str());
+    HeaderList = curl_slist_append(HeaderList, QString("User-Agent: " + UA).toStdString().c_str());
     curl_easy_setopt(Curl, CURLOPT_HTTPHEADER, HeaderList);
     CurlCode = curl_easy_perform(Curl);
     if (CurlCode != 0)
     {
-        cout << "Request with URL \"" << URL << "\" failed! " << endl
-             << CurlCode << ": " << curl_easy_strerror(CurlCode) << endl;
-        getchar();
+        QMessageBox::critical(NULL, QTranslator::tr("Error"), QTranslator::tr("Request with URL ") + URL + QTranslator::tr("\" failed! \n") + QString::number(CurlCode) + " " + curl_easy_strerror(CurlCode));
         exit(0);
     }
     int TempHTTPResponseCode = 0;
@@ -272,19 +263,19 @@ int GetDataToFile(string URL,
     if (HTTPResponseCode != NULL)
         *HTTPResponseCode = TempHTTPResponseCode;
     curl_easy_cleanup(Curl);
-    fclose(BodyFilePointer);
-    fclose(HeaderFilePointer);
+    BodyFile.close();
+    HeaderFile.close();
     return 0;
 }
-string EraseHTMLElement(string Data)
+QString EraseHTMLElement(QString Data)
 {
     int HTMLStartIndex = 0;
-    for (unsigned int i = 0; i < Data.size(); i++)
+    for (int i = 0; i < Data.size(); i++)
         if (Data[i] == '<')
             HTMLStartIndex = i;
         else if (Data[i] == '>')
         {
-            Data.erase(HTMLStartIndex, i - HTMLStartIndex + 1);
+            Data.remove(HTMLStartIndex, i - HTMLStartIndex + 1);
             i = HTMLStartIndex;
         }
     return Data;
@@ -293,22 +284,22 @@ void Clean()
 {
     if (CurrentDir == "")
         GetCurrentDir();
-    remove((CurrentDir + "Body.tmp").c_str());
-    remove((CurrentDir + "Header.tmp").c_str());
+    remove((CurrentDir + "Body.tmp").toStdString().c_str());
+    remove((CurrentDir + "Header.tmp").toStdString().c_str());
 }
-string Base64Encode(string Input)
+QString Base64Encode(QString Input)
 {
-    string base64_chars =
+    QString base64_chars =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz"
         "0123456789+/";
-    string Output;
-    for (unsigned int k = 0; k < Input.size(); k += 3)
+    QString Output;
+    for (int k = 0; k < Input.size(); k += 3)
     {
-        Output.push_back(base64_chars[(Input[k] & 0xfc) >> 2]);
-        Output.push_back(base64_chars[((Input[k] & 0x03) << 4) + ((Input[k + 1] & 0xf0) >> 4)]);
-        Output.push_back(base64_chars[((Input[k + 1] & 0x0f) << 2) + ((Input[k + 2] & 0xc0) >> 6)]);
-        Output.push_back(base64_chars[Input[k + 2] & 0x3f]);
+        Output.push_back(base64_chars[(Input.toUtf8().at(k) & 0xfc) >> 2]);
+        Output.push_back(base64_chars[((Input.toUtf8().at(k) & 0x03) << 4) + ((Input.toUtf8().at(k + 1) & 0xf0) >> 4)]);
+        Output.push_back(base64_chars[((Input.toUtf8().at(k + 1) & 0x0f) << 2) + ((Input.toUtf8().at(k + 2) & 0xc0) >> 6)]);
+        Output.push_back(base64_chars[Input.toUtf8().at(k + 2) & 0x3f]);
     }
     if (Input.size() % 3 == 1)
         Output.replace(Output.size() - 2, 2, "==");
@@ -333,13 +324,12 @@ unsigned char FromHex(unsigned char x)
         assert(0);
     return y;
 }
-string URLEncode(string Input)
+QString URLEncode(QString Input)
 {
-    string Output = "";
-    size_t length = Input.length();
-    for (size_t i = 0; i < length; i++)
+    QString Output = "";
+    for (int i = 0; i < Input.length(); i++)
     {
-        if (isalnum((unsigned char)Input[i]) ||
+        if (isalnum(Input.toUtf8().at(i)) ||
             (Input[i] == '-') ||
             (Input[i] == '_') ||
             (Input[i] == '.') ||
@@ -350,25 +340,24 @@ string URLEncode(string Input)
         else
         {
             Output += '%';
-            Output += ToHex((unsigned char)Input[i] >> 4);
-            Output += ToHex((unsigned char)Input[i] % 16);
+            Output += ToHex(Input.toUtf8().at(i) >> 4);
+            Output += ToHex(Input.toUtf8().at(i) % 16);
         }
     }
     return Output;
 }
-string URLDecode(string Input)
+QString URLDecode(QString Input)
 {
-    string Output = "";
-    size_t length = Input.length();
-    for (size_t i = 0; i < length; i++)
+    QString Output = "";
+    for (int i = 0; i < Input.length(); i++)
     {
         if (Input[i] == '+')
             Output += ' ';
         else if (Input[i] == '%')
         {
-            assert(i + 2 < length);
-            unsigned char high = FromHex((unsigned char)Input[++i]);
-            unsigned char low = FromHex((unsigned char)Input[++i]);
+            assert(i + 2 < Input.length());
+            unsigned char high = FromHex(Input.toUtf8().at(++i));
+            unsigned char low = FromHex(Input.toUtf8().at(++i));
             Output += high * 16 + low;
         }
         else
@@ -376,20 +365,19 @@ string URLDecode(string Input)
     }
     return Output;
 }
-string FindLocation()
+QString FindLocation()
 {
     if (CurrentDir == "")
         GetCurrentDir();
-    string Header = GetDataFromFileToString("Header.tmp");
+    QString Header = GetDataFromFileToString("Header.tmp");
     Header += "\n";
-    string RedirectURL = GetStringBetween(Header, "Location: ", "\n");
+    QString RedirectURL = GetStringBetween(Header, "Location: ", "\n");
     if (RedirectURL == "")
         RedirectURL = GetStringBetween(Header, "location: ", "\n");
     if (RedirectURL == "")
     {
-        cout << "无法找到重定向位置" << endl;
-        getchar();
+        QMessageBox::critical(NULL, QTranslator::tr("Error"), QTranslator::tr("Can not find redirect position. "));
         exit(0);
     }
-    return FixString(RedirectURL.substr(0, RedirectURL.size()));
+    return FixString(RedirectURL.left(RedirectURL.size()));
 }
