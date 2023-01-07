@@ -295,7 +295,7 @@ void TOOL::LUOGU::ClockIn()
 void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
 {
     cout << "Getting question detail page... " << flush;
-    GetDataToFile("https://www.luogu.com.cn/problem/" + QuestionID + "?_contentOnly=1");
+    GetDataToFile("https://www.luogu.com.cn/problem/" + QuestionID + (QuestionID.find("?") == string::npos ? "?" : "&") + "_contentOnly=1");
     json QuestionInfo = json::parse(GetDataFromFileToString());
     if (QuestionInfo["code"].as_integer() != 200)
     {
@@ -484,7 +484,7 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
     cout << "Judging... " << flush;
     while (1)
     {
-        GetDataToFile("https://www.luogu.com.cn/record/" + to_string(RecordID) + "?_contentOnly=1");
+        GetDataToFile("https://www.luogu.com.cn/record/" + to_string(RecordID) + (QuestionID.find("?") == string::npos ? "?" : "&") + "_contentOnly=1");
         RecordInfo = json::parse(GetDataFromFileToString());
         if (RecordInfo["currentData"]["record"]["status"].is_number() &&
             RecordInfo["currentData"]["record"]["status"].as_integer() >= 2)
@@ -524,7 +524,7 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
 void TOOL::LUOGU::GetAnswer(string QuestionID)
 {
     cout << "Getting solution page data... " << flush;
-    GetDataToFile("https://www.luogu.com.cn/problem/solution/" + QuestionID + "?_contentOnly=1");
+    GetDataToFile("https://www.luogu.com.cn/problem/solution/" + QuestionID + (QuestionID.find("?") == string::npos ? "?" : "&") + "_contentOnly=1");
     json SolutionInfo = json::parse(GetDataFromFileToString());
     cout << "Succeed" << endl;
     for (auto i : SolutionInfo["currentData"]["solutions"]["result"])
