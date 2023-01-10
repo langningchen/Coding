@@ -1,7 +1,7 @@
 name: Auto ClockIn
 on:
-  # schedule:
-  #   - cron:  '38 21 * * *'
+  schedule:
+    - cron:  '38 21 * * *'
   workflow_dispatch: 
 jobs:
   ClockIn:
@@ -62,7 +62,15 @@ jobs:
         cd ../../../
         rm -f -r ./tidy-html5-next/
         sudo cp /usr/local/lib/libtidy.* /usr/lib
+    - name: Make OJTool
+      run: |
+      cd ./Projects/OJTool
+        rm -rf build/
+        mkdir build/
+        cd ./build
+        cmake ../
+        make
     - name: ClockIn for Etiger
-      run: ./Tools/Tool Etiger "${{ secrets.ETIGER_USERNAME }}" "${{ secrets.ETIGER_PASSWORD }}"
+      run: ./main Etiger "${{ secrets.ETIGER_USERNAME }}" "${{ secrets.ETIGER_PASSWORD }}"
     - name: ClockIn for Luogu
-      run: ./Tools/Tool Luogu "${{ secrets.LUOGU_USERNAME }}" "${{ secrets.LUOGU_PASSWORD }}"
+      run: ./main Luogu "${{ secrets.LUOGU_USERNAME }}" "${{ secrets.LUOGU_PASSWORD }}"
