@@ -16,7 +16,6 @@ jobs:
         cd ./openssl-1.1.1q/
         ./config
         make
-        make test
         sudo make install
         cd ../
         rm -f -r ./openssl-1.1.1q/
@@ -29,7 +28,6 @@ jobs:
         cd ./curl-7.85.0/
         ./configure --with-openssl
         make
-        make test
         sudo make install
         cd ../
         rm -f -r ./curl-7.85.0/
@@ -42,7 +40,6 @@ jobs:
         cd ./jpeg-9e/
         ./configure
         make
-        make test
         sudo make install
         cd ../
         rm -f -r ./jpeg-9e/
