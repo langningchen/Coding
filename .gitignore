@@ -17,8 +17,10 @@ CPH/
 # Ignore libraries
 Lib/
 
-# Ignore debug files
+# Ignore build/debug/release files
 build/
+Debug/
+Release/
 
 # Ignore VSCode files
 .vscode/
