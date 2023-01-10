@@ -64,9 +64,11 @@ int main()
         int ClientAddressSize = sizeof(sockaddr_in);
         int CurrentSocket = accept(ListenSocket, (sockaddr *)&ClientAddress, (socklen_t *)&ClientAddressSize);
         ASSERT(CurrentSocket != -1);
-        // Message HelloMessage;
-        // HelloMessage.DataType = HelloMessage.HELLO;
-        // SendMessageList[SendMessageList.size()].push(HelloMessage);
+        Message HelloMessage;
+        HelloMessage.DataType = HelloMessage.HELLO;
+        SendMessageList.resize(SendMessageList.size() + 1);
+        SendMessageList[SendMessageList.size() - 1].push(HelloMessage);
+        ReceiveMessageList.resize(ReceiveMessageList.size() + 1);
         ThreadList.push_back(thread(Do, SendMessageList.size() - 1, CurrentSocket, ClientAddress));
     }
     close(ListenSocket);
