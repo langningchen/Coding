@@ -64,7 +64,7 @@ jobs:
         sudo cp /usr/local/lib/libtidy.* /usr/lib
     - name: Make OJTool
       run: |
-      cd ./Projects/OJTool
+        cd ./Projects/OJTool
         rm -rf build/
         mkdir build/
         cd ./build
