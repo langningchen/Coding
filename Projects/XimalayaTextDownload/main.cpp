@@ -1,8 +1,8 @@
-#include "../../Lib/Curl.hpp"
-#include "../../Lib/lodepng.cpp"
-#include "../../Lib/jpeg/jpeglib.h"
-#include "../../Lib/SHA1.hpp"
-#include "../../Lib/MD5.hpp"
+#include "Curl.hpp"
+#include "lodepng.cpp"
+#include "jpeg/jpeglib.h"
+#include "SHA1.hpp"
+#include "MD5.hpp"
 #include <locale>
 const string WEBSign = "WEB-V1-PRODUCT-E7768904917C4154A925FBE1A3848BC3E84E2C7770744E56AFBC9600C267891F";
 const string LinuxFilePath = "/mnt/d/12_Mom/";

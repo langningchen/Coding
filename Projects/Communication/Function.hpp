@@ -21,7 +21,7 @@ void ERROR_FUNCTION(string File, int Line, string Message)
     exit(-1);
 }
 
-const int SERVER_PORT = 1474;
+const int SERVER_PORT = 1592;
 const int StringSize = 1024;
 
 struct Message
