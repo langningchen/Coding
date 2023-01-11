@@ -62,26 +62,6 @@ jobs:
     - name: Make OJTool
       run: |
         cd ./Projects/OJTool
-        echo "cmake_minimum_required(VERSION 3.9) " > CMakeLists.txt
-        echo "project(OJTool)" >> CMakeLists.txt
-        echo "" >> CMakeLists.txt
-        echo "set(CMAKE_CXX_COMPILER \"g++\")" >> CMakeLists.txt
-        echo "set(CMAKE_CXX_FLAGS \"\${CMAKE_CXX_FLAGS} -W -std=c++11\")" >> CMakeLists.txt
-        echo "" >> CMakeLists.txt
-        echo "add_executable(main main.cpp)" >> CMakeLists.txt
-        echo -n "target_include_directories(main PUBLIC " >> CMakeLists.txt
-        echo -n $(pwd) >> CMakeLists.txt
-        echo "/../../Lib)" >> CMakeLists.txt
-        echo "" >> CMakeLists.txt
-        echo "find_library(LIBCURL curl REQUIRED)" >> CMakeLists.txt
-        echo "find_library(LIBJPEG jpeg REQUIRED)" >> CMakeLists.txt
-        echo "find_library(LIBTIDY tidy REQUIRED)" >> CMakeLists.txt
-        echo "set(LIBS" >> CMakeLists.txt
-        echo "    \${LIBCURL}" >> CMakeLists.txt
-        echo "    \${LIBJPEG}" >> CMakeLists.txt
-        echo "    \${LIBTIDY}" >> CMakeLists.txt
-        echo ")" >> CMakeLists.txt
-        echo "target_link_libraries(main PRIVATE \${LIBS})" >> CMakeLists.txt
         rm -rf build/
         mkdir build/
         cd ./build
