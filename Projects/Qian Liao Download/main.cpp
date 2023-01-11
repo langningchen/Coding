@@ -1,17 +1,69 @@
 #include "Curl.hpp"
+#include <regex>
+#include <sys/stat.h>
 int main()
 {
-    string TopicID = "260000212225925";
+    cout << "请输入课程ID：";
+    string TopicID;
+    cin >> TopicID;
+    int HTTPResponseCode = 0;
+    GetDataToFile("https://m.qlchat.com/wechat/page/mine/collect",
+                  "Header.tmp",
+                  "Body.tmp",
+                  false,
+                  "",
+                  NULL,
+                  &HTTPResponseCode);
+    if (HTTPResponseCode == 302)
+    {
+        GetDataToFile("https://open.weixin.qq.com/connect/qrconnect?appid=wx485213694a978438&scope=snsapi_login&redirect_uri=https://m.qlchat.com/qrLogin.htm");
+        string LoginQRCodeID = GetStringBetween(GetDataFromFileToString(), "<div class=\"wrp_code\"><img class=\"qrcode lightBorder\" src=\"/connect/qrcode/", "\"/></div>");
+        GetDataToFile("https://open.weixin.qq.com/connect/qrcode/" + LoginQRCodeID, "Header.tmp", "QRCode.jpeg");
+        system(string("code \"" + CurrentDir + "QRCode.jpeg\"").c_str());
+        bool Scanned = false;
+        while (true)
+        {
+            curl_slist *HeaderList = NULL;
+            HeaderList = curl_slist_append(HeaderList, "Referer: https://open.weixin.qq.com/");
+            GetDataToFile("https://lp.open.weixin.qq.com/connect/l/qrconnect?uuid=" + LoginQRCodeID + (Scanned ? "&last=404" : "") + "&_=" + to_string(time(NULL)),
+                          "Header.tmp",
+                          "Body.tmp",
+                          false,
+                          "",
+                          HeaderList);
+            string LoginQRCodeStatus = GetStringBetween(GetDataFromFileToString(), "window.wx_errcode=", ";");
+            if (LoginQRCodeStatus == "404")
+            {
+                cout << "已扫描，请在手机上确认" << endl;
+                Scanned = true;
+            }
+            else if (LoginQRCodeStatus == "403")
+            {
+                cout << "登录已取消" << endl;
+                return 0;
+            }
+            else if (LoginQRCodeStatus == "500")
+                cout << "正在等待继续操作" << endl;
+            else if (LoginQRCodeStatus == "405")
+            {
+                string LoginCode = GetStringBetween(GetDataFromFileToString(), "window.wx_code='", "'");
+                GetDataToFile("https://m.qlchat.com/qrLogin.htm?code=" + LoginCode + "&state=");
+                cout << "登录成功" << endl;
+                break;
+            }
+            else if (LoginQRCodeStatus == "408")
+                cout << "正在等待" << endl;
+            else
+                cout << "未知错误 " << LoginQRCodeStatus << endl;
+        }
+    }
+    else
+        cout << "已登录" << endl;
+    rmdir((CurrentDir + "../Images").c_str());
+    mkdir((CurrentDir + "../Images").c_str(), 0755);
+    rmdir((CurrentDir + "../Audios").c_str());
+    mkdir((CurrentDir + "../Audios").c_str(), 0755);
     curl_slist *HeaderList = NULL;
-    HeaderList = curl_slist_append(HeaderList, string(string("cookie: uid=01859021-0CC5-QL0C-A726-03FFBC6FEED5=1673160364=1704782764; ") +
-                                                      "rsessionid=qlwrsid%3A5A238C2A-73EC-45CA-BB59-3E8E1BEDBC5A.i1sk7nQO7ewC5RImOX4baV6h57Tmx%2FEr2w0bmyvSO0I" +
-                                                      "JSESSIONID=2A93882E907DE682D2473F2FB9BA5A3C; " +
-                                                      "QL_PG_WB=0; " +
-                                                      "QLZB_SESSIONID=47425334514A4A665A475366593265704B51625267324265722B704C6A63616E546678343075676F32316B3D; " +
-                                                      "userId=2000002185269187; " +
-                                                      "isCheckJsession=true; " +
-                                                      "B_END_POINT_LEARN_TIME_210000327499248=1")
-                                                   .c_str());
     HeaderList = curl_slist_append(HeaderList, string("referer: https://m.qlchat.com/topic/details?topicId=" + TopicID).c_str());
     GetDataToFile("https://m.qlchat.com/api/wechat/topic/total-speak-list",
                   "Header.tmp",
@@ -24,31 +76,43 @@ int main()
     string Command = "ffmpeg -i \"concat:";
     for (auto i : Data["data"]["speakList"])
     {
-        GetDataToFile(i["content"].as_string(), "Header.tmp", "../" + to_string(Counter) + ".mp3");
         Counter++;
+        GetDataToFile(i["content"].as_string(), "Header.tmp", "../Audios/" + to_string(Counter) + ".mp3");
         cout << Counter << "/" << Data["data"]["speakList"].size() << "  " << i["content"].as_string() << endl;
-        Command += CurrentDir + "../" + to_string(Counter - 1) + ".mp3|";
+        Command += CurrentDir + "../Audios/" + to_string(Counter) + ".mp3|";
     }
     Command.erase(Command.size() - 1, 1);
-    Command += "\" Output.mp3";
+    Command += "\" ../Output.mp3";
     if (system(Command.c_str()) == 0)
         for (int i = 0; i < Data["data"]["speakList"].size(); i++)
-            remove((CurrentDir + "../" + to_string(i) + ".mp3").c_str());
-    GetDataToFile("https://m.qlchat.com/api/wechat/topic/getTopicSpeak",
-                  "Header.tmp",
-                  "Body.tmp",
-                  true,
-                  "{\"topicId\":\"" + TopicID + "\",\"liveId\":\"210000327499248\",\"time\":1482150169000,\"beforeOrAfter\":\"after\",\"hideLuckyMoney\":false,\"pullComment\":\"N\"}",
-                  HeaderList);
-    Data = json::parse(GetDataFromFileToString());
+            remove((CurrentDir + "../Audios/" + to_string(i) + ".mp3").c_str());
+    string LastTime = "0";
+    vector<string> ImageURLList;
+    bool Break = false;
+    while (!Break)
+    {
+        GetDataToFile("https://m.qlchat.com/api/wechat/topic/getTopicSpeak",
+                      "Header.tmp",
+                      "Body.tmp",
+                      true,
+                      "{\"topicId\":\"" + TopicID + "\",\"liveId\":\"210000327499248\",\"time\":" + LastTime + ",\"beforeOrAfter\":\"after\",\"hideLuckyMoney\":false,\"pullComment\":\"N\"}",
+                      HeaderList);
+        Data = json::parse(GetDataFromFileToString());
+        for (auto i : Data["data"]["liveSpeakViews"])
+            if (i["type"].as_string() == "image")
+            {
+                ImageURLList.push_back(i["content"].as_string());
+            }
+            else if (i["type"].as_string() == "end")
+                Break = true;
+        LastTime = (*Data["data"]["liveSpeakViews"].rbegin())["createTime"].as_string();
+    }
     Counter = 0;
-    for (auto i : Data["data"]["liveSpeakViews"])
-        if (i["content"].as_string().find(".jpg") != string::npos)
-        {
-            GetDataToFile(i["content"].as_string(), "Header.tmp", "../" + to_string(Counter) + ".jpg");
-            Counter++;
-            cout << Counter << "/" << Data["data"]["liveSpeakViews"].size() << "  " << i["content"].as_string() << endl;
-        }
-    Clean();
+    for (auto i : ImageURLList)
+    {
+        Counter++;
+        cout << Counter << "/" << ImageURLList.size() << "  " << i << endl;
+        GetDataToFile(i, "Header.tmp", "../Images/" + to_string(Counter - 1) + ".jpg");
+    }
     return 0;
 }
