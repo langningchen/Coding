@@ -89,6 +89,10 @@ jobs:
         make
         cd ../
     - name: ClockIn for Etiger
-      run: ./build/main Etiger "${{ secrets.ETIGER_USERNAME }}" "${{ secrets.ETIGER_PASSWORD }}"
+      run: |
+        pwd
+        ll
+        ll ./build
+        ./build/main Etiger "${{ secrets.ETIGER_USERNAME }}" "${{ secrets.ETIGER_PASSWORD }}"
     - name: ClockIn for Luogu
       run: ./build/main Luogu "${{ secrets.LUOGU_USERNAME }}" "${{ secrets.LUOGU_PASSWORD }}"
