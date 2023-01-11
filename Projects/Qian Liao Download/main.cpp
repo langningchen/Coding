@@ -3,8 +3,10 @@
 #include <sys/stat.h>
 int main()
 {
+    // https://m.qlchat.com/topic/details?topicId=*** <---这个就是课程ID
     cout << "请输入课程ID：";
     string TopicID;
+    // TopicID = "260000212225925";
     cin >> TopicID;
     int HTTPResponseCode = 0;
     GetDataToFile("https://m.qlchat.com/wechat/page/mine/collect",
@@ -82,9 +84,9 @@ int main()
         Command += CurrentDir + "../Audios/" + to_string(Counter) + ".mp3|";
     }
     Command.erase(Command.size() - 1, 1);
-    Command += "\" ../Output.mp3";
+    Command += "\" Output.mp3";
     if (system(Command.c_str()) == 0)
-        for (int i = 0; i < Data["data"]["speakList"].size(); i++)
+        for (int i = 1; i <= Data["data"]["speakList"].size(); i++)
             remove((CurrentDir + "../Audios/" + to_string(i) + ".mp3").c_str());
     string LastTime = "0";
     vector<string> ImageURLList;
@@ -112,7 +114,7 @@ int main()
     {
         Counter++;
         cout << Counter << "/" << ImageURLList.size() << "  " << i << endl;
-        GetDataToFile(i, "Header.tmp", "../Images/" + to_string(Counter - 1) + ".jpg");
+        GetDataToFile(i, "Header.tmp", "../Images/" + to_string(Counter) + ".jpg");
     }
     return 0;
 }
