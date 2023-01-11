@@ -1,0 +1,6 @@
+#include "tinyxml/tinyxml.cpp"
+#include "tinyxml/tinyxml.h"
+#include "tinyxml/tinyxmlerror.cpp"
+#include "tinyxml/tinyxmlparser.cpp"
+#include "tinyxml/tinystr.cpp"
+#include "tinyxml/tinystr.h"
