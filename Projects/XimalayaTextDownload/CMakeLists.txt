@@ -5,7 +5,7 @@ set(CMAKE_CXX_COMPILER "g++")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 add_executable(main main.cpp)
-target_include_directories(main PUBLIC /workspaces/Coding/Lib)
+target_include_directories(main PUBLIC ../../Lib)
 
 find_library(LIBCURL curl REQUIRED)
 find_library(LIBJPEG jpeg REQUIRED)
