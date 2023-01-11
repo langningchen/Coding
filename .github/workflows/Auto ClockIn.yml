@@ -87,7 +87,8 @@ jobs:
         cd ./build
         cmake ../
         make
+        cd ../
     - name: ClockIn for Etiger
-      run: ./main Etiger "${{ secrets.ETIGER_USERNAME }}" "${{ secrets.ETIGER_PASSWORD }}"
+      run: ./build/main Etiger "${{ secrets.ETIGER_USERNAME }}" "${{ secrets.ETIGER_PASSWORD }}"
     - name: ClockIn for Luogu
-      run: ./main Luogu "${{ secrets.LUOGU_USERNAME }}" "${{ secrets.LUOGU_PASSWORD }}"
+      run: ./build/main Luogu "${{ secrets.LUOGU_USERNAME }}" "${{ secrets.LUOGU_PASSWORD }}"
