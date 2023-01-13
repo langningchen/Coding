@@ -1,11 +1,8 @@
-#include <iostream>
+#include "Curl.hpp"
 #include <regex>
-#include <unistd.h>
-#include <stdio.h>
 #include <errno.h>
 #include "tidy/tidy.h"
 #include "tidy/tidybuffio.h"
-#include "Curl.hpp"
 #include "TinyXML.hpp"
 #include "MD5.hpp"
 bool Failed = false;
@@ -25,7 +22,7 @@ private:
         void ClockIn();
         void GetQuestionDetail(string QuestionID);
         void SubmitCode(string QuestionID);
-        void GetAnswer(string QuestionID);
+        void GetAnswerOrTips(string QuestionID);
     };
     class ETIGER
     {
@@ -39,7 +36,7 @@ private:
         void ClockIn();
         void GetQuestionDetail(string QuestionID);
         void SubmitCode(string QuestionID);
-        void GetAnswer(string QuestionID);
+        void GetAnswerOrTips(string QuestionID);
     };
     class CODEFORCES
     {
@@ -505,38 +502,41 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
              << RecordInfo["currentData"]["record"]["detail"]["compileResult"]["message"].as_string() << endl;
     else
     {
-        for (auto jit : RecordInfo["currentData"]
-                                  ["record"]
-                                  ["detail"]
-                                  ["judgeResult"]
-                                  ["subtasks"])
-        {
-            cout << "#" << jit["id"].as_string() << endl;
-            for (auto jit2 : RecordInfo["currentData"]
-                                       ["record"]
-                                       ["detail"]
-                                       ["judgeResult"]
-                                       ["subtasks"]
-                                       [atoi(jit["id"].as_string().c_str())]
-                                       ["testCases"])
-                cout
-                    << "    #" << jit2["id"].as_integer() << " "
-                    << jit2["score"].as_integer() << "pts "
-                    << RecordName[jit2["status"].as_integer()].second << " "
-                    << jit2["time"].as_integer() << "ms "
-                    << jit2["memory"].as_integer() << "KB" << endl;
-        }
-        cout << RecordInfo["currentData"]["record"]["score"].as_integer() << "pts" << endl;
         if (RecordInfo["currentData"]["record"]["score"].as_integer() == 100)
         {
-            remove(GetCPHFileName("Luogu", QuestionID).c_str());
+            remove((CurrentDir + GetCPHFileName("Luogu", QuestionID)).c_str());
             remove(string("/workspaces/Coding/Luogu/" + QuestionID + ".md").c_str());
             remove(string("/workspaces/Coding/Luogu/" + QuestionID).c_str());
             cout << "Congratulations! You have passed this question!" << endl;
         }
+        else
+        {
+            for (auto jit : RecordInfo["currentData"]
+                                      ["record"]
+                                      ["detail"]
+                                      ["judgeResult"]
+                                      ["subtasks"])
+            {
+                cout << "#" << jit["id"].as_string() << endl;
+                for (auto jit2 : RecordInfo["currentData"]
+                                           ["record"]
+                                           ["detail"]
+                                           ["judgeResult"]
+                                           ["subtasks"]
+                                           [atoi(jit["id"].as_string().c_str())]
+                                           ["testCases"])
+                    cout
+                        << "    #" << jit2["id"].as_integer() << " "
+                        << jit2["score"].as_integer() << "pts "
+                        << RecordName[jit2["status"].as_integer()].second << " "
+                        << jit2["time"].as_integer() << "ms "
+                        << jit2["memory"].as_integer() << "KB" << endl;
+            }
+            cout << RecordInfo["currentData"]["record"]["score"].as_integer() << "pts" << endl;
+        }
     }
 }
-void TOOL::LUOGU::GetAnswer(string QuestionID)
+void TOOL::LUOGU::GetAnswerOrTips(string QuestionID)
 {
     cout << "Getting solution page data... " << flush;
     GetDataToFile("https://www.luogu.com.cn/problem/solution/" + QuestionID + (QuestionID.find("?") == string::npos ? "?" : "&") + "_contentOnly=1");
@@ -698,7 +698,6 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
     CPHData["languages"]["java"]["taskClass"] = "GCastleDefense";
     CPHData["batch"]["id"] = QuestionID;
     CPHData["batch"]["size"] = 1;
-    cout << GetCPHFileName("Etiger", QuestionID) << endl;
     SetDataFromStringToFile(GetCPHFileName("Etiger", QuestionID), CPHData.dump());
     ofstream OutputFileStream(string("/workspaces/Coding/Etiger/" + QuestionID + ".md"));
     OutputFileStream << "# " << QuestionID << " " << QuestionInfo["data"]["title"].as_string() << endl
@@ -804,36 +803,39 @@ void TOOL::ETIGER::SubmitCode(string QuestionID)
         return;
     }
     cout << "Succeed" << endl;
-    int Counter = 1;
-    for (auto i : SubmitInfo["data"]["result"])
-    {
-        cout << "#" << Counter << " "
-             << i["type"].as_string() << " "
-             << i["timeUsed"] << "ms "
-             << i["memUsed"] << "B" << endl;
-        Counter++;
-        if (i["input"].as_string() != "")
-        {
-            cout << "    Input: " << i["input"].as_string() << endl
-                 << "    Standard output: " << i["output"].as_string() << endl
-                 << "    My output: " << i["myOutput"].as_string() << endl;
-            json CPHData = json::parse(GetDataFromFileToString(GetCPHFileName("Etiger", QuestionID)));
-            CPHData["tests"].push_back({{"input", i["input"].as_string()},
-                                        {"output", i["output"].as_string()},
-                                        {"id", Counter}});
-            SetDataFromStringToFile(GetCPHFileName("Etiger", QuestionID), CPHData.dump());
-        }
-    }
-    cout << SubmitInfo["data"]["grade"] << "pts" << endl;
     if (SubmitInfo["data"]["grade"].as_integer() == 100)
     {
-        remove(GetCPHFileName("Etiger", QuestionID).c_str());
+        remove((CurrentDir + GetCPHFileName("Etiger", QuestionID)).c_str());
         remove(string("/workspaces/Coding/Etiger/" + QuestionID + ".md").c_str());
         remove(string("/workspaces/Coding/Etiger/" + QuestionID).c_str());
         cout << "Congratulations! You have passed this question!" << endl;
     }
+    else
+    {
+        int Counter = 1;
+        for (auto i : SubmitInfo["data"]["result"])
+        {
+            cout << "#" << Counter << " "
+                 << i["type"].as_string() << " "
+                 << i["timeUsed"] << "ms "
+                 << i["memUsed"] << "B" << endl;
+            Counter++;
+            if (i["input"].as_string() != "")
+            {
+                cout << "    Input: " << i["input"].as_string() << endl
+                     << "    Standard output: " << i["output"].as_string() << endl
+                     << "    My output: " << i["myOutput"].as_string() << endl;
+                json CPHData = json::parse(GetDataFromFileToString(GetCPHFileName("Etiger", QuestionID)));
+                CPHData["tests"].push_back({{"input", i["input"].as_string()},
+                                            {"output", i["output"].as_string()},
+                                            {"id", Counter}});
+                SetDataFromStringToFile(GetCPHFileName("Etiger", QuestionID), CPHData.dump());
+            }
+        }
+        cout << SubmitInfo["data"]["grade"] << "pts" << endl;
+    }
 }
-void TOOL::ETIGER::GetAnswer(string QuestionID)
+void TOOL::ETIGER::GetAnswerOrTips(string QuestionID)
 {
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json;charset=utf-8");
@@ -1416,8 +1418,8 @@ TOOL::TOOL(string FileName, string Operation)
             Luogu.GetQuestionDetail(GetStringBetween(FileName, "Luogu/", ".cpp"));
         else if (Operation == "SubmitCode")
             Luogu.SubmitCode(GetStringBetween(FileName, "Luogu/", ".cpp"));
-        else if (Operation == "GetAnswer")
-            Luogu.GetAnswer(GetStringBetween(FileName, "Luogu/", ".cpp"));
+        else if (Operation == "GetAnswerOrTips")
+            Luogu.GetAnswerOrTips(GetStringBetween(FileName, "Luogu/", ".cpp"));
         else
             cout << "传参错误" << endl;
         if (Failed)
@@ -1435,8 +1437,8 @@ TOOL::TOOL(string FileName, string Operation)
             Etiger.GetQuestionDetail(GetStringBetween(FileName, "Etiger/", ".cpp"));
         else if (Operation == "SubmitCode")
             Etiger.SubmitCode(GetStringBetween(FileName, "Etiger/", ".cpp"));
-        else if (Operation == "GetAnswer")
-            Etiger.GetAnswer(GetStringBetween(FileName, "Etiger/", ".cpp"));
+        else if (Operation == "GetAnswerOrTips")
+            Etiger.GetAnswerOrTips(GetStringBetween(FileName, "Etiger/", ".cpp"));
         else
             cout << "传参错误" << endl;
         if (Failed)
@@ -1483,7 +1485,6 @@ TOOL::TOOL(string ServerName, string Username, string Password)
     while (Password[Password.size() - 1] == '\n' ||
            Password[Password.size() - 1] == '\r')
         Password.erase(Password.size() - 1, 1);
-    cout << ServerName << " " << Username << " " << Password << endl;
     if (ServerName == "Luogu")
     {
         LUOGU Luogu;
