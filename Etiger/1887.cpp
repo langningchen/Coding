@@ -7,7 +7,7 @@ struct node
     int nxt, to;
 } e[N * 2];
 int n, m, timer, nE, hd[N], d[N], p[N], sz[N], son[N], tI[N], tO[N], top[N], bit[N];
-void addedge(int u, int v)
+void add_edge(int u, int v)
 {
     e[++nE].to = v;
     e[nE].nxt = hd[u];
@@ -97,8 +97,8 @@ int main()
     {
         int u, v;
         cin >> u >> v;
-        addedge(u, v);
-        addedge(v, u);
+        add_edge(u, v);
+        add_edge(v, u);
     }
     dfs_son(1, 0);
     dfs_top_tIO(1, 0);
