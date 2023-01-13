@@ -230,8 +230,7 @@ int GetDataToFile(string URL,
         fclose(HeaderFilePointer);
         cout << "Curl init failed!" << endl
              << CurlCode << ": " << curl_easy_strerror(CurlCode) << endl;
-        getchar();
-        exit(0);
+        return 1;
     }
     CURL *Curl = curl_easy_init();
     curl_easy_setopt(Curl, CURLOPT_SSL_VERIFYHOST, false);
@@ -259,16 +258,21 @@ int GetDataToFile(string URL,
     CurlCode = curl_easy_perform(Curl);
     if (CurlCode != 0)
     {
+        fclose(BodyFilePointer);
+        fclose(HeaderFilePointer);
         cout << "Request with URL \"" << URL << "\" failed! " << endl
              << CurlCode << ": " << curl_easy_strerror(CurlCode) << endl;
-        getchar();
-        exit(0);
+        return 1;
     }
     int TempHTTPResponseCode = 0;
     curl_easy_getinfo(Curl, CURLINFO_RESPONSE_CODE, &TempHTTPResponseCode);
     if (TempHTTPResponseCode >= 500)
     {
-        exit(0);
+        fclose(BodyFilePointer);
+        fclose(HeaderFilePointer);
+        cout << "Request with URL \"" << URL << "\" failed! " << endl
+             << TempHTTPResponseCode << endl;
+        return 1;
     }
     if (HTTPResponseCode != NULL)
         *HTTPResponseCode = TempHTTPResponseCode;
