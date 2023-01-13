@@ -67,12 +67,8 @@ jobs:
         cd ./build
         cmake ../
         make
-        cd ../
+        cd ../../../
     - name: ClockIn for Etiger
-      run: |
-        pwd
-        ls -lha
-        ls -lha ./build
-        ./build/main Etiger "${{ secrets.ETIGER_USERNAME }}" "${{ secrets.ETIGER_PASSWORD }}"
+      run: ./Projects/OJTool/build/main Etiger "${{ secrets.ETIGER_USERNAME }}" "${{ secrets.ETIGER_PASSWORD }}"
     - name: ClockIn for Luogu
-      run: ./build/main Luogu "${{ secrets.LUOGU_USERNAME }}" "${{ secrets.LUOGU_PASSWORD }}"
+      run: ./Projects/OJTool/build/main Luogu "${{ secrets.LUOGU_USERNAME }}" "${{ secrets.LUOGU_PASSWORD }}"
