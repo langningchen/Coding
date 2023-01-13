@@ -12,7 +12,7 @@ int n, m, timer, nE,
     to[N * 2], hd[N * 2], nxt[N * 2];
 set<int> S[N * 2];
 vector<query> q[N];
-void addedge(ll u, ll v)
+void add_edge(ll u, ll v)
 {
     to[++nE] = v;
     nxt[nE] = hd[u];
@@ -82,7 +82,7 @@ void input()
             iName[u] = names[s] = ++nNames;
         cin >> p[u];
         if (p[u])
-            addedge(p[u], u);
+            add_edge(p[u], u);
     }
     cin >> m;
     for (int i = 1; i <= m; i++)

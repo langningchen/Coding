@@ -6,7 +6,7 @@ struct Query
 {
     int l, r, id, u, idB;
 } q[N];
-void addedge(int u, int v)
+void add_edge(int u, int v)
 {
     to[++nE] = v;
     nxt[nE] = hd[u];
@@ -45,8 +45,8 @@ void Input()
     {
         int u, v;
         cin >> u >> v;
-        addedge(u, v);
-        addedge(v, u);
+        add_edge(u, v);
+        add_edge(v, u);
     }
     cin >> m;
     for (int i = 1; i <= m; i++)
