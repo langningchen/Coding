@@ -57,7 +57,7 @@ int main()
         true);
     cout << "结束" << endl;
     cout << "开始转换视频  " << flush;
-    if (system((string("ffmpeg -hide_banner -loglevel error -i ") +
+    if (system((string("ffmpeg -y -hide_banner -loglevel error -i ") +
                 "\"" + CurrentDir + "../" + Name + ".mp4\" " +
                 "\"" + CurrentDir + "../" + Name + ".mp3\"")
                    .c_str()))
