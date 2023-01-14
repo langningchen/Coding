@@ -5,7 +5,10 @@
 #include "tidy/tidybuffio.h"
 #include "TinyXML.hpp"
 #include "MD5.hpp"
+
+// If the login failed, set the Failed flag to true, and exit the program
 bool Failed = false;
+
 class TOOL
 {
 private:
@@ -69,15 +72,19 @@ public:
 };
 string GetCPHFileName(string Path, string FileName)
 {
+    // Create an object of the MD5 class to encode the file name
     MD5 MD5Encoder;
+    // Return the file name in the CPH directory
     return "../../../CPH/." +
            FileName +
            ".cpp_" +
+           // Encode the full path of the file
            MD5Encoder.encode("/workspaces/Coding/" +
                              Path +
                              "/" +
                              FileName +
                              ".cpp") +
+           // Add the .prob extension to the file name
            ".prob";
 }
 TOOL::LUOGU::LUOGU()
@@ -164,37 +171,54 @@ TOOL::LUOGU::LUOGU()
     ColorList["user-color-Red"] = "fe4c61";
     ColorList["user-color-Purple"] = "9d3dcf";
     ColorList["vip"] = "dfc289";
+
+    // Get the configuration information of the luogu website.
     cout << "Getting luogu config... " << flush;
     GetDataToFile("https://www.luogu.com.cn/_lfe/config");
     json Config = json::parse(GetDataFromFileToString());
     cout << "Succeed" << endl
          << "Getting luogu tags... " << flush;
+
+    // Get the tag information of the luogu website.
     GetDataToFile("https://www.luogu.com.cn/_lfe/tags");
     json Tag = json::parse(GetDataFromFileToString());
     cout << "Succeed" << endl;
+
+    // Get the language information of the luogu website.
     for (auto i : Config["codeLanguages"])
     {
         LanguageName[i["value"].as_integer()] = i["name"].as_string();
         LanguageMarkdownName[i["value"].as_integer()] = i["hljsMode"].as_string();
     }
     LanguageName[0] = "自动识别语言";
+
+    // Get the difficulty information of the luogu website.
     for (auto i : Config["problemDifficulty"])
         DifficultyName[i["id"].as_integer()] = make_pair(i["name"].as_string(),
                                                          i["color"].as_string());
+
+    // Get the problem type information of the luogu website.
     for (auto i : Config["problemTypes"])
         TypeName[i["id"].as_string()] = i["name"].as_string();
     json Temp;
+
+    // Get the tag type information of the luogu website.
     for (auto i : Tag["types"])
         Temp[i["id"].as_integer()] = i["color"].as_string();
+
+    // Get the tag information of the luogu website.
     for (auto i : Tag["tags"])
         TagName[i["id"].as_integer()] = make_pair(i["name"].as_string(),
                                                   Temp[i["type"].as_integer()]);
+
+    // Get the submission status information of the luogu website.
     for (auto i : Config["recordStatus"])
         RecordName[i["id"].as_integer()] = make_pair(i["name"].as_string(),
                                                      i["shortName"].as_string());
 }
 void TOOL::LUOGU::Login(string Username, string Password)
 {
+    // Check if the user is logged in.
     int HTTPResponseCode = 0;
     cout << "Checking login... " << flush;
     GetDataToFile("https://www.luogu.com.cn/auth/login",
@@ -210,14 +234,19 @@ void TOOL::LUOGU::Login(string Username, string Password)
         return;
     }
     cout << "Not logged in" << endl;
+
+    // Get csrf token
     string Token = GetStringBetween(GetDataFromFileToString(),
                                     "<meta name=\"csrf-token\" content=\"", "\"");
     int ErrorCounter = 0;
     while (1)
     {
+        // Get login captcha
         cout << "Getting login captcha... " << flush;
         GetDataToFile("https://www.luogu.com.cn/api/verify/captcha");
         cout << "Succeed" << endl;
+
+        // Predict captcha
         curl_slist *HeaderList = NULL;
         HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json");
         cout << "Predicting captcha... " << flush;
@@ -228,11 +257,15 @@ void TOOL::LUOGU::Login(string Username, string Password)
                       string("data:image/jpeg;base64," + Base64Encode(GetDataFromFileToString())),
                       HeaderList);
         cout << "Succeed" << endl;
+
+        // Create a json object to store the login request info
         string Captcha = GetDataFromFileToString();
         json LoginRequest;
         LoginRequest["username"] = Username;
         LoginRequest["password"] = Password;
         LoginRequest["captcha"] = Captcha;
+
+        // Create a header list for the curl request
         HeaderList = NULL;
         HeaderList = curl_slist_append(HeaderList, string("X-CSRF-TOKEN: " + Token).c_str());
         HeaderList = curl_slist_append(HeaderList, string("Content-Length: " +
@@ -242,6 +275,8 @@ void TOOL::LUOGU::Login(string Username, string Password)
         HeaderList = curl_slist_append(HeaderList, "Referer: https://www.luogu.com.cn/auth/login");
         HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
         HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
+
+        // Send the login request to the server
         cout << "Logging in... " << flush;
         GetDataToFile("https://www.luogu.com.cn/api/auth/userPassLogin",
                       "Header.tmp",
@@ -249,9 +284,12 @@ void TOOL::LUOGU::Login(string Username, string Password)
                       true,
                       LoginRequest.dump(),
                       HeaderList);
+
+        // Parse the response to a json object
         json LoginInfo = json::parse(GetDataFromFileToString());
         if (!LoginInfo["status"].is_null())
         {
+            // If the captcha is incorrect and the error counter is less than 5, try again.
             if (LoginInfo["data"].as_string() != "验证码错误" && ErrorCounter < 5)
             {
                 Failed = true;
@@ -273,17 +311,24 @@ void TOOL::LUOGU::Login(string Username, string Password)
 }
 void TOOL::LUOGU::ClockIn()
 {
+    // Gets the clock-in page data
     cout << "Get clock in page data... " << flush;
     GetDataToFile("https://www.luogu.com.cn/");
+
+    // Gets the clock-in token
     string Token = GetStringBetween(GetDataFromFileToString(),
                                     "<meta name=\"csrf-token\" content=\"", "\"");
     cout << "Succeed" << endl;
+
+    // Gets the clock-in header
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, string("X-CSRF-TOKEN: " + Token).c_str());
     HeaderList = curl_slist_append(HeaderList, "Host: www.luogu.com.cn");
     HeaderList = curl_slist_append(HeaderList, "Referer: https://www.luogu.com.cn/");
     HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
     HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
+
+    // Clocks in
     cout << "Clocking in... " << flush;
     GetDataToFile("https://www.luogu.com.cn/index/ajax_punch",
                   "Header.tmp",
@@ -291,6 +336,8 @@ void TOOL::LUOGU::ClockIn()
                   true,
                   "{}",
                   HeaderList);
+
+    // Parse the response to a json object
     json ClockInInfo = json::parse(GetDataFromFileToString());
     if (ClockInInfo["code"].as_integer() != 200)
     {
@@ -304,6 +351,7 @@ void TOOL::LUOGU::ClockIn()
 }
 void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
 {
+    // Gets the question detail page
     cout << "Getting question detail page... " << flush;
     GetDataToFile("https://www.luogu.com.cn/problem/" + QuestionID + (QuestionID.find("?") == string::npos ? "?" : "&") + "_contentOnly=1");
     json QuestionInfo = json::parse(GetDataFromFileToString());
@@ -316,6 +364,8 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
         return;
     }
     cout << "Succeed" << endl;
+
+    // Save data for CPH
     MD5 MD5Encoder;
     json CPHData;
     CPHData["name"] = QuestionInfo["currentData"]["problem"]["title"].as_string();
@@ -347,6 +397,8 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
     CPHData["batch"]["size"] = 1;
     cout << string("/workspaces/Coding/Luogu/" + QuestionID + ".cpp") << endl;
     SetDataFromStringToFile(GetCPHFileName("Luogu", QuestionID), CPHData.dump());
+
+    // Save data for markdown
     ofstream OutputFileStream(string("/workspaces/Coding/Luogu/" + QuestionID + ".md").c_str());
     OutputFileStream << "# " << QuestionID << " "
                      << QuestionInfo["currentData"]["problem"]["title"].as_string() << endl;
@@ -441,21 +493,30 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
                      << "|最后一次提交语言|`" << LanguageName[QuestionInfo["currentData"]["lastLanguage"].as_integer()] << "`|" << endl
                      << endl;
     OutputFileStream.close();
+
+    // Open the file
     if (system(string("code /workspaces/Coding/Luogu/" + QuestionID + ".md").c_str()))
         cout << "Open file \"/workspaces/Coding/Luogu/" << QuestionID << ".md\" failed, please open it manually" << endl;
 }
 void TOOL::LUOGU::SubmitCode(string QuestionID)
 {
+    // Get the code
     string Code = GetDataFromFileToString(string("../../../Luogu/" + QuestionID + ".cpp"));
+
+    // Get the token
     cout << "Getting submit page data... " << flush;
     GetDataToFile("https://www.luogu.com.cn/problem/" + QuestionID);
     string Token = GetStringBetween(GetDataFromFileToString(),
                                     "<meta name=\"csrf-token\" content=\"", "\"");
     cout << "Succeed" << endl;
+
+    // Create the request
     json SubmitRequest;
     SubmitRequest["code"] = Code;
     SubmitRequest["enableO2"] = 1;
     SubmitRequest["lang"] = 0;
+
+    // Create the header
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, string("X-CSRF-TOKEN: " + Token).c_str());
     HeaderList = curl_slist_append(HeaderList, string("Content-Length: " +
@@ -467,6 +528,8 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
                                                    .c_str());
     HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
     HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
+
+    // Submit the code
     cout << "Submitting... " << flush;
     GetDataToFile("https://www.luogu.com.cn/fe/api/problem/submit/" + QuestionID,
                   "Header.tmp",
@@ -474,6 +537,8 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
                   true,
                   SubmitRequest.dump(),
                   HeaderList);
+
+    // Get the result
     json SubmitInfo = json::parse(GetDataFromFileToString());
     if (!SubmitInfo["status"].is_null())
     {
@@ -484,7 +549,11 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
         return;
     }
     cout << "Succeed" << endl;
+
+    // Get the record ID
     int RecordID = SubmitInfo["rid"].as_integer();
+
+    // Get the record info and wait for the result
     json RecordInfo;
     cout << "Judging... " << flush;
     while (1)
@@ -497,13 +566,17 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
         usleep(500000);
     }
     cout << "Succeed" << endl;
+
+    // Check whether there is a compile error
     if (!RecordInfo["currentData"]["record"]["detail"]["compileResult"]["success"].as_bool())
         cout << "Compile error: " << endl
              << RecordInfo["currentData"]["record"]["detail"]["compileResult"]["message"].as_string() << endl;
     else
     {
+        // Check whether the code is accepted
         if (RecordInfo["currentData"]["record"]["score"].as_integer() == 100)
         {
+            // Delete the temporary files
             remove((CurrentDir + GetCPHFileName("Luogu", QuestionID)).c_str());
             remove(string("/workspaces/Coding/Luogu/" + QuestionID + ".md").c_str());
             remove(string("/workspaces/Coding/Luogu/" + QuestionID).c_str());
@@ -511,6 +584,7 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
         }
         else
         {
+            // Get the result
             for (auto jit : RecordInfo["currentData"]
                                       ["record"]
                                       ["detail"]
@@ -538,6 +612,7 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
 }
 void TOOL::LUOGU::GetAnswerOrTips(string QuestionID)
 {
+    // Get the solution page data
     cout << "Getting solution page data... " << flush;
     GetDataToFile("https://www.luogu.com.cn/problem/solution/" + QuestionID + (QuestionID.find("?") == string::npos ? "?" : "&") + "_contentOnly=1");
     json SolutionInfo = json::parse(GetDataFromFileToString());
@@ -545,18 +620,27 @@ void TOOL::LUOGU::GetAnswerOrTips(string QuestionID)
     for (auto i : SolutionInfo["currentData"]["solutions"]["result"])
     {
         string Answer = "";
+
+        // Iterate through all the code blocks
         vector<string> Spilt = StringSpilt(i["content"].as_string(), "```");
         for (size_t j = 0; j < Spilt.size(); j++)
         {
             if (j % 2)
             {
+                // Get the code block
                 string CurrentAnswer = Spilt[j];
+
+                // If the code block is only one line, skip it
                 size_t k = 0;
                 while (k < CurrentAnswer.size() && CurrentAnswer[k] != '\n')
                     k++;
                 if (k == CurrentAnswer.size())
                     continue;
+
+                // Delete the first line which is the language names
                 CurrentAnswer = CurrentAnswer.substr(k + 1, string::npos);
+
+                // If the code block is a C++ code block and it's longer than the current answer, replace the current answer
                 if (CurrentAnswer.find("main") != string::npos &&
                     CurrentAnswer.find("include") != string::npos &&
                     CurrentAnswer.find("return") != string::npos &&
@@ -565,9 +649,11 @@ void TOOL::LUOGU::GetAnswerOrTips(string QuestionID)
                     Answer = CurrentAnswer;
             }
         }
+        // Delete leading and trailing spaces and line breaks.
         Answer = FixString(Answer);
         if (Answer != "")
         {
+            // Write the answer as a comment to the file.
             SetDataFromStringToFile("../../../Luogu/" + QuestionID + ".cpp",
                                     FixString(GetDataFromFileToString("../../../Luogu/" + QuestionID + ".cpp")) +
                                         "\n" +
@@ -593,13 +679,18 @@ TOOL::ETIGER::ETIGER()
 }
 void TOOL::ETIGER::Login(string Username, string Password)
 {
+    // Create login request
     json LoginRequest;
     LoginRequest["name"] = Username;
     LoginRequest["password"] = Password;
+
+    // Add headers
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json;charset=utf-8");
     HeaderList = curl_slist_append(HeaderList, "lang: zh");
     HeaderList = curl_slist_append(HeaderList, "Host: www.etiger.vip");
+
+    // Send login request
     cout << "Logging in... " << flush;
     GetDataToFile("https://www.etiger.vip/thrall-web/user/login",
                   "Header.tmp",
@@ -607,7 +698,11 @@ void TOOL::ETIGER::Login(string Username, string Password)
                   true,
                   LoginRequest.dump(),
                   HeaderList);
+
+    // Parse login response
     json LoginInfo = json::parse(GetDataFromFileToString());
+
+    // Check login response
     if (LoginInfo["code"] != 200)
     {
         Failed = true;
@@ -617,15 +712,20 @@ void TOOL::ETIGER::Login(string Username, string Password)
         return;
     }
     cout << "Succeed" << endl;
+
+    // Save token
     Token = LoginInfo["data"]["ticket"].as_string();
 }
 void TOOL::ETIGER::ClockIn()
 {
+    // Add headers
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json;charset=utf-8");
     HeaderList = curl_slist_append(HeaderList, "lang: zh");
     HeaderList = curl_slist_append(HeaderList, "Host: www.etiger.vip");
     HeaderList = curl_slist_append(HeaderList, string("Token: " + Token).c_str());
+
+    // Send clock in request
     cout << "Clocking in... " << flush;
     GetDataToFile("https://www.etiger.vip/thrall-web/sign/dailySign",
                   "Header.tmp",
@@ -633,6 +733,8 @@ void TOOL::ETIGER::ClockIn()
                   false,
                   "",
                   HeaderList);
+
+    // Parse clock in response
     json ClockInInfo = json::parse(GetDataFromFileToString());
     if (ClockInInfo["code"] != 200)
     {
@@ -646,11 +748,14 @@ void TOOL::ETIGER::ClockIn()
 }
 void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
 {
+    // Add headers
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json;charset=utf-8");
     HeaderList = curl_slist_append(HeaderList, "lang: zh");
     HeaderList = curl_slist_append(HeaderList, "Host: www.etiger.vip");
     HeaderList = curl_slist_append(HeaderList, string("Token: " + Token).c_str());
+
+    // Send request
     cout << "Getting question detail... " << flush;
     GetDataToFile("https://www.etiger.vip/thrall-web/question/getById?id=" + QuestionID,
                   "Header.tmp",
@@ -658,6 +763,8 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
                   false,
                   "",
                   HeaderList);
+
+    // Parse response
     json QuestionInfo = json::parse(GetDataFromFileToString());
     if (QuestionInfo["code"] != 200)
     {
@@ -668,6 +775,8 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
         return;
     }
     cout << "Succeed" << endl;
+
+    // Save data for CPH
     json CPHData;
     CPHData["name"] = QuestionInfo["data"]["title"].as_string();
     CPHData["group"] = "Etiger - test";
@@ -683,6 +792,7 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
     {
         string Input = FixString(InputSamples[i]);
         string Output = FixString(OutputSamples[i]);
+        // If input or output is empty, skip this test case
         if (Input == "" || Input == "无" || Output == "" || Output == "无")
             continue;
         CPHData["tests"][i]["input"] = Input;
@@ -699,6 +809,8 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
     CPHData["batch"]["id"] = QuestionID;
     CPHData["batch"]["size"] = 1;
     SetDataFromStringToFile(GetCPHFileName("Etiger", QuestionID), CPHData.dump());
+
+    // Sava markdown file
     ofstream OutputFileStream(string("/workspaces/Coding/Etiger/" + QuestionID + ".md"));
     OutputFileStream << "# " << QuestionID << " " << QuestionInfo["data"]["title"].as_string() << endl
                      << endl
@@ -767,25 +879,36 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
                      << "|通过率|$" << QuestionInfo["data"]["submitInfo"]["passRate"] << "\\%$|" << endl
                      << endl;
     OutputFileStream.close();
+
+    // Open file
     if (system(string("code /workspaces/Coding/Etiger/" + QuestionID + ".md").c_str()))
         cout << "Open file \"/workspaces/Coding/Etiger/" << QuestionID << ".md\" failed, please open it manually" << endl;
 }
 void TOOL::ETIGER::SubmitCode(string QuestionID)
 {
+    // Get code
     string Code = GetDataFromFileToString(string("../../../Etiger/" + QuestionID + ".cpp"));
+
+    // Uncomment freopen and save
     Code = StringReplaceAll(Code, "// freopen", "freopen");
     SetDataFromStringToFile("../../../Etiger/" + QuestionID + ".cpp", Code);
+
+    // Create submit request
     json SubmitRequest;
     SubmitRequest["comment"] = "";
     SubmitRequest["lang"] = "CPP";
     SubmitRequest["submitType"] = 0;
     SubmitRequest["questionId"] = QuestionID;
     SubmitRequest["src"] = Code;
+
+    // Create header
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json;charset=utf-8");
     HeaderList = curl_slist_append(HeaderList, "lang: zh");
     HeaderList = curl_slist_append(HeaderList, "Host: www.etiger.vip");
     HeaderList = curl_slist_append(HeaderList, string("Token: " + Token).c_str());
+
+    // Submit
     cout << "Submitting... " << flush;
     GetDataToFile("https://www.etiger.vip/thrall-web/saveSubmit",
                   "Header.tmp",
@@ -793,6 +916,8 @@ void TOOL::ETIGER::SubmitCode(string QuestionID)
                   true,
                   SubmitRequest.dump(),
                   HeaderList);
+
+    // Get result
     json SubmitInfo = json::parse(GetDataFromFileToString());
     if (SubmitInfo["code"] != 200)
     {
@@ -803,8 +928,11 @@ void TOOL::ETIGER::SubmitCode(string QuestionID)
         return;
     }
     cout << "Succeed" << endl;
+
+    // Check whether the code is accepted
     if (SubmitInfo["data"]["grade"].as_integer() == 100)
     {
+        // Remove temporary files
         remove((CurrentDir + GetCPHFileName("Etiger", QuestionID)).c_str());
         remove(string("/workspaces/Coding/Etiger/" + QuestionID + ".md").c_str());
         remove(string("/workspaces/Coding/Etiger/" + QuestionID).c_str());
@@ -812,6 +940,7 @@ void TOOL::ETIGER::SubmitCode(string QuestionID)
     }
     else
     {
+        // Output result
         int Counter = 1;
         for (auto i : SubmitInfo["data"]["result"])
         {
@@ -837,11 +966,14 @@ void TOOL::ETIGER::SubmitCode(string QuestionID)
 }
 void TOOL::ETIGER::GetAnswerOrTips(string QuestionID)
 {
+    // Create header
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json;charset=utf-8");
     HeaderList = curl_slist_append(HeaderList, "lang: zh");
     HeaderList = curl_slist_append(HeaderList, "Host: www.etiger.vip");
     HeaderList = curl_slist_append(HeaderList, string("Token: " + Token).c_str());
+
+    // Get tips
     cout << "Getting comments page data... " << flush;
     GetDataToFile("https://www.etiger.vip/thrall-web/comment/getByQuestionForPage?questionId=" + QuestionID + "&cpage=1&pagesize=10",
                   "Header.tmp",
@@ -849,6 +981,8 @@ void TOOL::ETIGER::GetAnswerOrTips(string QuestionID)
                   false,
                   "",
                   HeaderList);
+
+    // Get result
     json CommentsData = json::parse(GetDataFromFileToString());
     if (CommentsData["code"] != 200)
     {
@@ -859,9 +993,13 @@ void TOOL::ETIGER::GetAnswerOrTips(string QuestionID)
         return;
     }
     cout << "Success" << endl;
+
+    // Save comments to a string joined by newline
     string Comments = "";
     for (auto i : CommentsData["data"]["records"])
         Comments += FixString(i["content"].as_string()) + "\n";
+
+    // Add comments to the code
     SetDataFromStringToFile("../../../Etiger/" + QuestionID + ".cpp",
                             FixString(GetDataFromFileToString("../../../Etiger/" + QuestionID + ".cpp")) +
                                 "\n" +
@@ -873,19 +1011,26 @@ void TOOL::ETIGER::GetAnswerOrTips(string QuestionID)
 }
 string TOOL::CODEFORCES::GetCRSF()
 {
+    // Get csrf token
     return GetStringBetween(GetDataFromFileToString(),
                             "<input type='hidden' name='csrf_token' value='", "'/>");
 }
 string TOOL::CODEFORCES::OutputPre(TiXmlElement *Input)
 {
+    // Output pre tag
     string Output;
     Output += "```\n";
     for (TiXmlNode *i = Input->FirstChild(); i != NULL; i = i->NextSibling())
+        // If the node is text, output it
         if (i->Type() == TiXmlNode::TINYXML_TEXT)
             Output += i->ToText()->Value();
+
+        // If the node is br, output a newline
         else if (i->Type() == TiXmlNode::TINYXML_ELEMENT)
             if (string(i->Value()) == "br")
                 Output += "\n";
+
+    // If the last character is not a newline, add a newline
     if (Output[Output.size() - 1] != '\n')
         Output += "\n";
     Output += "```";
@@ -895,40 +1040,67 @@ string TOOL::CODEFORCES::Output(TiXmlElement *Input, bool InLatex)
 {
     string OutputValue = "";
     string Value = Input->Value();
+
+    // If the node is pre, call OutputPre to output it
     if (Value == "pre")
     {
         OutputValue += "\n" + OutputPre(Input) + "\n";
         return OutputValue;
     }
+
+    // If the node is img, output it as a markdown image
     else if (Value == "img")
     {
         OutputValue += " ![](" + string(Input->Attribute("src")) + ") ";
         return OutputValue;
     }
-    if (Value == "ul")
+
+    // If the node is a ul output as a newline
+    else if (Value == "ul")
         OutputValue += "\n";
+
+    // If the node is a li output as a list
     else if (Value == "li")
         OutputValue += "- ";
+
+    // If the node is a span, output it as it should be
     else if (Value == "span" && Input->Attribute("class") != NULL)
     {
         string Class = Input->Attribute("class");
+
+        // If it is bold
         if (Class == "tex-font-style-bf")
             OutputValue += " **";
+
+        // If it is italic
         else if (Class == "tex-font-style-tt")
             OutputValue += " `";
+
+        // Else it is a latex expressions
         else
             OutputValue += " $";
         InLatex = true;
     }
+
+    // If the node is a sup, output it as a superscript
     else if (Value == "sup")
         OutputValue += "^{";
+
+    // If the node is a sub, output it as a subscript
     else if (Value == "sub")
         OutputValue += "_{";
+
+    // Output the node's children
     for (TiXmlNode *i = Input->FirstChild(); i != NULL; i = i->NextSibling())
+        // If the node is text, output it
         if (i->Type() == TiXmlNode::TINYXML_TEXT)
             OutputValue += i->ToText()->Value();
+
+        // If the node is element, call Output to output it
         else if (i->Type() == TiXmlNode::TINYXML_ELEMENT)
             OutputValue += Output(i->ToElement(), InLatex);
+
+    // End all expressions as above
     if (Value == "span" && Input->Attribute("class") != NULL)
     {
         string Class = Input->Attribute("class");
@@ -953,6 +1125,7 @@ string TOOL::CODEFORCES::Output(TiXmlElement *Input, bool InLatex)
 }
 string TOOL::CODEFORCES::ToNormalName(string Input)
 {
+    // Convert the Codeforces name to normal judge name
     if (Input == "OK")
         return "AC";
     if (Input == "FAILED")
@@ -991,6 +1164,7 @@ string TOOL::CODEFORCES::ToNormalName(string Input)
 }
 string TOOL::CODEFORCES::TidyHTMLDocument(string Input)
 {
+    // Use Tidy to tidy the HTML document to XHTML
     TidyBuffer OutputBuffer = {0};
     TidyBuffer ErrorBuffer = {0};
     TidyDoc TidyDocument = tidyCreate();
@@ -1009,6 +1183,7 @@ string TOOL::CODEFORCES::TidyHTMLDocument(string Input)
 }
 void TOOL::CODEFORCES::Login(string Username, string Password)
 {
+    // Check if the user is already logged in
     int HTTPResponseCode = 0;
     cout << "Checking login... " << flush;
     GetDataToFile("https://codeforces.com/enter",
@@ -1025,6 +1200,8 @@ void TOOL::CODEFORCES::Login(string Username, string Password)
     }
     cout << "Not logged in" << endl;
     HTTPResponseCode = 0;
+
+    // Login
     cout << "Logging in... " << flush;
     GetDataToFile("https://codeforces.com/enter",
                   "Header.tmp",
@@ -1044,12 +1221,32 @@ void TOOL::CODEFORCES::Login(string Username, string Password)
                   FORM);
     if (HTTPResponseCode == 200)
     {
+        // Login failed
         string LoginPageData = GetDataFromFileToString();
+
+        // If the login failed because of the check of javascript
         if (LoginPageData.find("toNumbers"))
         {
-            SetDataFromStringToFile("Run.js", GetDataFromFileToString("aes.min.js") + "\n\n\n\nfunction " + StringReplaceAll(GetStringBetween(LoginPageData, "<script>function ", "document.location.href="), "document.cookie", "var Output") + "\n\nconsole.log(Output);\n");
+            // Get the javascript code and write it to a file
+            SetDataFromStringToFile("Run.js",
+                                    // Get the javascript library
+                                    GetDataFromFileToString("aes.min.js") +
+                                        "\n\n\n\nfunction " +
+                                        // Remove set cookie code and replace it with a variable
+                                        StringReplaceAll(
+                                            GetStringBetween(LoginPageData,
+                                                             "<script>function ",
+                                                             "document.location.href="),
+                                            "document.cookie", "var Output") +
+                                        "\n\nconsole.log(Output);\n");
+
+            // Run the javascript code
             system(string("nodejs " + CurrentDir + "Run.js >> " + CurrentDir + "Output.tmp").c_str());
+
+            // Delete the javascript code
             unlink(string(CurrentDir + "Run.js").c_str());
+
+            // Get the output of the javascript code and try to login again
             GetDataToFile(GetStringBetween(LoginPageData, "document.location.href=\"", "\";</script>"),
                           "Header.tmp",
                           "Body.tmp",
@@ -1066,7 +1263,10 @@ void TOOL::CODEFORCES::Login(string Username, string Password)
                           NULL,
                           &HTTPResponseCode,
                           FORM,
+                          // Set the cookie
                           "#HttpOnly_codeforces.com\tFALSE\t/\tFALSE\t0\tRCPC\t" + GetStringBetween(GetDataFromFileToString("Output.tmp"), "RCPC=", ";"));
+
+            // Remove the javascript output file
             unlink(string(CurrentDir + "Output.tmp").c_str());
             if (HTTPResponseCode == 200)
             {
@@ -1075,16 +1275,25 @@ void TOOL::CODEFORCES::Login(string Username, string Password)
                 return;
             }
         }
+        else
+        {
+            Failed = true;
+            cout << "Failed" << endl;
+            return;
+        }
     }
     cout << "Succeed" << endl;
 }
 void TOOL::CODEFORCES::GetQuestionDetail(string QuestionID)
 {
+    // Get the question detail
     cout << "Getting question detail... " << flush;
     GetDataToFile("https://codeforces.com/problemset/problem/" +
                   QuestionID.substr(0, QuestionID.size() - 1) + "/" +
                   QuestionID.substr(QuestionID.size() - 1));
     cout << "Succeed" << endl;
+
+    // Format the question detail and prase it
     TiXmlDocument QuestionXmlDocument;
     QuestionXmlDocument.Parse(TidyHTMLDocument(GetDataFromFileToString()).c_str());
     if (QuestionXmlDocument.Error())
@@ -1093,6 +1302,8 @@ void TOOL::CODEFORCES::GetQuestionDetail(string QuestionID)
         return;
     }
     ofstream OutputFileStream(string("/workspaces/Coding/Codeforces/" + QuestionID + ".md").c_str());
+
+    // Find the question detail
     TiXmlHandle QuestionXmlHandle = TiXmlHandle(&QuestionXmlDocument)
                                         .FirstChild("html")
                                         .FirstChild("body")
@@ -1102,6 +1313,8 @@ void TOOL::CODEFORCES::GetQuestionDetail(string QuestionID)
                                         .Child("div", 2)
                                         .Child("div", 1)
                                         .Child("div", 0);
+
+    // Output the question detail
     OutputFileStream << "# " << QuestionXmlHandle.Child(0).Child(0).ToElement()->GetText()
                      << endl
                      << endl
@@ -1128,16 +1341,25 @@ void TOOL::CODEFORCES::GetQuestionDetail(string QuestionID)
                      << "|Output|" << QuestionXmlHandle.Child(0).Child(4).Child(1).ToText()->Value() << "|" << endl
                      << endl;
     OutputFileStream.close();
+
+    // Open the question detail file
     if (system(string("code /workspaces/Coding/Codeforces/" + QuestionID + ".md").c_str()))
         cout << "Open file \"/workspaces/Coding/Codeforces/" << QuestionID << ".md\" failed, please open it manually" << endl;
 }
 void TOOL::CODEFORCES::SubmitCode(string QuestionID)
 {
+    // Get the code
     string Code = GetDataFromFileToString("../../../Codeforces/" + QuestionID + ".cpp");
+
+    // Add a number to the code to avoid submitting the same code
     Code += "\n\n// " + to_string(time(NULL));
+
+    // Get submit page data
     cout << "Getting submit page data... " << flush;
     GetDataToFile("https://codeforces.com/problemset/submit");
     cout << "Succeed" << endl;
+
+    // Submit the code
     int HTTPResponseCode = 0;
     cout << "Submitting... " << flush;
     GetDataToFile("https://codeforces.com/problemset/submit?csrf_token=" + GetCRSF(),
@@ -1165,12 +1387,18 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
         return;
     }
     cout << "Succeed" << endl;
+
+    // Crate a header list
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList,
                                    "Referer: https://codeforces.com/problemset/status/page/1?my=on");
+
+    // Get the submission list page data
     cout << "Getting submission ID... " << flush;
     GetDataToFile("https://codeforces.com/problemset/status/page/1?my=on");
     cout << "Succeed" << endl;
+
+    // Parse the submission list
     TiXmlDocument SubmitListXmlDocument;
     SubmitListXmlDocument.Parse(TidyHTMLDocument(GetDataFromFileToString()).c_str());
     if (SubmitListXmlDocument.Error())
@@ -1178,6 +1406,8 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
         cout << "Formatting submission list error, error message: " << SubmitListXmlDocument.ErrorDesc() << endl;
         return;
     }
+
+    // Get the submission ID
     string SubmitID = TiXmlHandle(&SubmitListXmlDocument)
                           .FirstChild("html")
                           .FirstChild("body")
@@ -1191,17 +1421,10 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
                           .ToElement()
                           ->Attribute("data-submission-id");
     cout << "Judging... " << flush;
-    GetDataToFile("https://codeforces.com/data/submitSource",
-                  "Header.tmp",
-                  "Body.tmp",
-                  true,
-                  string("submissionId=" + SubmitID +
-                         "&csrf_token=" + GetCRSF()),
-                  HeaderList,
-                  NULL,
-                  FORM);
-    json result = json::parse(GetDataFromFileToString());
-    while (result["waiting"].as_string() == "true")
+
+    // Get the submission result
+    json result;
+    do
     {
         GetDataToFile("https://codeforces.com/data/submitSource",
                       "Header.tmp",
@@ -1213,16 +1436,21 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
                       NULL,
                       FORM);
         result = json::parse(GetDataFromFileToString());
-    }
+    } while (!result["waiting"].is_null() && result["waiting"].as_string() == "true");
     cout << "Succeed" << endl;
+
+    // Get the submission result
     int ACNumber = 0;
     int TestNumber = atoi(result["testCount"].as_string().c_str());
     for (int i = 1; i <= TestNumber; i++)
     {
+        // Save the input and output file
         SetDataFromStringToFile("/workspaces/Coding/Codeforces/" + QuestionID + "_" + to_string(i) + ".in",
                                 result["input#" + to_string(i)].as_string());
         SetDataFromStringToFile("/workspaces/Coding/Codeforces/" + QuestionID + "_" + to_string(i) + ".out",
                                 result["answer#" + to_string(i)].as_string());
+
+        // Print the result
         cout << "#" << i << " "
              << ToNormalName(result["verdict#" + to_string(i)].as_string()) << " "
              << result["timeConsumed#" + to_string(i)].as_string() << "ms "
@@ -1235,6 +1463,7 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
 }
 void TOOL::UVA::Login(string Username, string Password)
 {
+    // Check if already logged in
     cout << "Checking login... " << flush;
     GetDataToFile("https://onlinejudge.org/index.php?option=com_comprofiler");
     if (GetDataFromFileToString().find("You need to login.") == string::npos)
@@ -1243,12 +1472,16 @@ void TOOL::UVA::Login(string Username, string Password)
         return;
     }
     cout << "Not logged in" << endl;
+
+    // Get the login page data
     GetDataToFile("https://onlinejudge.org/index.php");
     string LoginPageHTML = GetDataFromFileToString();
     int HTTPResponseCode = 0;
     string cbsecuritym3 = GetStringBetween(LoginPageHTML,
                                            "<input type=\"hidden\" name=\"cbsecuritym3\" value=\"",
                                            "\" />");
+
+    // Login
     cout << "Logging in... " << flush;
     GetDataToFile("https://onlinejudge.org/index.php?option=com_comprofiler&task=login",
                   "Header.tmp",
@@ -1287,9 +1520,12 @@ void TOOL::UVA::Login(string Username, string Password)
 }
 void TOOL::UVA::GetQuestionDetail(string QuestionID)
 {
+    // Get the question detail
     string FixedQuestionID = QuestionID;
     while (FixedQuestionID[0] == '0')
         FixedQuestionID.erase(0, 1);
+
+    // Save the pdf file
     cout << "Getting question detail... " << flush;
     GetDataToFile("https://onlinejudge.org/external/" +
                       FixedQuestionID.substr(0, FixedQuestionID.size() - 2) +
@@ -1297,18 +1533,25 @@ void TOOL::UVA::GetQuestionDetail(string QuestionID)
                   "Header.tmp",
                   "../../../UVa/" + QuestionID + ".pdf");
     cout << "Succeed" << endl;
+
+    // Open the pdf file
     if (system(string("code /workspaces/Coding/UVa/" + QuestionID + ".pdf").c_str()))
         cout << "Open file \"/workspaces/Coding/UVa/" << QuestionID << ".md\" failed, please open it manually" << endl;
 }
 void TOOL::UVA::SubmitCode(string QuestionID)
 {
+    // Get the submit page data
     cout << "Getting submit page data... " << flush;
     GetDataToFile("https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=25&page=submit_problem");
     cout << "Succeed" << endl;
     string FixedQuestionID = QuestionID;
     while (FixedQuestionID[0] == '0')
         FixedQuestionID.erase(0, 1);
+
+    // Get the code
     string Code = GetDataFromFileToString("../../../UVa/" + QuestionID + ".cpp");
+
+    // Create the header list
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
     HeaderList = curl_slist_append(HeaderList, "Accept-Encoding: gzip, deflate, br");
@@ -1323,6 +1566,8 @@ void TOOL::UVA::SubmitCode(string QuestionID)
     HeaderList = curl_slist_append(HeaderList, "Host: onlinejudge.org");
     HeaderList = curl_slist_append(HeaderList, "Referer: https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=25&page=submit_problem");
     int HTTPResponseCode = 0;
+
+    // Create the multipart data
     string tmp = "--" + MULTIPART_BOUNDARY + "\n" +
                  "Content-Disposition: form-data; name=\"problemid\"\n" +
                  "\n" +
@@ -1349,6 +1594,8 @@ void TOOL::UVA::SubmitCode(string QuestionID)
                  "\n" +
                  "\n" +
                  "--" + MULTIPART_BOUNDARY + "--\n";
+
+    // Submit the code
     cout << "Submitting... " << flush;
     GetDataToFile("https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=25&page=save_submission",
                   "Header.tmp",
@@ -1364,6 +1611,8 @@ void TOOL::UVA::SubmitCode(string QuestionID)
         cout << "Failed" << endl;
         return;
     }
+
+    // Get the submission id
     string SubmissionID = FindLocation();
     SubmissionID = SubmissionID.substr(SubmissionID.find_last_of('+') + 1);
     if (atoi(SubmissionID.c_str()) == 0)
@@ -1373,9 +1622,12 @@ void TOOL::UVA::SubmitCode(string QuestionID)
         return;
     }
     cout << "Succeed" << endl;
+
+    // Get the submission result
     cout << "Judging... " << flush;
     while (1)
     {
+        // Get the submission list
         GetDataToFile("https://onlinejudge.org/index.php?option=com_onlinejudge&Itemid=9");
         string Data = GetDataFromFileToString();
         Data = StringReplaceAll(Data, "\t", "");
@@ -1386,9 +1638,12 @@ void TOOL::UVA::SubmitCode(string QuestionID)
         Data = StringReplaceAll(Data, "> ", ">");
         Data = StringReplaceAll(Data, " >", ">");
         SetDataFromStringToFile("Data.tmp", Data);
+
+        // Find the submission
         smatch Match;
         if (regex_search(Data.cbegin(), Data.cend(), Match, regex("<tr class=\"sectiontableentry[0-9]\"><td>" + SubmissionID + "</td><td align=\"right\"><a href=\"index\\.php\\?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=[0-9]*\">[0-9]*</a></td><td><a href=\"index\\.php\\?option=com_onlinejudge&amp;Itemid=8&amp;page=show_problem&amp;problem=[0-9]*\">[^<]*</a></td><td>([^<]*)</td><td>C\\+\\+11</td><td>([0-9\\.]*)</td><!--<td></td>--><td>[^<]*</td></tr>")))
         {
+            // Get the result
             string Verdict = Match[1];
             if (Verdict == "In judge queue")
                 usleep(500000);
@@ -1406,6 +1661,7 @@ void TOOL::UVA::SubmitCode(string QuestionID)
 }
 TOOL::TOOL(string FileName, string Operation)
 {
+    // Choose the tool
     if (FileName.find("Luogu") != string::npos)
     {
         LUOGU Luogu;
@@ -1479,12 +1735,9 @@ TOOL::TOOL(string FileName, string Operation)
 }
 TOOL::TOOL(string ServerName, string Username, string Password)
 {
-    while (Username[Username.size() - 1] == '\n' ||
-           Username[Username.size() - 1] == '\r')
-        Username.erase(Username.size() - 1, 1);
-    while (Password[Password.size() - 1] == '\n' ||
-           Password[Password.size() - 1] == '\r')
-        Password.erase(Password.size() - 1, 1);
+    // Fix leading and trailing spaces and line breaks in the username and password
+    Username = FixString(Username);
+    Password = FixString(Password);
     if (ServerName == "Luogu")
     {
         LUOGU Luogu;
@@ -1502,11 +1755,13 @@ TOOL::TOOL(string ServerName, string Username, string Password)
 }
 TOOL::~TOOL()
 {
+    // Clean up
     Clean();
 }
 int main(int argc, char **argv)
 {
     GetCurrentDir();
+    // If the Cookies.tmp file does not exist, create it
     if (!IfFileExist("../../../Keys/Cookies.tmp"))
     {
         system(string("mkdir " + CurrentDir + "../../../Keys").c_str());
@@ -1514,13 +1769,17 @@ int main(int argc, char **argv)
     }
     try
     {
+        // If the argument count is 3, the tool is used to GetQuestionDetail/SubmitCode/GetAnswerOrTips
         if (argc == 3)
             TOOL Tool(argv[1], argv[2]);
+
+        // If the argument count is 4, the tool is used to login and clock in
         else if (argc == 4)
             TOOL Tool(argv[1], argv[2], argv[3]);
         else
             cout << "传参错误" << endl;
     }
+    // Catch json parsing errors
     catch (const configor::configor_exception &Exception)
     {
         cerr << Exception.what() << endl;
