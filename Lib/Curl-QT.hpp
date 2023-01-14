@@ -212,8 +212,7 @@ int GetDataToFile(QString URL,
                   curl_slist *HeaderList = NULL,
                   int *HTTPResponseCode = NULL,
                   QString PostContentType = "application/json",
-                  QString Cookie = "",
-                  CURLU *URL2 = NULL)
+                  QString Cookie = "")
 {
     if (CurrentDir == "")
         GetCurrentDir();
@@ -223,13 +222,13 @@ int GetDataToFile(QString URL,
         QMessageBox::critical(NULL, QTranslator::tr("Error"), QTranslator::tr("Curl init failed!\n") + QString::number(CurlCode) + QTranslator::tr(": ") + curl_easy_strerror(CurlCode));
         return 1;
     }
-    FILE* HeaderFile = fopen(QString(CurrentDir + HeaderFileName).toStdString().c_str(), "w");
+    FILE *HeaderFile = fopen(QString(CurrentDir + HeaderFileName).toStdString().c_str(), "w");
     if (HeaderFile == NULL)
     {
         QMessageBox::critical(NULL, QTranslator::tr("Error"), QTranslator::tr("Can not open output file: ") + CurrentDir + HeaderFileName);
         return 1;
     }
-    FILE* BodyFile = fopen(QString(CurrentDir + BodyFileName).toStdString().c_str(), "w");
+    FILE *BodyFile = fopen(QString(CurrentDir + BodyFileName).toStdString().c_str(), "w");
     if (BodyFile == NULL)
     {
         fclose(BodyFile);
@@ -247,10 +246,7 @@ int GetDataToFile(QString URL,
         curl_easy_setopt(Curl, CURLOPT_COOKIELIST, Cookie.toStdString().c_str());
     curl_easy_setopt(Curl, CURLOPT_COOKIEFILE, "/workspaces/Coding/Keys/Cookies.tmp");
     curl_easy_setopt(Curl, CURLOPT_COOKIEJAR, "/workspaces/Coding/Keys/Cookies.tmp");
-    if (URL == "")
-        curl_easy_setopt(Curl, CURLOPT_CURLU, URL2);
-    else
-        curl_easy_setopt(Curl, CURLOPT_URL, URL.toStdString().c_str());
+    curl_easy_setopt(Curl, CURLOPT_URL, URL.toStdString().c_str());
     if (IsPost)
     {
         HeaderList = curl_slist_append(HeaderList, QString("Content-Type: " + PostContentType).toStdString().c_str());
