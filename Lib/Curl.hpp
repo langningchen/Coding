@@ -219,18 +219,85 @@ int GetDataToFileProgressCallback(void *_Param,
 {
     struct PROGRESS *Param = (struct PROGRESS *)_Param;
     CURL *Curl = Param->Curl;
-    string OutputString = "\033[2K\r" + to_string(DownloadNow * 1.0 / DownloadTotal * 100) + "% ";
+    string OutputString = "";
     double Speed = 0;
-    curl_easy_getinfo(Curl, CURLINFO_SPEED_DOWNLOAD, &Speed); // curl_get_info必须在curl_easy_perform之后调用
-    if (Speed > 1024 * 1024 * 1024)
-        OutputString += to_string(Speed / 1024 / 1024 / 1024) + "GB/s";
-    else if (Speed > 1024 * 1024)
-        OutputString += to_string(Speed / 1024 / 1024) + "MB/s";
-    else if (Speed > 1024)
-        OutputString += to_string(Speed / 1024) + "KB/s";
+    curl_easy_getinfo(Curl, CURLINFO_SPEED_DOWNLOAD, &Speed);
+
+    // Output download progress bar
+    string Bar = "[";
+    for (int i = 0; i < 50; i++)
+    {
+        if (i < DownloadNow * 1.0 / DownloadTotal * 50)
+            Bar += "█";
+        else
+            Bar += " ";
+    }
+    Bar += "]";
+
+    // Output network status
+    string NetworkStatus;
+    if (Speed == 0)
+        NetworkStatus = "▂     ";
+    else if (Speed < 1024)
+        NetworkStatus = "▂▃    ";
+    else if (Speed < 1024 * 1024)
+        NetworkStatus = "▂▃▄   ";
+    else if (Speed < 1024 * 1024 * 8)
+        NetworkStatus = "▂▃▄▅  ";
+    else if (Speed < 1024 * 1024 * 16)
+        NetworkStatus = "▂▃▄▅▆ ";
     else
-        OutputString += to_string(Speed) + "B/s";
-    printf("%s", OutputString.c_str());
+        NetworkStatus = "▂▃▄▅▆▇";
+
+    // Output download speed
+    string Unit = "";
+    double SpeedInUnit = 0;
+    if (Speed > 1024 * 1024 * 1024)
+    {
+        SpeedInUnit = Speed / 1024 / 1024 / 1024;
+        Unit = "GB/s";
+    }
+    else if (Speed > 1024 * 1024)
+    {
+        SpeedInUnit = Speed / 1024 / 1024;
+        Unit = "MB/s";
+    }
+    else if (Speed > 1024)
+    {
+        SpeedInUnit = Speed / 1024;
+        Unit = "KB/s";
+    }
+    else
+    {
+        SpeedInUnit = Speed;
+        Unit = "B/s";
+    }
+
+    // Output time left
+    string TimeLeft;
+    int HoursLeft = -1;
+    int MinutesLeft = -1;
+    int SecondsLeft = -1;
+    OutputString += " Remaining: ";
+    if (Speed != 0)
+    {
+        double TimeLeft = (DownloadTotal - DownloadNow) / Speed;
+        HoursLeft = TimeLeft / 3600;
+        MinutesLeft = TimeLeft / 60 - HoursLeft * 60;
+        SecondsLeft = TimeLeft - HoursLeft * 3600 - MinutesLeft * 60;
+    }
+
+    // Output and flush
+    printf("\033[2K\r%.2f%% %s %s %s %.2f%s %02d:%02d:%02d",
+           DownloadNow * 1.0 / DownloadTotal * 100,
+           OutputString.c_str(),
+           Bar.c_str(),
+           NetworkStatus.c_str(),
+           SpeedInUnit,
+           Unit.c_str(),
+           HoursLeft,
+           MinutesLeft,
+           SecondsLeft);
     fflush(stdout);
     return 0;
 }
@@ -267,7 +334,7 @@ int GetDataToFile(string URL,
     curl_easy_setopt(Curl, CURLOPT_CONNECTTIMEOUT, 10);
     if (ShowProgress)
     {
-        cout << endl
+        cout << "\033[s" << endl
              << "\033[?25l";
         struct PROGRESS Param;
         Param.Curl = Curl;
@@ -291,7 +358,7 @@ int GetDataToFile(string URL,
     CurlCode = curl_easy_perform(Curl);
     if (ShowProgress)
     {
-        cout << "\033[2K\033[?25h\r" << endl;
+        cout << "\033[2K\033[?25h\033[u";
     }
     if (CurlCode != 0)
     {
