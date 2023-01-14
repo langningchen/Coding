@@ -78,7 +78,18 @@ void DownloadVideo(string CourseID)
     unsigned int M3U8Counter = 0;
     for (json::iterator jit = CourseInfo["currentData"]["replayFiles"].begin(); jit != CourseInfo["currentData"]["replayFiles"].end(); jit++)
     {
-        GetDataToFile(Decode(jit.value()["url"]["HD"].as_string(), CourseInfo["currentData"]["obfsKey"].as_integer()));
+        GetDataToFile(
+            Decode(jit.value()["url"]["HD"].as_string(),
+                   CourseInfo["currentData"]["obfsKey"].as_integer()),
+            "Header.tmp",
+            "Body.tmp",
+            false,
+            "",
+            NULL,
+            NULL,
+            "application/json",
+            "",
+            true);
         string M3U8Detail = GetDataFromFileToString();
         unsigned int TSCounter = 0;
         if (system(string("mkdir \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "\"").c_str()) != 0)

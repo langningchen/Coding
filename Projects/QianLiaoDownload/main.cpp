@@ -91,7 +91,16 @@ void DownloadTopic(string LiveID,
              << TopicCounter << "/" << TopicSize << ": " << TopicName << "   "
              << "1/2   "
              << Counter << "/" << Data["data"]["speakList"].size() << "      " << flush;
-        if (GetDataToFile(i["content"].as_string(), "Header.tmp", DownloadDir + to_string(Counter) + ".mp3"))
+        if (GetDataToFile(i["content"].as_string(),
+                          "Header.tmp",
+                          DownloadDir + to_string(Counter) + ".mp3",
+                          false,
+                          "",
+                          NULL,
+                          NULL,
+                          "application/json",
+                          "",
+                          true))
         {
             cout << "下载失败，正在等待5秒" << endl;
             usleep(5000000);
@@ -145,7 +154,14 @@ void DownloadTopic(string LiveID,
              << Counter << "/" << ImageURLList.size() << "      " << flush;
         if (GetDataToFile(i,
                           "Header.tmp",
-                          DownloadDir + (Counter < 10 ? "0" : "") + to_string(Counter) + ".jpg"))
+                          DownloadDir + (Counter < 10 ? "0" : "") + to_string(Counter) + ".jpg",
+                          false,
+                          "",
+                          NULL,
+                          NULL,
+                          "application/json",
+                          "",
+                          true))
         {
             cout << "下载失败，正在等待5秒" << endl;
             usleep(5000000);
