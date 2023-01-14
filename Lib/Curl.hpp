@@ -208,6 +208,32 @@ string HTTPResponseString(int HTTPResponseCode)
         return to_string(HTTPResponseCode);
     }
 }
+struct PROGRESS
+{
+    CURL *Curl;
+};
+int GetDataToFileProgressCallback(void *_Param,
+                                  curl_off_t DownloadTotal, curl_off_t DownloadNow,
+                                  curl_off_t UploadTotal, curl_off_t UploadNow)
+
+{
+    struct PROGRESS *Param = (struct PROGRESS *)_Param;
+    CURL *Curl = Param->Curl;
+    string OutputString = "\033[2K\r" + to_string(DownloadNow * 1.0 / DownloadTotal * 100) + "% ";
+    double Speed = 0;
+    curl_easy_getinfo(Curl, CURLINFO_SPEED_DOWNLOAD, &Speed); // curl_get_info必须在curl_easy_perform之后调用
+    if (Speed > 1024 * 1024 * 1024)
+        OutputString += to_string(Speed / 1024 / 1024 / 1024) + "GB/s";
+    else if (Speed > 1024 * 1024)
+        OutputString += to_string(Speed / 1024 / 1024) + "MB/s";
+    else if (Speed > 1024)
+        OutputString += to_string(Speed / 1024) + "KB/s";
+    else
+        OutputString += to_string(Speed) + "B/s";
+    printf("%s", OutputString.c_str());
+    fflush(stdout);
+    return 0;
+}
 int GetDataToFile(string URL,
                   string HeaderFileName = "Header.tmp",
                   string BodyFileName = "Body.tmp",
@@ -217,7 +243,7 @@ int GetDataToFile(string URL,
                   int *HTTPResponseCode = NULL,
                   string PostContentType = "application/json",
                   string Cookie = "",
-                  CURLU *URL2 = NULL)
+                  bool ShowProgress = false)
 {
     if (CurrentDir == "")
         GetCurrentDir();
@@ -239,14 +265,21 @@ int GetDataToFile(string URL,
     curl_easy_setopt(Curl, CURLOPT_HEADERDATA, HeaderFilePointer);
     curl_easy_setopt(Curl, CURLOPT_WRITEDATA, BodyFilePointer);
     curl_easy_setopt(Curl, CURLOPT_CONNECTTIMEOUT, 10);
+    if (ShowProgress)
+    {
+        cout << endl
+             << "\033[?25l";
+        struct PROGRESS Param;
+        Param.Curl = Curl;
+        curl_easy_setopt(Curl, CURLOPT_XFERINFOFUNCTION, GetDataToFileProgressCallback);
+        curl_easy_setopt(Curl, CURLOPT_XFERINFODATA, &Param);
+        curl_easy_setopt(Curl, CURLOPT_NOPROGRESS, false);
+    }
     if (Cookie != "")
         curl_easy_setopt(Curl, CURLOPT_COOKIELIST, Cookie.c_str());
     curl_easy_setopt(Curl, CURLOPT_COOKIEFILE, "/workspaces/Coding/Keys/Cookies.tmp");
     curl_easy_setopt(Curl, CURLOPT_COOKIEJAR, "/workspaces/Coding/Keys/Cookies.tmp");
-    if (URL == "")
-        curl_easy_setopt(Curl, CURLOPT_CURLU, URL2);
-    else
-        curl_easy_setopt(Curl, CURLOPT_URL, URL.c_str());
+    curl_easy_setopt(Curl, CURLOPT_URL, URL.c_str());
     if (IsPost)
     {
         HeaderList = curl_slist_append(HeaderList, string("Content-Type: " + PostContentType).c_str());
@@ -256,6 +289,10 @@ int GetDataToFile(string URL,
     HeaderList = curl_slist_append(HeaderList, string("User-Agent: " + UA).c_str());
     curl_easy_setopt(Curl, CURLOPT_HTTPHEADER, HeaderList);
     CurlCode = curl_easy_perform(Curl);
+    if (ShowProgress)
+    {
+        cout << "\033[2K\033[?25h\r" << endl;
+    }
     if (CurlCode != 0)
     {
         fclose(BodyFilePointer);
