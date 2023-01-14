@@ -1531,7 +1531,14 @@ void TOOL::UVA::GetQuestionDetail(string QuestionID)
                       FixedQuestionID.substr(0, FixedQuestionID.size() - 2) +
                       "/p" + FixedQuestionID + ".pdf",
                   "Header.tmp",
-                  "../../../UVa/" + QuestionID + ".pdf");
+                  "../../../UVa/" + QuestionID + ".pdf",
+                  false,
+                  "",
+                  NULL,
+                  NULL,
+                  "application/json",
+                  "",
+                  true);
     cout << "Succeed" << endl;
 
     // Open the pdf file
