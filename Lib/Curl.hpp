@@ -442,7 +442,7 @@ unsigned char FromHex(unsigned char x)
         assert(0);
     return y;
 }
-string URLEncode(string Input)
+string URLEncode(string Input, bool EncodeSpace = false)
 {
     string Output = "";
     size_t length = Input.length();
@@ -454,7 +454,7 @@ string URLEncode(string Input)
             (Input[i] == '.') ||
             (Input[i] == '~'))
             Output += Input[i];
-        else if (Input[i] == ' ')
+        else if (Input[i] == ' ' && !EncodeSpace)
             Output += "+";
         else
         {
