@@ -1,0 +1,27 @@
+# Ignore files without extension
+*
+!*.*
+!*/
+
+# Ignore secret files
+Keys/
+Tools/LockAndUnlock.cpp
+
+# Ingore generated files
+Tools/LGR*
+
+# Ignore temp files
+**/*.tmp
+CPH/
+
+# Ignore build/debug/release files
+build/
+Debug/
+Release/
+
+# Ignore VSCode files
+.vscode/
+Default.code-workspace
+
+# Ignore unfinish files
+/Projects/Unfinished-*
