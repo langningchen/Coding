@@ -93,10 +93,9 @@ int GetDataToFileProgressCallback(void *_Param,
     }
 
     string LoadingString[8] = {"⣰", "⣤", "⣆", "⡇", "⠏", "⠛", "⠹", "⢸"};
-    struct timeval tv;
-    struct timezone tz;
-    gettimeofday(&tv, &tz);
-    string CurrentLoadingString = LoadingString[(int)(tv.tv_usec / 125000) % 8];
+    struct timeval TimeVal;
+    gettimeofday(&TimeVal, NULL);
+    string CurrentLoadingString = LoadingString[(int)(TimeVal.tv_usec / 125000) % 8];
 
     // Output and flush
     printf("\033[2K\r%.2f%% %s%s %s %.2f%s %02d:%02d:%02d",
