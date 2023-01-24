@@ -167,7 +167,7 @@ int main()
             if (CaptchaCounter == 5)
             {
                 cout << "多次失败，请重新运行程序重试" << endl;
-                Clean();
+                
                 getchar();
                 getchar();
                 return 0;
@@ -249,7 +249,7 @@ int main()
             remove(string(CurrentDir + "Captcha-Background.jpg").c_str());
             remove(string(CurrentDir + "Captcha-Foreground.png").c_str());
         }
-        string PhoneNumber = GetDataFromFileToString("../../Lib/PhoneNumber2");
+        string PhoneNumber = GetDataFromFileToString("Keys/PhoneNumber2");
         string Nonce = GetNonce();
         json AuthJSON;
         AuthJSON["mobile"] = PhoneNumber;
@@ -261,7 +261,7 @@ int main()
         if (AuthJSONResponse["ret"].as_integer() != 0)
         {
             cout << "验证码发送失败 " << AuthJSONResponse["msg"].as_string() << endl;
-            Clean();
+            
             getchar();
             getchar();
             return 0;
@@ -297,7 +297,7 @@ int main()
         if (LoginJSONResponse["ret"].as_integer() != 0)
         {
             cout << "登录失败 " << LoginJSONResponse["msg"].as_string() << endl;
-            Clean();
+            
             getchar();
             getchar();
             return 0;
@@ -309,7 +309,7 @@ int main()
     if (AlbumJSONResponse["ret"].as_integer() != 200)
     {
         cout << "获取合集信息失败 " << AlbumJSONResponse["msg"] << endl;
-        Clean();
+        
         getchar();
         getchar();
         return 0;
@@ -320,7 +320,7 @@ int main()
     if (TrackIndex < 1 || TrackIndex > AlbumJSONResponse["data"]["trackTotalCount"])
     {
         cout << "请输入大于1小于" << AlbumJSONResponse["data"]["trackTotalCount"] << "的数字" << endl;
-        Clean();
+        
         getchar();
         getchar();
         return 0;
@@ -330,7 +330,7 @@ int main()
     if (AlbumJSONResponse["ret"].as_integer() != 200)
     {
         cout << "获取合集信息失败 " << AlbumJSONResponse["msg"].as_string() << endl;
-        Clean();
+        
         getchar();
         getchar();
         return 0;
@@ -341,7 +341,7 @@ int main()
     if (TrackJSONResponse["ret"].as_integer() != 200)
     {
         cout << "获取音频信息失败 " << TrackJSONResponse["msg"] << endl;
-        Clean();
+        
         getchar();
         getchar();
         return 0;
@@ -371,7 +371,7 @@ int main()
     if (!OutputFileStream.is_open())
     {
         cout << "打开输出文件失败" << endl;
-        Clean();
+        
         getchar();
         getchar();
         return 0;
@@ -391,6 +391,6 @@ int main()
         cout << "执行失败" << endl;
         return 0;
     }
-    Clean();
+    
     return 0;
 }

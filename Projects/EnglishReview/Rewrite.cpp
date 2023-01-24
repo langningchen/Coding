@@ -2,8 +2,8 @@
 #include <fstream>
 #include <termio.h>
 #include <unistd.h>
-#include "../../Lib/configor/json.hpp"
-#include "../../Lib/StringOperation.hpp"
+#include "configor/json.hpp"
+#include "StringOperation.hpp"
 using namespace std;
 using namespace configor;
 int main()

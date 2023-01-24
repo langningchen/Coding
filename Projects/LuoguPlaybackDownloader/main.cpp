@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
-#include "../Lib/Curl.hpp"
+#include "Curl.hpp"
 using namespace std;
 string Decode(string Input, int OBFSKEY)
 {
@@ -14,50 +14,132 @@ string Decode(string Input, int OBFSKEY)
     }
     return Input;
 }
-void Login(string Username, string Password)
+
+// Copied from Projects/OJTool/main.cpp TOOL::LUOGU::GetCSRF
+string GetCSRF()
 {
-    int HTTPResponseCode;
-    GetDataToFile("https://www.luogu.com.cn/auth/login", "Header.tmp", "Body.tmp", false, "", NULL, &HTTPResponseCode);
-    if (HTTPResponseCode != 302)
+    // Get csrf token
+    string Token = GetStringBetween(GetDataFromFileToString(),
+                                    "<meta name=\"csrf-token\" content=\"", "\"");
+    if (Token == "")
     {
-        string Token = GetStringBetween(GetDataFromFileToString(), "<meta name=\"csrf-token\" content=\"", "\"");
-        int ErrorCounter = 0;
-        while (1)
+        TRIGGER_ERROR("Can not find csrf token");
+    }
+    return Token;
+}
+
+// Copied from Projects/OJTool/main.cpp TOOL::LUOGU::Login
+void LoginLuogu(string Username, string Password)
+{
+
+    // Check if the user is logged in.
+    int HTTPResponseCode = 0;
+    cout << "Checking login... " << flush;
+    GetDataToFile("https://www.luogu.com.cn/auth/login",
+                  "Header.tmp",
+                  "Body.tmp",
+                  false,
+                  "",
+                  NULL,
+                  &HTTPResponseCode);
+    if (HTTPResponseCode == 302)
+    {
+        cout << "Already logged in" << endl;
+        return;
+    }
+    cout << "Not logged in" << endl;
+
+    string Token = GetCSRF();
+    int ErrorCounter = 0;
+    while (1)
+    {
+        // Get login captcha
+        cout << "Getting login captcha... " << flush;
+        GetDataToFile("https://www.luogu.com.cn/api/verify/captcha",
+                      "Header.tmp",
+                      "Captcha.jpeg");
+        cout << "Succeed" << endl;
+
+        // Predict captcha
+        curl_slist *HeaderList = NULL;
+        HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json");
+        cout << "Predicting captcha... " << flush;
+        string Captcha = "";
+        try
         {
-            GetDataToFile("https://www.luogu.com.cn/api/verify/captcha", "Header.tmp", "Captcha.jpeg");
-            curl_slist *HeaderList = NULL;
-            HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json");
-            // GetDataToFile("https://luogu-captcha-bypass.piterator.com/predict/", "Header.tmp", "Body.tmp", true, string("data:image/jpeg;base64," + Base64Encode(GetDataFromFileToString())), HeaderList);
-            // string Captcha = GetDataFromFileToString();
-            string Captcha;
+            GetDataToFile("https://luogu-captcha-bypass.piterator.com/predict/",
+                          "Header.tmp",
+                          "Body.tmp",
+                          true,
+                          "data:image/jpeg;base64," +
+                              Base64Encode(
+                                  GetDataFromFileToString("Captcha.jpeg")),
+                          HeaderList);
+            cout << "Succeed" << endl;
+            Captcha = GetDataFromFileToString();
+        }
+        catch (CLNException Exception)
+        {
+            cout << "Failed" << endl;
+            system(("code " + CurrentDir + "Captcha.jpeg").c_str());
             cout << "Please input the captcha: ";
             cin >> Captcha;
-            json LoginRequest;
-            LoginRequest["username"] = Username;
-            LoginRequest["password"] = Password;
-            LoginRequest["captcha"] = Captcha;
-            HeaderList = NULL;
-            HeaderList = curl_slist_append(HeaderList, string("X-CSRF-TOKEN: " + Token).c_str());
-            HeaderList = curl_slist_append(HeaderList, string("Content-Length: " + to_string(LoginRequest.dump().size())).c_str());
-            HeaderList = curl_slist_append(HeaderList, "Host: www.luogu.com.cn");
-            HeaderList = curl_slist_append(HeaderList, "Referer: https://www.luogu.com.cn/auth/login");
-            HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
-            HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
-            GetDataToFile("https://www.luogu.com.cn/api/auth/userPassLogin", "Header.tmp", "Body.tmp", true, LoginRequest.dump(), HeaderList);
-            json LoginInfo = json::parse(GetDataFromFileToString());
-            if (!LoginInfo["status"].is_null())
+        }
+        remove((CurrentDir + "Captcha.jpeg").c_str());
+
+        // Create a json object to store the login request info
+        json LoginRequest;
+        LoginRequest["username"] = Username;
+        LoginRequest["password"] = Password;
+        LoginRequest["captcha"] = Captcha;
+
+        // Create a header list for the curl request
+        HeaderList = NULL;
+        HeaderList = curl_slist_append(HeaderList, string("X-CSRF-TOKEN: " + Token).c_str());
+        HeaderList = curl_slist_append(HeaderList, string("Content-Length: " +
+                                                          to_string(LoginRequest.dump().size()))
+                                                       .c_str());
+        HeaderList = curl_slist_append(HeaderList, "Host: www.luogu.com.cn");
+        HeaderList = curl_slist_append(HeaderList, "Referer: https://www.luogu.com.cn/auth/login");
+        HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
+        HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
+
+        // Send the login request to the server
+        cout << "Logging in... " << flush;
+        GetDataToFile("https://www.luogu.com.cn/api/auth/userPassLogin",
+                      "Header.tmp",
+                      "Body.tmp",
+                      true,
+                      LoginRequest.dump(),
+                      HeaderList);
+
+        // Parse the response to a json object
+        json LoginInfo = json::parse(GetDataFromFileToString());
+        if (!LoginInfo["status"].is_null())
+        {
+            // If the captcha is incorrect and the error counter is less than 5, try again.
+            if (LoginInfo["data"].as_string() != "验证码错误" && ErrorCounter < 5)
             {
-                if (LoginInfo["currentData"]["errorMessage"].as_string() != "验证码错误" && ErrorCounter < 5)
-                {
-                    cout << "登录失败，错误码：" << LoginInfo["status"].as_integer() << "，错误信息：" << LoginInfo["currentData"]["errorMessage"].as_string() << endl;
-                    return;
-                }
+                TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Login failed",
+                                                    LoginInfo["status"].as_integer(),
+                                                    LoginInfo["data"].as_string());
             }
             else
-                break;
-            ErrorCounter++;
+                cout << "Failed (Captcha check failed for " << ErrorCounter + 1 << " times)" << endl;
         }
+        else
+        {
+            cout << "Succeed" << endl;
+            break;
+        }
+        ErrorCounter++;
     }
+}
+void Login(string Username, string Password)
+{
+    LoginLuogu(Username, Password);
+    cout << "Logging luogu class... " << flush;
+    int HTTPResponseCode = 0;
     GetDataToFile("https://class.luogu.com.cn/course", "Header.tmp", "Body.tmp", false, "", NULL, &HTTPResponseCode);
     if (HTTPResponseCode != 200)
     {
@@ -65,6 +147,7 @@ void Login(string Username, string Password)
         string RedirectURL = FindLocation();
         GetDataToFile(RedirectURL);
     }
+    cout << "Success" << endl;
 }
 void DownloadVideo(string CourseID)
 {
@@ -72,7 +155,7 @@ void DownloadVideo(string CourseID)
     json CourseInfo = json::parse(GetDataFromFileToString());
     if (CourseInfo["code"].as_integer() != 200)
     {
-        cout << "获取课程信息失败，错误码：" << CourseInfo["code"].as_integer() << "，错误信息：" << CourseInfo["currentData"]["errorMessage"].as_string() << endl;
+        TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Get course info", CourseInfo["code"].as_integer(), CourseInfo["currentData"]["errorMessage"].as_string());
         return;
     }
     unsigned int M3U8Counter = 0;
@@ -94,16 +177,14 @@ void DownloadVideo(string CourseID)
         unsigned int TSCounter = 0;
         if (system(string("mkdir \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "\"").c_str()) != 0)
         {
-            cout << "创建文件夹失败" << endl;
-            return;
+            TRIGGER_ERROR("Create dir failed");
         }
         ofstream OutputFileStream(string(CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.m3u8"));
         if (OutputFileStream.bad())
         {
-            cout << "无法打开输出文件" << endl;
-            return;
+            TRIGGER_ERROR("Open output file failed");
         }
-        queue<string> TSURLList;
+        queue<string> TsUrlList;
         for (unsigned int i = 0; i < M3U8Detail.size(); i++)
         {
             unsigned int LineStartPos = i;
@@ -118,21 +199,25 @@ void DownloadVideo(string CourseID)
                 else if (Line.find("https://class.luogu.com.cn/") != string::npos && Line.find("https://class.luogu.com.cn/api/") == string::npos)
                     Line.replace(Line.find("https://class.luogu.com.cn/"), 27, "https://class.luogu.com.cn/api/");
             }
-            TSURLList.push(Line);
+            TsUrlList.push(Line);
             i = LineEndPos;
         }
         int CurrentTSIndex = 0;
-        while (!TSURLList.empty())
+        while (!TsUrlList.empty())
         {
-            if (TSURLList.front()[0] == '#')
-                OutputFileStream << TSURLList.front() << endl;
+            if (TsUrlList.front()[0] == '#')
+                OutputFileStream << TsUrlList.front() << endl;
             else
             {
-                GetDataToFile(string("https://class.luogu.com.cn/api/live/signReplay?url=https://video.class.luogu.com.cn/yugu-live/" + CourseID + "/" + TSURLList.front()));
-                json TSURLInfo = json::parse(GetDataFromFileToString());
+                GetDataToFile(string("https://class.luogu.com.cn/api/live/signReplay?url=https://video.class.luogu.com.cn/yugu-live/" + CourseID + "/" + TsUrlList.front()));
+                json TsUrlInfo = json::parse(GetDataFromFileToString());
                 cout << "\r" << CurrentTSIndex << "/" << TSCounter;
                 fflush(stdout);
-                if (GetDataToFile(TSURLInfo["url"].as_string(), "Header.tmp", string(CourseInfo["currentData"]["lesson"]["name"].as_string() + "/" + to_string(CurrentTSIndex) + ".ts")) == -1)
+                try
+                {
+                    GetDataToFile(TsUrlInfo["url"].as_string(), "Header.tmp", string(CourseInfo["currentData"]["lesson"]["name"].as_string() + "/" + to_string(CurrentTSIndex) + ".ts"));
+                }
+                catch (CLNException)
                 {
                     CurrentTSIndex--;
                     continue;
@@ -140,40 +225,40 @@ void DownloadVideo(string CourseID)
                 OutputFileStream << CurrentTSIndex << ".ts" << endl;
                 CurrentTSIndex++;
             }
-            TSURLList.pop();
+            TsUrlList.pop();
         }
         OutputFileStream.close();
-        if (system(string("ffmpeg -protocol_whitelist concat,file,http,https,tcp,tls,crypto -i \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.m3u8\" \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\"").c_str()) == 0)
-        {
-            if (system(string("cp \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\" \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + (CourseInfo["currentData"]["replayFiles"].size() == 1 ? "" : "_" + to_string(M3U8Counter)) + ".mp4\"").c_str()) == 0)
-            {
-                if (system(string("rm -r \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "\"").c_str()) != 0)
-                {
-                    cout << "删除临时文件出错" << endl;
-                    return;
-                }
-            }
-            else
-            {
-                cout << "MP4复制出错" << endl;
-                return;
-            }
-        }
-        else
-        {
-            cout << "TS文件合并出错" << endl;
-            return;
-        }
+        if (system((string("ffmpeg -y -hide_banner -loglevel error -protocol_whitelist concat,file,http,https,tcp,tls,crypto -i ") +
+                    "\"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.m3u8\" " +
+                    "\"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\"")
+                       .c_str()) == 0 &&
+            system((string("cp ") +
+                    "\"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\" " +
+                    "\"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() +
+                    (CourseInfo["currentData"]["replayFiles"].size() == 1
+                         ? ""
+                         : "_" + to_string(M3U8Counter)) +
+                    ".mp4\"")
+                       .c_str()) == 0)
+            system(string("rm -r \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "\"").c_str());
         M3U8Counter++;
     }
 }
 int main()
 {
-    cout << "请输入课程编号：";
+    CLN_TRY
+    cout << "Please input the course id(LGR and lgr is different): ";
     string CourseID;
+#ifdef TEST
+    CourseID = "LGR119";
+    cout << CourseID << endl;
+#else
     cin >> CourseID;
-    Login(GetDataFromFileToString("../Keys/LuoguUsername"), GetDataFromFileToString("../Keys/LuoguPassword"));
+#endif
+    Login(GetDataFromFileToString("Keys/LuoguUsername"), GetDataFromFileToString("Keys/LuoguPassword"));
     DownloadVideo(CourseID);
-    Clean();
-    return 0;
+#ifdef TEST
+    OutputSummary("Success");
+#endif
+    CLN_CATCH return 0;
 }

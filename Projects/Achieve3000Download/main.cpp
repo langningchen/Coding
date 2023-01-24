@@ -10,8 +10,10 @@ string NormalizeString(string Data)
 }
 int main()
 {
+    CLN_TRY
     curl_slist *HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
+    cout << "Logging in... " << flush;
     GetDataToFile("https://portal.achieve3000.com/util/login.php",
                   "Header.tmp",
                   "Body.tmp",
@@ -21,11 +23,11 @@ int main()
                       "&lang=1" +
                       "&ajax_yn=Y" +
                       "&flash_version=" +
-                      "&login_name=" + GetDataFromFileToString("../../Keys/Achieve3000Username") +
+                      "&login_name=" + GetDataFromFileToString("Keys/Achieve3000Username") +
                       "&wz=0" +
                       "&cli=0" +
                       "&login_url=portal.achieve3000.com%2Findex" +
-                      "&password=" + GetDataFromFileToString("../../Keys/Achieve3000Password") +
+                      "&password=" + GetDataFromFileToString("Keys/Achieve3000Password") +
                       "&cdn=VIDEOCDN%3A0%3BAUDIOCDN%3A0%3BIMAGECDN%3A0%3BDOCSCDN%3A0%3BIMAGEASSETSCDN%3A0%3BAPPASSETSCDN%3A0%3BJSASSETSCDN%3A0%3BCSSASSETSCDN%3A0" +
                       "&banner=1" +
                       "&redirectedFromLE=" +
@@ -43,11 +45,14 @@ int main()
                   "application/x-www-form-urlencoded; charset=UTF-8");
     if (GetDataFromFileToString().find("REDIRECT") == string::npos)
     {
-        cout << "登录失败" << endl;
-        return 0;
+        TRIGGER_ERROR("Login failed");
     }
+    cout << "Succeed" << endl
+         << "Getting your lessons... " << flush;
     GetDataToFile("https://portal.achieve3000.com/my_lessons");
     string HTMLData = GetDataFromFileToString();
+    cout << "Succeed" << endl
+         << "Searching available lessons... " << flush;
     vector<pair<string, pair<string, string>>> Lessons;
     smatch Match;
     string::const_iterator StartPos = HTMLData.cbegin();
@@ -56,6 +61,7 @@ int main()
         Lessons.push_back(make_pair(Match.str(1), make_pair(Match.str(2), Match.str(3))));
         StartPos = Match.suffix().first;
     }
+    cout << "Succeed" << endl;
     int Counter = 1;
     for (vector<pair<string, pair<string, string>>>::iterator vit = Lessons.begin(); vit != Lessons.end(); vit++)
     {
@@ -69,142 +75,52 @@ int main()
     }
     int Index;
     cout << "Please input the id: ";
+#ifdef TEST
+    Index = 1;
+    cout << "1" << endl;
+#else
     cin >> Index;
+#endif
     if (Index >= Counter)
     {
-        cout << "Input invalid" << endl;
-        Clean();
-        return 0;
+        TRIGGER_ERROR("Input which is " + to_string(Index) + " must less than" + to_string(Counter));
     }
 
+    cout << "Getting lessons detail... " << flush;
     string LessonID = Lessons[Index - 1].first;
     string CategoryID = Lessons[Index - 1].second.first;
     string SubcategoryID = Lessons[Index - 1].second.second;
     GetDataToFile(string("https://portal.achieve3000.com/api/v1/lessoncontent/fetch?lid=" + LessonID + "&c=" + CategoryID + "&sc=" + SubcategoryID).c_str());
     json Data = json::parse(GetDataFromFileToString());
+    cout << "Succeed" << endl
+         << "Generating content... " << flush;
     HeaderList = NULL;
     HeaderList = curl_slist_append(HeaderList, string("X-ACHIEVE-SESSION: " + Data["session"]["resumeSessionId"].as_string()).c_str());
     HeaderList = curl_slist_append(HeaderList, string("X-ACHIEVE-SESSION-KEY: " + Data["session"]["resumeSessionToken"].as_string()).c_str());
     HeaderList = curl_slist_append(HeaderList, string("X-XSRF-TOKEN: " + Data["session"]["csrfToken"].as_string()).c_str());
-    // GetDataToFile(string("https://portal.achieve3000.com/api/v1/lessonactivity/fetch?lesson_id=" + LessonID + "&category_id=" + CategoryID + "&step_id=14&progress=true").c_str(), "Header.tmp", "Body.tmp", false, "", HeaderList);
-    // json QuestionData = json::parse(GetDataFromFileToString());
     string FileName = regex_replace(NormalizeString(Data["lessonInfo"]["lessonName"].as_string()), regex("(\\?|\"|/|\\|\\|<|>|:|\\*)"), "");
-    ofstream OutputFileStream("/mnt/c/Users/Son/Desktop/" + FileName + ".html");
-    OutputFileStream << "<html>" << endl
-                     << "<head>" << endl
-                     << "  <title>" << endl
-                     << "    " << NormalizeString(Data["lessonInfo"]["lessonName"].as_string()) << endl
-                     << "  </title>" << endl
-                     << "  <style>" << endl
-                     << "    * {" << endl
-                     << "      font-size: 15px;" << endl
-                     << "    }" << endl
-                     << "    .Big1," << endl
-                     << "    .Big2," << endl
-                     << "    .Big3 {" << endl
-                     << "      font-weight: 600;" << endl
-                     << "    }" << endl
-                     << "    .Big1 {" << endl
-                     << "      font-size: 25px;" << endl
-                     << "    }" << endl
-                     << "    .Big2 {" << endl
-                     << "      font-size: 20px;" << endl
-                     << "    }" << endl
-                     << "    .Big3 {" << endl
-                     << "      font-size: 18px;" << endl
-                     << "    }" << endl
-                     << "    .Code," << endl
-                     << "    .CodeBlock {" << endl
-                     << "      border-radius: 3px;" << endl
-                     << "      background-color: rgba(0, 0, 0, 0.05);" << endl
-                     << "      padding: 2px 5px;" << endl
-                     << "      color: black;" << endl
-                     << "    }" << endl
-                     << "    .CodeBlock {" << endl
-                     << "      border-radius: 10px;" << endl
-                     << "      width: 100%;" << endl
-                     << "    }" << endl
-                     << "    .CheckBox {" << endl
-                     << "      vertical-align: middle;" << endl
-                     << "      height: 20px;" << endl
-                     << "      width: 20px;" << endl
-                     << "    }" << endl
-                     << "    hr {" << endl
-                     << "      height: 4px;" << endl
-                     << "      background-color: rgba(0, 0, 0, 0.3);" << endl
-                     << "      border-style: none;" << endl
-                     << "      margin: 20px 0px;" << endl
-                     << "      border-radius: 3px;" << endl
-                     << "    }" << endl
-                     << "  </style>" << endl
-                     << "</head>" << endl
-                     << "<body>" << endl
-                     << "  <span class=\"Big1\">" << endl
-                     << "    " << NormalizeString(Data["lessonInfo"]["lessonName"].as_string()) << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl
-                     << "  <br />" << endl
-                     << "  <span class=\"Big2\">" << endl
-                     << "    Ready" << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl
-                     << "  <br />" << endl
-                     << "  <span>" << endl;
-    string PollQuestion = Data["poll"]["question"].as_string();
-    PollQuestion = regex_replace(PollQuestion, regex("<[/]?[^>]*>"), "");
-    OutputFileStream << "    " << PollQuestion << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl
-                     << "  <span>" << endl
-                     << "    " << Data["poll"]["opinionStatement"].as_string() << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl;
+    string OutputContent = GetDataFromFileToString("Projects/Achieve3000Download/Template.html");
+    OutputContent = StringReplaceAll(OutputContent, "${LESSON_NAME}", NormalizeString(Data["lessonInfo"]["lessonName"].as_string()));
+    OutputContent = StringReplaceAll(OutputContent, "${POLL_QUESTION}", EraseHTMLElement(Data["poll"]["question"].as_string()));
+    OutputContent = StringReplaceAll(OutputContent, "${OPTION_STATEMENT}", Data["poll"]["opinionStatement"].as_string());
+    string PollChoices = "";
     for (json::iterator jit = Data["poll"]["choices"].begin(); jit != Data["poll"]["choices"].end(); jit++)
     {
-        OutputFileStream << "  <input type=\"checkbox\" class=\"CheckBox\" />" << endl
-                         << "  <span>" << endl
-                         << "    " << jit.value()["choiceText"].as_string() << endl
-                         << "  </span>" << endl
-                         << "  <br />" << endl;
+        PollChoices += StringReplaceAll(GetDataFromFileToString("Projects/Achieve3000Download/PollChoicesTemplate.html"),
+                                        "${ChoiceText}",
+                                        jit.value()["choiceText"].as_string());
     }
-    OutputFileStream << "  <span>" << endl
-                     << "    Explain why you voted the way you did. " << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl
-                     << "  <br />" << endl
-                     << "  <div class=\"CodeBlock\">" << endl
-                     << "    <br />" << endl
-                     << "    <br />" << endl
-                     << "    <br />" << endl
-                     << "  </div>" << endl
-                     << "  <hr />" << endl
-                     << "  <span class=\"Big2\">" << endl
-                     << "    Vocabulary" << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl
-                     << "  <br />" << endl;
+    OutputContent = StringReplaceAll(OutputContent, "${POLL_CHOICES}", PollChoices);
+    string VocabularyList = "";
     for (json::iterator jit = Data["lessonContent"]["vocabulary"].begin(); jit != Data["lessonContent"]["vocabulary"].end(); jit++)
     {
-        OutputFileStream << "  <span class=\"Big3\">" << endl
-                         << "    <span>" << endl
-                         << "      " << jit.value()["word"].as_string() << endl
-                         << "    </span>" << endl
-                         << "    <span class=\"Code\">" << endl
-                         << "      " << jit.value()["speechPart"].as_string() << endl
-                         << "    </span>" << endl
-                         << "  </span>" << endl
-                         << "  <br />" << endl
-                         << "  <span>" << endl
-                         << "    " << jit.value()["definition"].as_string() << endl
-                         << "  </span>" << endl
-                         << "  <br />" << endl;
+        string CurrentVocabularyList = GetDataFromFileToString("Projects/Achieve3000Download/VocabularyTemplate.html");
+        CurrentVocabularyList = StringReplaceAll(CurrentVocabularyList, "${Word}", jit.value()["word"].as_string());
+        CurrentVocabularyList = StringReplaceAll(CurrentVocabularyList, "${SpeechPart}", jit.value()["speechPart"].as_string());
+        CurrentVocabularyList = StringReplaceAll(CurrentVocabularyList, "${Definition}", jit.value()["definition"].as_string());
+        VocabularyList += CurrentVocabularyList;
     }
-    OutputFileStream << "  <hr />" << endl
-                     << "  <span class=\"Big2\">" << endl
-                     << "    Read" << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl
-                     << "  <br />" << endl;
+    OutputContent = StringReplaceAll(OutputContent, "${VOCABULARY_LIST}", VocabularyList);
     string Article = Data["lessonContent"]["articles"][0]["pages"][0]["content"].as_string();
     Article = regex_replace(Article, regex("<em>[a-zA-Z\\s]* contributed to this story.</em>"), "");
     Article = regex_replace(Article, regex("Credit for photo and all related images: [^<]*"), "");
@@ -229,29 +145,25 @@ int main()
         Article.erase(0, 1);
     Article = StringReplaceAll(Article, "\n\n", "\n  </span>\n  <br />\n  <span>\n    ");
     Article = "  <span>\n    " + Article + "\n  </span>";
-    OutputFileStream << Article << endl
-                     << "  <br />" << endl;
+    OutputContent = StringReplaceAll(OutputContent, "${ARTICLE_CONTENT}", Article);
+    string ArticleImages = "";
     for (vector<string>::iterator vit = PictureVector.begin(); vit != PictureVector.end(); vit++)
         if (vit->find("magnify") == vit->npos && vit->size() > 1)
         {
             string URL = *vit;
             if (URL[0] != 'h')
                 URL.insert(0, "https://portal.achieve3000.com");
-            OutputFileStream << "  <img src=\"" << URL << "\" style=\"width: 48%; \"/>" << endl;
+            ArticleImages += "  <img src=\"" + URL + "\" style=\"width: 48%; \"/>\n";
         }
-    OutputFileStream << "  <hr />" << endl
-                     << "  <span class=\"Big2\">" << endl
-                     << "    Respond" << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl
-                     << "  <br />" << endl;
+    OutputContent = StringReplaceAll(OutputContent, "${ARTICLE_IMAGES}", ArticleImages);
     Counter = 0;
+    string QuestionList = "";
     for (json::iterator jit = Data["activities"]["14"][0]["questions"].begin(); jit != Data["activities"]["14"][0]["questions"].end(); jit++)
     {
-        OutputFileStream << "  <span class=\"Big3\">" << endl
-                         << "    Question " << Counter + 1 << endl
-                         << "  </span>" << endl
-                         << "  <br />" << endl;
+        QuestionList += string("  <span class=\"Big3\">\n") +
+                        "    Question " + to_string(Counter + 1) + "\n" +
+                        "  </span>\n" +
+                        "  <br />\n";
         string Question = jit.value()["collection"][0]["question"].as_string();
         Question = regex_replace(Question, regex("<[/]?(span|br|video|p|div|a)[^>]*>"), "");
         Question = regex_replace(Question, regex("<img[^>]*src=\"([^\"]*)\"[^>]*>"), "<img src=\"https://portal.achieve3000.com$1\" style=\"width: 48%; \">");
@@ -265,8 +177,7 @@ int main()
             Question.erase(0, 1);
         Question = StringReplaceAll(Question, "\n\n", "\n  </span>\n  <br />\n  <span>\n    ");
         Question = "  <span>\n    " + Question + "\n  </span>";
-        OutputFileStream << Question << endl
-                         << "  <br />" << endl;
+        QuestionList += Question + "\n  <br />\n";
         short Counter2 = 0;
         for (json::iterator jit2 = Data["activities"]["14"][0]["questions"][Counter]["collection"][0]["items"].begin(); jit2 != Data["activities"]["14"][0]["questions"][Counter]["collection"][0]["items"].end(); jit2++)
         {
@@ -283,57 +194,15 @@ int main()
                 Item.erase(0, 1);
             Item = StringReplaceAll(Item, "\n\n", "\n    </span>\n    <br />\n    <span>\n      ");
             Item = "    <span>\n      " + Item + "\n    </span>";
-            OutputFileStream << "  <input type=\"checkbox\" class=\"CheckBox\" />" << endl
-                             << "  <span>" << endl
-                             << "    <span>" << endl
-                             << "      " << (char)(Counter2 + 'A') << ".&ensp;" << endl
-                             << "    </span>" << endl
-                             << Item << endl
-                             << "  </span>" << endl
-                             << "  <br />" << endl;
+            QuestionList += "  <input type=\"checkbox\" class=\"CheckBox\" />\n  <span>\n    <span>\n      ";
+            QuestionList.push_back(Counter2 + 'A');
+            QuestionList += ".&ensp;\n    </span>\n" + Item + "\n  </span>\n  <br />\n";
             Counter2++;
         }
-        OutputFileStream << "  <br />" << endl;
+        QuestionList += "  <br />\n";
         Counter++;
     }
-    OutputFileStream << "  <hr />" << endl
-                     << "  <span class=\"Big2\">" << endl
-                     << "    Reflect" << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl
-                     << "  <br />" << endl
-                     << "  <span>" << endl
-                     << "    " << PollQuestion << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl
-                     << "  <span>" << endl
-                     << "    " << Data["poll"]["opinionStatement"].as_string() << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl;
-    for (json::iterator jit = Data["poll"]["choices"].begin(); jit != Data["poll"]["choices"].end(); jit++)
-    {
-        OutputFileStream << "  <input type=\"checkbox\" class=\"CheckBox\" />" << endl
-                         << "  <span>" << endl
-                         << "    " << jit.value()["choiceText"].as_string() << endl
-                         << "  </span>" << endl
-                         << "  <br />" << endl;
-    }
-    OutputFileStream << "  <span>" << endl
-                     << "    Explain why you voted the way you did. " << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl
-                     << "  <br />" << endl
-                     << "  <div class=\"CodeBlock\">" << endl
-                     << "    <br />" << endl
-                     << "    <br />" << endl
-                     << "    <br />" << endl
-                     << "  </div>" << endl
-                     << "  <hr />" << endl
-                     << "  <span class=\"Big2\">" << endl
-                     << "    Write" << endl
-                     << "  </span>" << endl
-                     << "  <br />" << endl
-                     << "  <br />" << endl;
+    OutputContent = StringReplaceAll(OutputContent, "${QUESTION_LIST}", QuestionList);
     string WritingQuestion = Data["thoughtQuestion"]["question"].as_string();
     WritingQuestion = regex_replace(WritingQuestion, regex("<[/]?(span|br|video|p|div|a)[^>]*>"), "");
     WritingQuestion = StringReplaceAll(WritingQuestion, "\t", "");
@@ -346,40 +215,27 @@ int main()
         WritingQuestion.erase(0, 1);
     WritingQuestion = StringReplaceAll(WritingQuestion, "\n\n", "\n  </span>\n  <br />\n  <span>\n    ");
     WritingQuestion = "  <span>\n    " + WritingQuestion + "\n  </span>";
-    OutputFileStream << WritingQuestion << endl
-                     << "  <br />" << endl
-                     << "  <br />" << endl
-                     << "  <div class=\"CodeBlock\">" << endl
-                     << "    <br />" << endl
-                     << "    <br />" << endl
-                     << "    <br />" << endl
-                     << "    <br />" << endl
-                     << "    <br />" << endl
-                     << "  </div>" << endl
-                     << "  <script>" << endl
-                     << "    window.print();" << endl
-                     << "    setTimeout(function() {" << endl
-                     << "	      window.close();" << endl
-                     << "    }, 1500);" << endl
-                     << "  </script>" << endl
-                     << "</body>" << endl
-                     << "</html>" << endl;
+    OutputContent = StringReplaceAll(OutputContent, "${WRITING_QUESTION}", WritingQuestion);
+#ifdef TEST
+    SetDataFromStringToFile(FileName + ".html", OutputContent);
+#else
+    SetDataFromStringToFile("/mnt/c/Users/Son/Desktop/" + FileName + ".html", OutputContent);
     if (system(string("\"/mnt/c/Program Files/Google/Chrome/Application/chrome.exe\" --kiosk-printing --kiosk \"C:\\Users\\Son\\Desktop\\" + FileName + ".html\"").c_str()))
     {
-        cout << "执行失败" << endl;
-        Clean();
-        return 0;
+        TRIGGER_ERROR("Call chrome.exe to open file failed");
     }
     char DeleteOrNot;
     cout << "Delete to html file(y=Yes other=No)? ";
     cin >> DeleteOrNot;
-    if (DeleteOrNot == 'y' || DeleteOrNot == 'Y')
-        if (system(string(string("rm -f /mnt/c/Users/Son/Desktop/") + FileName + ".html").c_str()))
-        {
-            cout << "执行失败" << endl;
-            Clean();
-            return 0;
-        }
-    Clean();
+    if ((DeleteOrNot == 'y' || DeleteOrNot == 'Y') &&
+        (system(string("rm -f /mnt/c/Users/Son/Desktop/" + FileName + ".html").c_str())))
+    {
+        TRIGGER_ERROR("Delete failed");
+    }
+#endif
+#ifdef TEST
+    OutputSummary("Success");
+#endif
+    CLN_CATCH
     return 0;
 }

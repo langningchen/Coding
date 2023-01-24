@@ -2,6 +2,19 @@
 #include <string.h>
 #include <unistd.h>
 #include <vector>
+#include <assert.h>
+#include "Exception.hpp"
+#ifdef TEST
+#define VAR_DUMP(e) cout << #e << "=" << e << endl
+#define SPILT_LINE cout << endl                                     \
+                        << "------------------------------" << endl \
+                        << endl
+#define REPORT_POSITION                         \
+    cout << "Report current position: " << endl \
+         << "File: " << __FILE__ << endl        \
+         << "Line: " << __LINE__ << endl        \
+         << "Function: " << __func__ << endl;
+#endif
 using namespace std;
 string CurrentDir;
 void GetCurrentDir()
@@ -10,12 +23,13 @@ void GetCurrentDir()
     char *Buffer = new char[BufferSize];
     memset(Buffer, 0, sizeof(char) * BufferSize);
     if (readlink("/proc/self/exe", Buffer, BufferSize) == 0)
-        return;
+    {
+        TRIGGER_ERROR("Can not read current file location");
+    }
     CurrentDir = Buffer;
     delete Buffer;
-    CurrentDir.erase(CurrentDir.find_last_of("/") + 1, string::npos);
+    CurrentDir.erase(CurrentDir.find("Coding/") + 7, string::npos);
 }
-#ifndef QT_VERSION_STR
 string StringReplaceAll(string Data, string Before, string After)
 {
     size_t Index = 0;
@@ -23,15 +37,13 @@ string StringReplaceAll(string Data, string Before, string After)
         Data.replace(Index, Before.size(), After);
     return Data;
 }
-#else
-QString StringReplaceAll(string Data, string Before, string After)
+string StringReplaceAllNoLoop(string Data, string Before, string After)
 {
-    size_t Index = 0;
-    while ((Index = Data.find(Before)) != string::npos)
-        Data.replace(Index, Before.size(), After);
+    string Identifier = "${TEMP" + to_string(time(NULL)) + "}";
+    Data = StringReplaceAll(Data, Before, Identifier);
+    Data = StringReplaceAll(Data, Identifier, After);
     return Data;
 }
-#endif
 string GetStringBetween(string Data, string Start, string End)
 {
     int StartPos = Data.find(Start);
@@ -63,7 +75,7 @@ bool IfFileExist(string FileName)
     if (CurrentDir == "")
         GetCurrentDir();
     ifstream InputFileStream(CurrentDir + FileName);
-    if (InputFileStream.bad())
+    if (InputFileStream.bad() || !InputFileStream.is_open())
         return false;
     InputFileStream.close();
     return true;
@@ -76,9 +88,7 @@ string GetDataFromFileToString(string FileName = "Body.tmp")
     FILE *FilePointer = fopen((CurrentDir + FileName).c_str(), "r");
     if (FilePointer == NULL)
     {
-        cout << "无法打开输入文件" << FileName << endl;
-        getchar();
-        exit(0);
+        TRIGGER_ERROR("Cannot open input file: " + FileName);
     }
     while (!feof(FilePointer))
         Data.push_back(fgetc(FilePointer));
@@ -94,9 +104,7 @@ void SetDataFromStringToFile(string FileName, string Data)
     FILE *FilePointer = fopen((CurrentDir + FileName).c_str(), "w");
     if (FilePointer == NULL)
     {
-        cout << "无法打开输出文件" << FileName << endl;
-        getchar();
-        exit(0);
+        TRIGGER_ERROR("Cannot open output file: " + FileName);
     }
     for (auto i : Data)
         fputc(i, FilePointer);
@@ -105,4 +113,16 @@ void SetDataFromStringToFile(string FileName, string Data)
 string FixString(string Data)
 {
     return (Data[Data.size() - 1] == '\n' || Data[Data.size() - 1] == '\r' || Data[Data.size() - 1] == ' ' ? FixString(Data.erase(Data.size() - 1, 1)) : Data);
+}
+void OutputSummary(string Data)
+{
+    Data = StringReplaceAll(Data, "\n", "\\n");
+    Data = StringReplaceAll(Data, "\t", "\\t");
+    Data = StringReplaceAll(Data, "\r", "\\r");
+    Data = StringReplaceAllNoLoop(Data, "`", "\\`");
+    Data = StringReplaceAllNoLoop(Data, "\"", "\\\"");
+    if (system(string("echo \"" + Data + "\" >> $GITHUB_STEP_SUMMARY").c_str()))
+    {
+        TRIGGER_ERROR("Output Github summary failed");
+    }
 }

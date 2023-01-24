@@ -1,4 +1,4 @@
-#include "../../Lib/Curl.hpp"
+#include "Curl.hpp"
 #include <regex>
 int main()
 {
@@ -9,9 +9,9 @@ int main()
     // cin >> IDCardNumber;
     // cout << "手机号：";
     // cin >> PhoneNumber;
-    Name = GetDataToFile("../../Keys/Name");
-    IDCardNumber = GetDataToFile("../../Keys/IDCardNumber");
-    PhoneNumber = GetDataToFile("../../Keys/PhoneNumber");
+    Name = GetDataToFile("Keys/Name");
+    IDCardNumber = GetDataToFile("Keys/IDCardNumber");
+    PhoneNumber = GetDataToFile("Keys/PhoneNumber");
     UA = WECHAT_UA;
     // GetDataToFile("https://wx1.pdlib.com/pudonglib-weixin/activity/list/load1?pageSize=10&currentPage=1&categoryid=33", "Header.tmp", "Body.tmp", true);
     // json ListData = json::parse(GetDataFromFileToString());
@@ -68,7 +68,7 @@ int main()
                 else
                     cout << "报名失败！" << endl;
             }
-            Clean();
+            
             return 0;
         }
         else if (Data.find("<button type=\"button\" class=\"air_button\" onclick=\"cancelSign(" + to_string(ActiveID) + ")\">取消报名</button>") != string::npos)
@@ -87,7 +87,7 @@ int main()
                 else
                     cout << "取消报名失败！" << endl;
             }
-            Clean();
+            
             return 0;
         }
         else if (Data.find("<button type=\"button\" class=\"air_button\">已报满</button>") != string::npos)
@@ -115,6 +115,6 @@ int main()
         Data = StringReplaceAll(Data, "> ", ">");
         Data = StringReplaceAll(Data, " >", ">");
     }
-    Clean();
+    
     return 0;
 }

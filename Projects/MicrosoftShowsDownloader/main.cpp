@@ -15,6 +15,7 @@ string VTTToLRC(string Input)
 }
 int main()
 {
+    CLN_TRY
     string ShowName = "visual-studio-toolbox";
     GetDataToFile("https://learn.microsoft.com/api/contentbrowser/search/shows/" + ShowName + "/episodes" +
                   "?locale=en-us" +
@@ -28,26 +29,32 @@ int main()
         Counter++;
         cout << (Counter < 10 ? "0" : "") << Counter << " " << i["title"].as_string() << endl;
     }
-    cout << "请输入要下载的视频序号  " << flush;
-    int Choice;
+    cout << "Please input the id of the video you want to download:  " << flush;
+    int Choice = 0;
+#ifdef TEST
+    Choice = 1;
+    cout << 1 << endl;
+#else
     cin >> Choice;
+#endif
     if (Choice > Counter || Choice < 1)
     {
-        cout << "输入错误" << endl;
-        return 0;
+        TRIGGER_ERROR("Input invalid");
     }
     string Name = JSONData["results"][Choice - 1]["title"].as_string();
     string EntryID = JSONData["results"][Choice - 1]["entry_id"].as_string();
     GetDataToFile(string("https://learn.microsoft.com/api/video/public/v1/entries/" + EntryID));
     JSONData = json::parse(GetDataFromFileToString());
-    cout << "开始下载视频  " << flush;
+    cout << "Downloading audio... " << flush;
     GetDataToFile(
         StringReplaceAll(
             string("https://learn.microsoft.com" +
-                   JSONData["publicVideo"]["audioUrl"].as_string()),
+                   StringReplaceAll(JSONData["publicVideo"]["audioUrl"].as_string(),
+                                    "https://learn.microsoft.com",
+                                    "")),
             " ", "%20"),
         "Header.tmp",
-        "../" + Name + ".mp4",
+        Name + ".mp4",
         false,
         "",
         NULL,
@@ -55,31 +62,33 @@ int main()
         "application/json",
         "",
         true);
-    cout << "结束" << endl;
-    cout << "开始转换视频  " << flush;
+    cout << "Success" << endl;
+    cout << "Changing audio format... " << flush;
     if (system((string("ffmpeg -y -hide_banner -loglevel error -i ") +
-                "\"" + CurrentDir + "../" + Name + ".mp4\" " +
-                "\"" + CurrentDir + "../" + Name + ".mp3\"")
+                "\"" + CurrentDir + Name + ".mp4\" " +
+                "\"" + CurrentDir + Name + ".mp3\"")
                    .c_str()))
     {
-        cout << "转换失败" << endl;
-        return 0;
+        TRIGGER_ERROR("Change audio format failed");
     }
-    remove((CurrentDir + "../" + Name + ".mp4").c_str());
-    cout << "结束" << endl;
-    cout << "开始下载字幕  " << flush;
+    remove((CurrentDir + Name + ".mp4").c_str());
+    cout << "Success" << endl;
+    cout << "Downloading subtitle... " << flush;
     for (json::iterator jit = JSONData["publicVideo"]["captions"].begin(); jit != JSONData["publicVideo"]["captions"].end(); jit++)
         if (jit.value()["language"].as_string() == "en-us")
-            GetDataToFile("https://learn.microsoft.com" + jit.value()["url"].as_string(),
+            GetDataToFile("https://learn.microsoft.com" +
+                              StringReplaceAll(jit.value()["url"].as_string(), "https://learn.microsoft.com", ""),
                           "Header.tmp",
-                          "../" + Name + ".vtt");
-    cout << "结束" << endl;
-    cout << "开始转换字幕  " << flush;
-    SetDataFromStringToFile("../" + Name + ".lrc",
+                          Name + ".vtt");
+    cout << "Success" << endl;
+    cout << "Changing subtitle format... " << flush;
+    SetDataFromStringToFile(Name + ".lrc",
                             VTTToLRC(GetDataFromFileToString(
-                                "../" + Name + ".vtt")));
-    remove((CurrentDir + "../" + Name + ".vtt").c_str());
-    cout << "结束" << endl;
-    Clean();
-    return 0;
+                                Name + ".vtt")));
+    remove((CurrentDir + Name + ".vtt").c_str());
+    cout << "Success" << endl;
+#ifdef TEST
+    OutputSummary("Success");
+#endif
+    CLN_CATCH return 0;
 }

@@ -9,8 +9,8 @@
 #include <string.h>
 #include <map>
 #include <set>
-#include "../../Lib/jpeg/jpeglib.h"
-#include "../../Lib/jpeg/jerror.h"
+#include "jpeg/jpeglib.h"
+#include "jpeg/jerror.h"
 using namespace std;
 short ColorCounter[256][256][256];
 struct PICTURE
