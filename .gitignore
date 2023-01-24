@@ -8,11 +8,17 @@ Keys/
 Tools/LockAndUnlock.cpp
 
 # Ingore generated files
-Tools/LGR*
+LGR*
 
 # Ignore temp files
 **/*.tmp
 CPH/
+Etiger/*.md
+Etiger/*.in
+Etiger/*.out
+Luogu/*.md
+Codeforces/*.md
+UVa/*.pdf
 
 # Ignore build/debug/release files
 build/
