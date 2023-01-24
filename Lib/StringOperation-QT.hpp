@@ -16,7 +16,7 @@ void GetCurrentDir()
         return;
     CurrentDir = Buffer;
     delete[] Buffer;
-    CurrentDir = CurrentDir.left(CurrentDir.lastIndexOf("/") + 1);
+    CurrentDir = CurrentDir.left(CurrentDir.lastIndexOf("Coding/") + 7);
 }
 QString StringReplaceAll(QString Data, QString Before, QString After)
 {

@@ -3,11 +3,11 @@
 #include <iostream>
 #include <fstream>
 using namespace std;
-#include "../../../Lib/Curl-QT.hpp"
-#include "../../../Lib/lodepng.cpp"
-#include "../../../Lib/jpeg/jpeglib.h"
-#include "../../../Lib/SHA1-QT.hpp"
-#include "../../../Lib/MD5-QT.hpp"
+#include "Curl-QT.hpp"
+#include "lodepng.cpp"
+#include "jpeg/jpeglib.h"
+#include "SHA1-QT.hpp"
+#include "MD5-QT.hpp"
 #include <locale>
 const QString WEBSign = "WEB-V1-PRODUCT-E7768904917C4154A925FBE1A3848BC3E84E2C7770744E56AFBC9600C267891F";
 const QString LinuxFilePath = "/mnt/d/12_Mom/";
@@ -195,7 +195,7 @@ void MainWindow::on_pushButton_clicked()
             if (CaptchaCounter == 5)
             {
                 QMessageBox::critical(NULL, QTranslator::tr("错误"), QTranslator::tr("多次失败，请重新运行程序重试"));
-                Clean();
+                
                 ui->pushButton->setEnabled(true);
                 return;
             }
@@ -294,7 +294,7 @@ void MainWindow::on_pushButton_clicked()
             remove(QString(CurrentDir + "Captcha-Foreground.png").toStdString().c_str());
         }
         ui->progressBar->setValue(25);
-        QString PhoneNumber = GetDataFromFileToString("../../../Keys/PhoneNumber2");
+        QString PhoneNumber = GetDataFromFileToString("Keys/PhoneNumber2");
         QString Nonce = GetNonce();
         json AuthJSON;
         AuthJSON["mobile"] = PhoneNumber.toStdString();
@@ -310,7 +310,7 @@ void MainWindow::on_pushButton_clicked()
         if (AuthJSONResponse["ret"].as_integer() != 0)
         {
             QMessageBox::critical(NULL, QTranslator::tr("错误"), QTranslator::tr("验证码发送失败 ") + QString::fromStdString(AuthJSONResponse["msg"].as_string()));
-            Clean();
+            
             ui->pushButton->setEnabled(true);
             return;
         }
@@ -359,7 +359,7 @@ void MainWindow::on_pushButton_clicked()
         if (LoginJSONResponse["ret"].as_integer() != 0)
         {
             QMessageBox::critical(NULL, QTranslator::tr("错误"), QTranslator::tr("登录失败 ") + QString::fromStdString(LoginJSONResponse["msg"].as_string()));
-            Clean();
+            
             ui->pushButton->setEnabled(true);
             return;
         }
@@ -375,7 +375,7 @@ void MainWindow::on_pushButton_clicked()
     if (AlbumJSONResponse["ret"].as_integer() != 200)
     {
         QMessageBox::critical(NULL, QTranslator::tr("错误"), QTranslator::tr("获取合集信息失败 ") + QString::fromStdString(AlbumJSONResponse["msg"].as_string()));
-        Clean();
+        
         ui->pushButton->setEnabled(true);
         return;
     }
@@ -385,7 +385,7 @@ void MainWindow::on_pushButton_clicked()
     if (TrackIndex < 1 || TrackIndex > AlbumJSONResponse["data"]["trackTotalCount"])
     {
         QMessageBox::critical(NULL, QTranslator::tr("错误"), QTranslator::tr("请输入大于1小于") + QString::fromStdString(AlbumJSONResponse["data"]["trackTotalCount"].as_string()) + QTranslator::tr("的数字"));
-        Clean();
+        
         ui->pushButton->setEnabled(true);
         return;
     }
@@ -396,7 +396,7 @@ void MainWindow::on_pushButton_clicked()
     if (AlbumJSONResponse["ret"].as_integer() != 200)
     {
         QMessageBox::critical(NULL, QTranslator::tr("错误"), QTranslator::tr("获取合集信息失败 ") + QString::fromStdString(AlbumJSONResponse["msg"].as_string()));
-        Clean();
+        
         ui->pushButton->setEnabled(true);
         return;
     }
@@ -409,7 +409,7 @@ void MainWindow::on_pushButton_clicked()
     if (TrackJSONResponse["ret"].as_integer() != 200)
     {
         QMessageBox::critical(NULL, QTranslator::tr("错误"), QTranslator::tr("获取音频信息失败 ") + QString::fromStdString(TrackJSONResponse["msg"].as_string()));
-        Clean();
+        
         ui->pushButton->setEnabled(true);
         return;
     }
@@ -441,7 +441,7 @@ void MainWindow::on_pushButton_clicked()
     if (!OutputFileStream.is_open())
     {
         QMessageBox::critical(NULL, QTranslator::tr("错误"), QTranslator::tr("打开输出文件失败"));
-        Clean();
+        
         ui->pushButton->setEnabled(true);
         return;
     }
@@ -460,6 +460,6 @@ void MainWindow::on_pushButton_clicked()
     if (system(QString("fish -c \"/mnt/c/Program\\ Files/Microsoft\\ Office/root/Office16/WINWORD.EXE \\\"" + WindowsFilePath + RTFTitle + ".rtf\\\"\" > /dev/null 2>&1 &").toStdString().c_str()))
         QMessageBox::critical(NULL, QTranslator::tr("错误"), QTranslator::tr("执行失败"));
     ui->progressBar->setValue(100);
-    Clean();
+    
     ui->pushButton->setEnabled(true);
 }

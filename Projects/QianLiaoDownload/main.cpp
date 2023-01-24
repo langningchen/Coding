@@ -62,7 +62,7 @@ void DownloadTopic(string LiveID,
                    int ChannelCounter, int ChannelSize, string ChannelName,
                    int TopicCounter, int TopicSize, string TopicID, string TopicName)
 {
-    string DownloadDir = "../0" + to_string(ChannelCounter) + ChannelName + "_" + (TopicCounter < 10 ? "0" : "") + to_string(TopicCounter) + TopicName + "/";
+    string DownloadDir = "0" + to_string(ChannelCounter) + ChannelName + "_" + (TopicCounter < 10 ? "0" : "") + to_string(TopicCounter) + TopicName + "/";
     if (access((CurrentDir + DownloadDir).c_str(), 0) != -1)
     {
         cout << "已存在" << DownloadDir << "，跳过" << endl;
@@ -81,7 +81,7 @@ void DownloadTopic(string LiveID,
                   HeaderList);
     json Data = json::parse(GetDataFromFileToString());
     int Counter = 0;
-    string Command = "ffmpeg -hide_banner -loglevel error -i \"concat:";
+    string Command = "ffmpeg -y -hide_banner -loglevel error -i \"concat:";
     for (auto i : Data["data"]["speakList"])
     {
         Counter++;
@@ -91,7 +91,9 @@ void DownloadTopic(string LiveID,
              << TopicCounter << "/" << TopicSize << ": " << TopicName << "   "
              << "1/2   "
              << Counter << "/" << Data["data"]["speakList"].size() << "      " << flush;
-        if (GetDataToFile(i["content"].as_string(),
+        try
+        {
+            GetDataToFile(i["content"].as_string(),
                           "Header.tmp",
                           DownloadDir + to_string(Counter) + ".mp3",
                           false,
@@ -100,7 +102,9 @@ void DownloadTopic(string LiveID,
                           NULL,
                           "application/json",
                           "",
-                          true))
+                          true);
+        }
+        catch (CLNException &Exception)
         {
             cout << "下载失败，正在等待5秒" << endl;
             usleep(5000000);
@@ -152,7 +156,9 @@ void DownloadTopic(string LiveID,
              << TopicCounter << "/" << TopicSize << ": " << TopicName << "   "
              << "2/2   "
              << Counter << "/" << ImageURLList.size() << "      " << flush;
-        if (GetDataToFile(i,
+        try
+        {
+            GetDataToFile(i,
                           "Header.tmp",
                           DownloadDir + (Counter < 10 ? "0" : "") + to_string(Counter) + ".jpg",
                           false,
@@ -161,7 +167,9 @@ void DownloadTopic(string LiveID,
                           NULL,
                           "application/json",
                           "",
-                          true))
+                          true);
+        }
+        catch (CLNException &Exception)
         {
             cout << "下载失败，正在等待5秒" << endl;
             usleep(5000000);

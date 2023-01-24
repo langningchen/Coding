@@ -1,3 +1,5 @@
+// TODO Codeforces GetQuestionDetail parsing file failed
+
 #include "Curl.hpp"
 #include <regex>
 #include <errno.h>
@@ -5,9 +7,6 @@
 #include "tidy/tidybuffio.h"
 #include "TinyXML.hpp"
 #include "MD5.hpp"
-
-// If the login failed, set the Failed flag to true, and exit the program
-bool Failed = false;
 
 class TOOL
 {
@@ -18,6 +17,7 @@ private:
         map<int, string> LanguageName, LanguageMarkdownName;
         map<int, pair<string, string>> DifficultyName, TagName, RecordName;
         map<string, string> TypeName, ColorList;
+        string GetCSRF();
 
     public:
         LUOGU();
@@ -46,7 +46,7 @@ private:
     private:
         const string ftaa = "rv5q0yv00p85nhpyi7";
         const string bfaa = "f1b3f18c715565b589b7823cda7448ce";
-        string GetCRSF();
+        string GetCSRF();
         string OutputPre(TiXmlElement *Input);
         string Output(TiXmlElement *Input, bool InLatex = false);
         string ToNormalName(string Input);
@@ -75,7 +75,7 @@ string GetCPHFileName(string Path, string FileName)
     // Create an object of the MD5 class to encode the file name
     MD5 MD5Encoder;
     // Return the file name in the CPH directory
-    return "../../../CPH/." +
+    return "CPH/." +
            FileName +
            ".cpp_" +
            // Encode the full path of the file
@@ -176,10 +176,10 @@ TOOL::LUOGU::LUOGU()
     cout << "Getting luogu config... " << flush;
     GetDataToFile("https://www.luogu.com.cn/_lfe/config");
     json Config = json::parse(GetDataFromFileToString());
-    cout << "Succeed" << endl
-         << "Getting luogu tags... " << flush;
+    cout << "Succeed" << endl;
 
     // Get the tag information of the luogu website.
+    cout << "Getting luogu tags... " << flush;
     GetDataToFile("https://www.luogu.com.cn/_lfe/tags");
     json Tag = json::parse(GetDataFromFileToString());
     cout << "Succeed" << endl;
@@ -216,6 +216,17 @@ TOOL::LUOGU::LUOGU()
         RecordName[i["id"].as_integer()] = make_pair(i["name"].as_string(),
                                                      i["shortName"].as_string());
 }
+string TOOL::LUOGU::GetCSRF()
+{
+    // Get csrf token
+    string Token = GetStringBetween(GetDataFromFileToString(),
+                                    "<meta name=\"csrf-token\" content=\"", "\"");
+    if (Token == "")
+    {
+        TRIGGER_ERROR("Can not find csrf token");
+    }
+    return Token;
+}
 void TOOL::LUOGU::Login(string Username, string Password)
 {
     // Check if the user is logged in.
@@ -235,31 +246,45 @@ void TOOL::LUOGU::Login(string Username, string Password)
     }
     cout << "Not logged in" << endl;
 
-    // Get csrf token
-    string Token = GetStringBetween(GetDataFromFileToString(),
-                                    "<meta name=\"csrf-token\" content=\"", "\"");
+    string Token = GetCSRF();
     int ErrorCounter = 0;
     while (1)
     {
         // Get login captcha
         cout << "Getting login captcha... " << flush;
-        GetDataToFile("https://www.luogu.com.cn/api/verify/captcha");
+        GetDataToFile("https://www.luogu.com.cn/api/verify/captcha",
+                      "Header.tmp",
+                      "Captcha.jpeg");
         cout << "Succeed" << endl;
 
         // Predict captcha
         curl_slist *HeaderList = NULL;
         HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json");
         cout << "Predicting captcha... " << flush;
-        GetDataToFile("https://luogu-captcha-bypass.piterator.com/predict/",
-                      "Header.tmp",
-                      "Body.tmp",
-                      true,
-                      string("data:image/jpeg;base64," + Base64Encode(GetDataFromFileToString())),
-                      HeaderList);
-        cout << "Succeed" << endl;
+        string Captcha = "";
+        try
+        {
+            GetDataToFile("https://luogu-captcha-bypass.piterator.com/predict/",
+                          "Header.tmp",
+                          "Body.tmp",
+                          true,
+                          "data:image/jpeg;base64," +
+                              Base64Encode(
+                                  GetDataFromFileToString("Captcha.jpeg")),
+                          HeaderList);
+            cout << "Succeed" << endl;
+            Captcha = GetDataFromFileToString();
+        }
+        catch (CLNException &Exception)
+        {
+            cout << "Failed" << endl;
+            system(("code " + CurrentDir + "Captcha.jpeg").c_str());
+            cout << "Please input the captcha: ";
+            cin >> Captcha;
+        }
+        remove((CurrentDir + "Captcha.jpeg").c_str());
 
         // Create a json object to store the login request info
-        string Captcha = GetDataFromFileToString();
         json LoginRequest;
         LoginRequest["username"] = Username;
         LoginRequest["password"] = Password;
@@ -292,11 +317,9 @@ void TOOL::LUOGU::Login(string Username, string Password)
             // If the captcha is incorrect and the error counter is less than 5, try again.
             if (LoginInfo["data"].as_string() != "验证码错误" && ErrorCounter < 5)
             {
-                Failed = true;
-                cout << "Failed" << endl
-                     << "Error number: " << LoginInfo["status"].as_integer() << endl
-                     << "Error message: " << LoginInfo["data"].as_string() << endl;
-                return;
+                TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Login failed",
+                                                    LoginInfo["status"].as_integer(),
+                                                    LoginInfo["data"].as_string());
             }
             else
                 cout << "Failed (Captcha check failed for " << ErrorCounter + 1 << " times)" << endl;
@@ -314,10 +337,7 @@ void TOOL::LUOGU::ClockIn()
     // Gets the clock-in page data
     cout << "Get clock in page data... " << flush;
     GetDataToFile("https://www.luogu.com.cn/");
-
-    // Gets the clock-in token
-    string Token = GetStringBetween(GetDataFromFileToString(),
-                                    "<meta name=\"csrf-token\" content=\"", "\"");
+    string Token = GetCSRF();
     cout << "Succeed" << endl;
 
     // Gets the clock-in header
@@ -341,11 +361,9 @@ void TOOL::LUOGU::ClockIn()
     json ClockInInfo = json::parse(GetDataFromFileToString());
     if (ClockInInfo["code"].as_integer() != 200)
     {
-        Failed = true;
-        cout << "Failed" << endl
-             << "Error number: " << ClockInInfo["code"].as_integer() << endl
-             << "Error message: " << ClockInInfo["message"].as_string() << endl;
-        return;
+        TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Clock in failed",
+                                            ClockInInfo["code"].as_integer(),
+                                            ClockInInfo["message"].as_string());
     }
     cout << "Succeed" << endl;
 }
@@ -353,15 +371,13 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
 {
     // Gets the question detail page
     cout << "Getting question detail page... " << flush;
-    GetDataToFile("https://www.luogu.com.cn/problem/" + QuestionID + (QuestionID.find("?") == string::npos ? "?" : "&") + "_contentOnly=1");
+    GetDataToFile("https://www.luogu.com.cn/problem/" + QuestionID + "?_contentOnly=1");
     json QuestionInfo = json::parse(GetDataFromFileToString());
     if (QuestionInfo["code"].as_integer() != 200)
     {
-        Failed = true;
-        cout << "Failed" << endl
-             << "Error number: " << QuestionInfo["code"].as_integer() << endl
-             << "Error message: " << QuestionInfo["currentData"]["errorMessage"].as_string() << endl;
-        return;
+        TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Get question detail failed",
+                                            QuestionInfo["code"].as_integer(),
+                                            QuestionInfo["currentData"]["errorMessage"].as_string());
     }
     cout << "Succeed" << endl;
 
@@ -382,8 +398,8 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
     {
         json Temp;
         Temp["id"] = i;
-        Temp["input"] = FixString(QuestionInfo["currentData"]["problem"]["samples"][i]["input"].as_string());
-        Temp["output"] = FixString(QuestionInfo["currentData"]["problem"]["samples"][i]["output"].as_string());
+        Temp["input"] = FixString(QuestionInfo["currentData"]["problem"]["samples"][i][0].as_string());
+        Temp["output"] = FixString(QuestionInfo["currentData"]["problem"]["samples"][i][1].as_string());
         CPHData["tests"].push_back(json(Temp));
     }
     CPHData["local"] = false;
@@ -395,81 +411,69 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
     CPHData["languages"]["java"]["taskClass"] = "GCastleDefense";
     CPHData["batch"]["id"] = MD5Encoder.encode(QuestionID);
     CPHData["batch"]["size"] = 1;
-    cout << string("/workspaces/Coding/Luogu/" + QuestionID + ".cpp") << endl;
     SetDataFromStringToFile(GetCPHFileName("Luogu", QuestionID), CPHData.dump());
 
     // Save data for markdown
-    ofstream OutputFileStream(string("/workspaces/Coding/Luogu/" + QuestionID + ".md").c_str());
-    OutputFileStream << "# " << QuestionID << " "
-                     << QuestionInfo["currentData"]["problem"]["title"].as_string() << endl;
+    string OutputContent = "# " + QuestionID + " " + QuestionInfo["currentData"]["problem"]["title"].as_string() + "\n";
     if (QuestionInfo["currentData"]["problem"]["accepted"].as_bool())
-        OutputFileStream << "***您已经通过此题！***" << endl
-                         << endl;
+        OutputContent += string("***您已经通过此题！***\n") +
+                         "\n";
     else if (QuestionInfo["currentData"]["problem"]["submitted"].as_bool())
-        OutputFileStream << "***您已经提交过此题但未通过！***" << endl
-                         << endl;
+        OutputContent += string("***您已经提交过此题但未通过！***\n") +
+                         "\n";
     if (QuestionInfo["currentData"]["problem"]["background"].as_string() != "")
-        OutputFileStream << "## 题目背景" << endl
-                         << endl
-                         << FixString(QuestionInfo["currentData"]["problem"]["background"]) << endl
-                         << endl;
-    OutputFileStream << "## 题目描述" << endl
-                     << endl
-                     << FixString(QuestionInfo["currentData"]["problem"]["description"]) << endl
-                     << endl
-                     << "## 输入格式" << endl
-                     << endl
-                     << FixString(QuestionInfo["currentData"]["problem"]["inputFormat"]) << endl
-                     << endl
-                     << "## 输出格式" << endl
-                     << endl
-                     << FixString(QuestionInfo["currentData"]["problem"]["outputFormat"]) << endl
-                     << endl
-                     << "## 输入输出样例" << endl
-                     << endl;
+        OutputContent += string("## Background\n") +
+                         "\n" +
+                         FixString(QuestionInfo["currentData"]["problem"]["background"]) + "\n" +
+                         "\n";
+    OutputContent += string("## Description\n") +
+                     "\n" +
+                     FixString(QuestionInfo["currentData"]["problem"]["description"]) + "\n\n## 输入格式\n\n" + FixString(QuestionInfo["currentData"]["problem"]["inputFormat"]) + "\n\n## 输出格式\n\n" + FixString(QuestionInfo["currentData"]["problem"]["outputFormat"]) + "\n" +
+                     "\n" +
+                     "## Samples\n" +
+                     "\n";
     if (QuestionInfo["currentData"]["problem"]["samples"].size() == 0)
-        OutputFileStream << "无" << endl
-                         << endl;
+        OutputContent += "None\n\n";
     else
     {
-        int Counter = 1;
+        int Counter = 0;
         for (auto cit : QuestionInfo["currentData"]["problem"]["samples"])
         {
-            OutputFileStream << "输入 #" << Counter << endl
-                             << "```" << endl
-                             << FixString(cit[0].as_string()) << endl
-                             << "```" << endl
-                             << "输出 #" << Counter << endl
-                             << "```" << endl
-                             << FixString(cit[1].as_string()) << endl
-                             << "```" << endl;
             Counter++;
+            OutputContent += string("Input #" + to_string(Counter) + "\n") +
+                             "```\n" +
+                             FixString(cit[0].as_string()) + "\n" +
+                             "```\n" +
+                             "Output #" + to_string(Counter) + "\n" +
+                             "```\n" +
+                             FixString(cit[1].as_string()) + "\n" +
+                             "```\n";
         }
     }
-    OutputFileStream << endl
-                     << "## 提示" << endl
-                     << endl
-                     << FixString(QuestionInfo["currentData"]["problem"]["hint"]) << endl
-                     << endl;
-    OutputFileStream << "## 时空限制" << endl;
-    OutputFileStream << "|测试点编号|时间限制|空间限制|" << endl
-                     << "|:---:|:---:|:---:|" << endl;
+    OutputContent += string("\n") +
+                     "## Hint\n" +
+                     "\n" +
+                     FixString(QuestionInfo["currentData"]["problem"]["hint"]) +
+                     "\n" +
+                     "\n";
+    OutputContent += "## Limits\n";
+    OutputContent += string("|Test case|Time limit|Memory limit|\n") +
+                     "|:---:|:---:|:---:|\n";
     for (unsigned int Counter = 0; Counter < QuestionInfo["currentData"]["problem"]["limits"]["memory"].size(); Counter++)
     {
-        OutputFileStream << "|$" << (Counter + 1) << "$"
-                         << "|$" << (QuestionInfo["currentData"]["problem"]["limits"]["memory"][Counter].as_integer() / 1024.0) << "MB$"
-                         << "|$" << (QuestionInfo["currentData"]["problem"]["limits"]["time"][Counter].as_integer() / 1000) << "s$"
-                         << "|" << endl;
+        OutputContent += "|$" + to_string(Counter + 1) + "$|" +
+                         "$" + to_string(QuestionInfo["currentData"]["problem"]["limits"]["memory"][Counter].as_integer() / 1024.0) + "MB$|" +
+                         "$" + to_string(QuestionInfo["currentData"]["problem"]["limits"]["time"][Counter].as_integer() / 1000) + "s$|\n";
     }
-    OutputFileStream << endl
-                     << "## 最后一次提交代码" << endl
-                     << endl
-                     << "```" << LanguageMarkdownName[QuestionInfo["currentData"]["lastLanguage"].as_integer()] << endl
-                     << FixString(QuestionInfo["currentData"]["lastCode"].as_string()) << endl
-                     << "```" << endl
-                     << endl
-                     << "## 其他数据" << endl
-                     << endl;
+    OutputContent += string("\n") +
+                     "## Last submit code\n" +
+                     "\n" +
+                     "```" + LanguageMarkdownName[QuestionInfo["currentData"]["lastLanguage"].as_integer()] + "\n" +
+                     "" + FixString(QuestionInfo["currentData"]["lastCode"].as_string()) + "\n" +
+                     "```\n" +
+                     "\n" +
+                     "## Other information\n" +
+                     "\n";
     string Tags = "";
     for (auto i : QuestionInfo["currentData"]["problem"]["tags"])
         Tags += string("<span style=\"display: inline-block; ") +
@@ -481,33 +485,33 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
                 "background-color: #" + ColorList[TagName[i.as_integer()].second] + "; \">" +
                 TagName[i.as_integer()].first +
                 "</span>";
-    OutputFileStream << "|项目|值|" << endl
-                     << "|:---:|:---:|" << endl
-                     << "|难度|<span style=\"font-weight: bold; color: #" << ColorList[DifficultyName[QuestionInfo["currentData"]["problem"]["difficulty"].as_integer()].second] << "\">" << DifficultyName[QuestionInfo["currentData"]["problem"]["difficulty"].as_integer()].first << "</span>|" << endl
-                     << "|标签|" << Tags << "|" << endl
-                     << "|提交人数|$" << QuestionInfo["currentData"]["problem"]["totalSubmit"]
-                     << "$|" << endl
-                     << "|通过人数|$" << QuestionInfo["currentData"]["problem"]["totalAccepted"] << "$|" << endl
-                     << "|通过率|$" << (QuestionInfo["currentData"]["problem"]["totalAccepted"].as_integer() * 100.0 / QuestionInfo["currentData"]["problem"]["totalSubmit"].as_integer()) << "\\%$|" << endl
-                     << "|来源|`" << TypeName[QuestionInfo["currentData"]["problem"]["type"].as_string()] << "`|" << endl
-                     << "|最后一次提交语言|`" << LanguageName[QuestionInfo["currentData"]["lastLanguage"].as_integer()] << "`|" << endl
-                     << endl;
-    OutputFileStream.close();
+    OutputContent += string("|Item|Value|\n") +
+                     "|:---:|:---:|\n" +
+                     "|Difficulty|<span style=\"font-weight: bold; color: #" + ColorList[DifficultyName[QuestionInfo["currentData"]["problem"]["difficulty"].as_integer()].second] + "\">" + DifficultyName[QuestionInfo["currentData"]["problem"]["difficulty"].as_integer()].first + "</span>|\n" +
+                     "|Label|" + Tags + "|\n" +
+                     "|Submit count|$" + QuestionInfo["currentData"]["problem"]["totalSubmit"].as_string() + "$|\n" +
+                     "|Pass count|$" + QuestionInfo["currentData"]["problem"]["totalAccepted"].as_string() + "$|\n" +
+                     "|Pass rate|$" + to_string(QuestionInfo["currentData"]["problem"]["totalAccepted"].as_integer() * 100.0 / QuestionInfo["currentData"]["problem"]["totalSubmit"].as_integer()) + "\\%$|\n" +
+                     "|From|`" + TypeName[QuestionInfo["currentData"]["problem"]["type"].as_string()] + "`|\n" +
+                     "|Last submit language|`" + LanguageName[QuestionInfo["currentData"]["lastLanguage"].as_integer()] + "`|\n" +
+                     "\n";
+    SetDataFromStringToFile("Luogu/" + QuestionID + ".md", OutputContent);
 
+#ifndef TEST
     // Open the file
-    if (system(string("code /workspaces/Coding/Luogu/" + QuestionID + ".md").c_str()))
-        cout << "Open file \"/workspaces/Coding/Luogu/" << QuestionID << ".md\" failed, please open it manually" << endl;
+    if (system(string("code " + CurrentDir + "Luogu/" + QuestionID + ".md").c_str()))
+        cout << "Open file \"" + CurrentDir + "Luogu/" << QuestionID << ".md\" failed, please open it manually" << endl;
+#endif
 }
 void TOOL::LUOGU::SubmitCode(string QuestionID)
 {
     // Get the code
-    string Code = GetDataFromFileToString(string("../../../Luogu/" + QuestionID + ".cpp"));
+    string Code = GetDataFromFileToString("Luogu/" + QuestionID + ".cpp");
 
     // Get the token
     cout << "Getting submit page data... " << flush;
     GetDataToFile("https://www.luogu.com.cn/problem/" + QuestionID);
-    string Token = GetStringBetween(GetDataFromFileToString(),
-                                    "<meta name=\"csrf-token\" content=\"", "\"");
+    string Token = GetCSRF();
     cout << "Succeed" << endl;
 
     // Create the request
@@ -542,11 +546,9 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
     json SubmitInfo = json::parse(GetDataFromFileToString());
     if (!SubmitInfo["status"].is_null())
     {
-        Failed = true;
-        cout << "Failed" << endl
-             << "Error number: " << SubmitInfo["status"].as_integer() << endl
-             << "Error message: " << SubmitInfo["errorMessage"].as_string() << endl;
-        return;
+        TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Submit failed",
+                                            SubmitInfo["status"].as_integer(),
+                                            SubmitInfo["errorMessage"].as_string());
     }
     cout << "Succeed" << endl;
 
@@ -558,7 +560,7 @@ void TOOL::LUOGU::SubmitCode(string QuestionID)
     cout << "Judging... " << flush;
     while (1)
     {
-        GetDataToFile("https://www.luogu.com.cn/record/" + to_string(RecordID) + (QuestionID.find("?") == string::npos ? "?" : "&") + "_contentOnly=1");
+        GetDataToFile("https://www.luogu.com.cn/record/" + to_string(RecordID) + "?_contentOnly=1");
         RecordInfo = json::parse(GetDataFromFileToString());
         if (RecordInfo["currentData"]["record"]["status"].is_number() &&
             RecordInfo["currentData"]["record"]["status"].as_integer() >= 2)
@@ -614,7 +616,7 @@ void TOOL::LUOGU::GetAnswerOrTips(string QuestionID)
 {
     // Get the solution page data
     cout << "Getting solution page data... " << flush;
-    GetDataToFile("https://www.luogu.com.cn/problem/solution/" + QuestionID + (QuestionID.find("?") == string::npos ? "?" : "&") + "_contentOnly=1");
+    GetDataToFile("https://www.luogu.com.cn/problem/solution/" + QuestionID + "?_contentOnly=1");
     json SolutionInfo = json::parse(GetDataFromFileToString());
     cout << "Succeed" << endl;
     for (auto i : SolutionInfo["currentData"]["solutions"]["result"])
@@ -654,8 +656,8 @@ void TOOL::LUOGU::GetAnswerOrTips(string QuestionID)
         if (Answer != "")
         {
             // Write the answer as a comment to the file.
-            SetDataFromStringToFile("../../../Luogu/" + QuestionID + ".cpp",
-                                    FixString(GetDataFromFileToString("../../../Luogu/" + QuestionID + ".cpp")) +
+            SetDataFromStringToFile("Luogu/" + QuestionID + ".cpp",
+                                    FixString(GetDataFromFileToString("Luogu/" + QuestionID + ".cpp")) +
                                         "\n" +
                                         "\n" +
                                         "/*\n" +
@@ -705,11 +707,9 @@ void TOOL::ETIGER::Login(string Username, string Password)
     // Check login response
     if (LoginInfo["code"] != 200)
     {
-        Failed = true;
-        cout << "Failed" << endl
-             << "Error number: " << LoginInfo["code"].as_integer() << endl
-             << "Error message: " << LoginInfo["msg"].as_string() << endl;
-        return;
+        TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Login failed",
+                                            LoginInfo["code"].as_integer(),
+                                            LoginInfo["msg"].as_string());
     }
     cout << "Succeed" << endl;
 
@@ -738,10 +738,9 @@ void TOOL::ETIGER::ClockIn()
     json ClockInInfo = json::parse(GetDataFromFileToString());
     if (ClockInInfo["code"] != 200)
     {
-        Failed = true;
-        cout << "Failed" << endl
-             << "Error number: " << ClockInInfo["code"].as_integer() << endl
-             << "Error message: " << ClockInInfo["msg"].as_string() << endl;
+        TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Clock in failed",
+                                            ClockInInfo["code"].as_integer(),
+                                            ClockInInfo["msg"].as_string());
         return;
     }
     cout << "Succeed" << endl;
@@ -768,11 +767,9 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
     json QuestionInfo = json::parse(GetDataFromFileToString());
     if (QuestionInfo["code"] != 200)
     {
-        Failed = true;
-        cout << "Failed" << endl
-             << "Error number: " << QuestionInfo["code"].as_integer() << endl
-             << "Error message: " << QuestionInfo["msg"].as_string() << endl;
-        return;
+        TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Get question detail failed",
+                                            QuestionInfo["code"].as_integer(),
+                                            QuestionInfo["msg"].as_string());
     }
     cout << "Succeed" << endl;
 
@@ -811,87 +808,89 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
     SetDataFromStringToFile(GetCPHFileName("Etiger", QuestionID), CPHData.dump());
 
     // Sava markdown file
-    ofstream OutputFileStream(string("/workspaces/Coding/Etiger/" + QuestionID + ".md"));
-    OutputFileStream << "# " << QuestionID << " " << QuestionInfo["data"]["title"].as_string() << endl
-                     << endl
-                     << "## 题目描述" << endl
-                     << endl
-                     << FixString(EraseHTMLElement(QuestionInfo["data"]["content"].as_string())) << endl
-                     << endl
-                     << "## 输入格式" << endl
-                     << endl
-                     << FixString(QuestionInfo["data"]["inputFormat"].as_string()) << endl
-                     << endl
-                     << "## 输出格式" << endl
-                     << endl
-                     << FixString(QuestionInfo["data"]["outputFormat"].as_string()) << endl
-                     << endl;
+    string OutputContent = "";
+    OutputContent += "# " + QuestionID + " " + QuestionInfo["data"]["title"].as_string() + "\n" +
+                     "\n" +
+                     "## 题目描述\n" +
+                     "\n" +
+                     FixString(EraseHTMLElement(QuestionInfo["data"]["content"].as_string())) + "\n" +
+                     "\n" +
+                     "## 输入格式\n" +
+                     "\n" +
+                     FixString(QuestionInfo["data"]["inputFormat"].as_string()) + "\n" +
+                     "\n" +
+                     "## 输出格式\n" +
+                     "\n" +
+                     FixString(QuestionInfo["data"]["outputFormat"].as_string()) + "\n" +
+                     "\n";
     if (!QuestionInfo["data"]["ioName"].is_null())
-        OutputFileStream << "## 输入输出文件" << endl
-                         << endl
-                         << "`" << FixString(QuestionInfo["data"]["ioName"].as_string()) << "`" << endl
-                         << endl;
-    OutputFileStream << "## 输入输出样例" << endl
-                     << endl;
+        OutputContent += string("## 输入输出文件\n") +
+                         "\n" +
+                         "`" + FixString(QuestionInfo["data"]["ioName"].as_string()) + "`\n" +
+                         "\n";
+    OutputContent += string("## 输入输出样例\n") +
+                     "\n";
     int Counter = 1;
     while (InputSample.find(";") != string::npos && OutputSample.find(";") != string::npos)
     {
         if (FixString(InputSample.substr(0, InputSample.find(";"))) != "无")
         {
-            OutputFileStream << "输入 #" << Counter << endl
-                             << "```" << endl
-                             << FixString(InputSample.substr(0, InputSample.find(";"))) << endl
-                             << "```" << endl
-                             << "输出 #" << Counter << endl
-                             << "```" << endl
-                             << FixString(OutputSample.substr(0, OutputSample.find(";"))) << endl
-                             << "```" << endl;
+            OutputContent += "输入 #" + to_string(Counter) + "\n" +
+                             "```\n" +
+                             FixString(InputSample.substr(0, InputSample.find(";"))) + "\n" +
+                             "```\n" +
+                             "输出 #" + to_string(Counter) + "\n" +
+                             "```\n" +
+                             FixString(OutputSample.substr(0, OutputSample.find(";"))) + "\n" +
+                             "```\n";
         }
         InputSample.erase(0, InputSample.find(";") + 1);
         OutputSample.erase(0, OutputSample.find(";") + 1);
         Counter++;
     }
-    OutputFileStream << endl;
+    OutputContent += "\n";
     if (EraseHTMLElement(QuestionInfo["data"]["description"].as_string()) != "")
     {
-        OutputFileStream << "## 说明" << endl
-                         << endl
-                         << FixString(EraseHTMLElement(QuestionInfo["data"]["description"].as_string())) << endl
-                         << endl;
+        OutputContent += string("## 说明\n") +
+                         "\n" +
+                         FixString(EraseHTMLElement(QuestionInfo["data"]["description"].as_string())) + "\n" +
+                         "\n";
     }
-    OutputFileStream << "## 其他数据" << endl
-                     << endl
-                     << "|项目|值|" << endl
-                     << "|:---:|:---:|" << endl
-                     << "|难度|<span style=\""
-                     << "text-align: center; "
-                     << "display: inline-block; "
-                     << "border-radius: 3px; "
-                     << "color: white; "
-                     << "width: 120px; "
-                     << "height: 24px; "
-                     << "background-color: " << DifficultyName[QuestionInfo["data"]["level"].as_integer()].second
-                     << "\">"
-                     << DifficultyName[QuestionInfo["data"]["level"].as_integer()].first << "</span>|" << endl
-                     << "|提交次数|$" << QuestionInfo["data"]["submitInfo"]["totalCount"] << "$|" << endl
-                     << "|提交人数|$" << QuestionInfo["data"]["submitInfo"]["submitPersonCount"] << "$|" << endl
-                     << "|通过人数|$" << QuestionInfo["data"]["submitInfo"]["passCount"] << "$|" << endl
-                     << "|通过率|$" << QuestionInfo["data"]["submitInfo"]["passRate"] << "\\%$|" << endl
-                     << endl;
-    OutputFileStream.close();
+    OutputContent += string("## 其他数据\n") +
+                     "\n" +
+                     "|项目|值|\n" +
+                     "|:---:|:---:|\n" +
+                     "|难度|<span style=\"" +
+                     "text-align: center; " +
+                     "display: inline-block; " +
+                     "border-radius: 3px; " +
+                     "color: white; " +
+                     "width: 120px; " +
+                     "height: 24px; " +
+                     "background-color: " + DifficultyName[QuestionInfo["data"]["level"].as_integer()].second +
+                     "\">" +
+                     DifficultyName[QuestionInfo["data"]["level"].as_integer()].first + "</span>|\n" +
+                     "|提交次数|$" + QuestionInfo["data"]["submitInfo"]["totalCount"].as_string() + "$|\n" +
+                     "|提交人数|$" + QuestionInfo["data"]["submitInfo"]["submitPersonCount"].as_string() + "$|\n" +
+                     "|通过人数|$" + QuestionInfo["data"]["submitInfo"]["passCount"].as_string() + "$|\n" +
+                     "|通过率|$" + QuestionInfo["data"]["submitInfo"]["passRate"].as_string() + "\\%$|\n" +
+                     "\n";
+    SetDataFromStringToFile("Etiger/" + QuestionID + ".md", OutputContent);
 
+#ifndef TEST
     // Open file
-    if (system(string("code /workspaces/Coding/Etiger/" + QuestionID + ".md").c_str()))
-        cout << "Open file \"/workspaces/Coding/Etiger/" << QuestionID << ".md\" failed, please open it manually" << endl;
+    if (system(string("code " + CurrentDir + "Etiger/" + QuestionID + ".md").c_str()))
+        cout << "Open file \"" + CurrentDir + "Etiger/" << QuestionID << ".md\" failed, please open it manually" << endl;
+#endif
 }
 void TOOL::ETIGER::SubmitCode(string QuestionID)
 {
     // Get code
-    string Code = GetDataFromFileToString(string("../../../Etiger/" + QuestionID + ".cpp"));
+    string Code = GetDataFromFileToString("Etiger/" + QuestionID + ".cpp");
 
     // Uncomment freopen and save
     Code = StringReplaceAll(Code, "// freopen", "freopen");
-    SetDataFromStringToFile("../../../Etiger/" + QuestionID + ".cpp", Code);
+    SetDataFromStringToFile("Etiger/" + QuestionID + ".cpp", Code);
 
     // Create submit request
     json SubmitRequest;
@@ -921,11 +920,9 @@ void TOOL::ETIGER::SubmitCode(string QuestionID)
     json SubmitInfo = json::parse(GetDataFromFileToString());
     if (SubmitInfo["code"] != 200)
     {
-        Failed = true;
-        cout << "Failed" << endl
-             << "Error number: " << SubmitInfo["code"].as_integer() << endl
-             << "Error message: " << SubmitInfo["msg"].as_string() << endl;
-        return;
+        TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Get submit result failed",
+                                            SubmitInfo["code"].as_integer(),
+                                            SubmitInfo["msg"].as_string());
     }
     cout << "Succeed" << endl;
 
@@ -986,11 +983,9 @@ void TOOL::ETIGER::GetAnswerOrTips(string QuestionID)
     json CommentsData = json::parse(GetDataFromFileToString());
     if (CommentsData["code"] != 200)
     {
-        Failed = true;
-        cout << "Failed" << endl
-             << "Error number: " << CommentsData["code"].as_integer() << endl
-             << "Error message: " << CommentsData["msg"].as_string() << endl;
-        return;
+        TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Get comments failed",
+                                            CommentsData["code"].as_integer(),
+                                            CommentsData["msg"].as_string());
     }
     cout << "Success" << endl;
 
@@ -1000,8 +995,8 @@ void TOOL::ETIGER::GetAnswerOrTips(string QuestionID)
         Comments += FixString(i["content"].as_string()) + "\n";
 
     // Add comments to the code
-    SetDataFromStringToFile("../../../Etiger/" + QuestionID + ".cpp",
-                            FixString(GetDataFromFileToString("../../../Etiger/" + QuestionID + ".cpp")) +
+    SetDataFromStringToFile("Etiger/" + QuestionID + ".cpp",
+                            FixString(GetDataFromFileToString("Etiger/" + QuestionID + ".cpp")) +
                                 "\n" +
                                 "\n" +
                                 "/*\n" +
@@ -1009,11 +1004,16 @@ void TOOL::ETIGER::GetAnswerOrTips(string QuestionID)
                                 "*/" +
                                 "\n");
 }
-string TOOL::CODEFORCES::GetCRSF()
+string TOOL::CODEFORCES::GetCSRF()
 {
     // Get csrf token
-    return GetStringBetween(GetDataFromFileToString(),
-                            "<input type='hidden' name='csrf_token' value='", "'/>");
+    string Token = GetStringBetween(GetDataFromFileToString(),
+                                    "<input type='hidden' name='csrf_token' value='", "'/>");
+    if (Token == "")
+    {
+        TRIGGER_ERROR("Can not find csrf token");
+    }
+    return Token;
 }
 string TOOL::CODEFORCES::OutputPre(TiXmlElement *Input)
 {
@@ -1207,7 +1207,7 @@ void TOOL::CODEFORCES::Login(string Username, string Password)
                   "Header.tmp",
                   "Body.tmp",
                   true,
-                  string("csrf_token=" + GetCRSF() +
+                  string("csrf_token=" + GetCSRF() +
                          "&action=enter" +
                          "&ftaa=" + ftaa +
                          "&bfaa=" + bfaa +
@@ -1251,7 +1251,7 @@ void TOOL::CODEFORCES::Login(string Username, string Password)
                           "Header.tmp",
                           "Body.tmp",
                           true,
-                          string("csrf_token=" + GetCRSF() +
+                          string("csrf_token=" + GetCSRF() +
                                  "&action=enter" +
                                  "&ftaa=" + ftaa +
                                  "&bfaa=" + bfaa +
@@ -1270,16 +1270,12 @@ void TOOL::CODEFORCES::Login(string Username, string Password)
             unlink(string(CurrentDir + "Output.tmp").c_str());
             if (HTTPResponseCode == 200)
             {
-                Failed = true;
-                cout << "Failed" << endl;
-                return;
+                TRIGGER_ERROR("Login failed");
             }
         }
         else
         {
-            Failed = true;
-            cout << "Failed" << endl;
-            return;
+            TRIGGER_ERROR("Login failed");
         }
     }
     cout << "Succeed" << endl;
@@ -1298,8 +1294,7 @@ void TOOL::CODEFORCES::GetQuestionDetail(string QuestionID)
     QuestionXmlDocument.Parse(TidyHTMLDocument(GetDataFromFileToString()).c_str());
     if (QuestionXmlDocument.Error())
     {
-        cout << "Formatting problem data error, error message: " << QuestionXmlDocument.ErrorDesc() << endl;
-        return;
+        TRIGGER_ERROR(string("Parse question detail error: ") + QuestionXmlDocument.ErrorDesc());
     }
     ofstream OutputFileStream(string("/workspaces/Coding/Codeforces/" + QuestionID + ".md").c_str());
 
@@ -1342,17 +1337,19 @@ void TOOL::CODEFORCES::GetQuestionDetail(string QuestionID)
                      << endl;
     OutputFileStream.close();
 
+#ifndef TEST
     // Open the question detail file
     if (system(string("code /workspaces/Coding/Codeforces/" + QuestionID + ".md").c_str()))
         cout << "Open file \"/workspaces/Coding/Codeforces/" << QuestionID << ".md\" failed, please open it manually" << endl;
+#endif
 }
 void TOOL::CODEFORCES::SubmitCode(string QuestionID)
 {
     // Get the code
-    string Code = GetDataFromFileToString("../../../Codeforces/" + QuestionID + ".cpp");
+    string Code = GetDataFromFileToString("Codeforces/" + QuestionID + ".cpp");
 
     // Add a number to the code to avoid submitting the same code
-    Code += "\n\n// " + to_string(time(NULL));
+    Code += "\n\n// " + to_string(time(NULL)) + "\n";
 
     // Get submit page data
     cout << "Getting submit page data... " << flush;
@@ -1362,12 +1359,12 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
     // Submit the code
     int HTTPResponseCode = 0;
     cout << "Submitting... " << flush;
-    GetDataToFile("https://codeforces.com/problemset/submit?csrf_token=" + GetCRSF(),
+    GetDataToFile("https://codeforces.com/problemset/submit?csrf_token=" + GetCSRF(),
                   "Header.tmp",
                   "Body.tmp",
                   true,
                   string(
-                      "csrf_token=" + GetCRSF() +
+                      "csrf_token=" + GetCSRF() +
                       "&ftaa=" + ftaa +
                       "&bfaa=" + bfaa +
                       "&action=submitSolutionFormSubmitted" +
@@ -1382,9 +1379,7 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
                   FORM);
     if (HTTPResponseCode == 200)
     {
-        Failed = true;
-        cout << "Failed" << endl;
-        return;
+        TRIGGER_ERROR("Submit failed");
     }
     cout << "Succeed" << endl;
 
@@ -1403,8 +1398,7 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
     SubmitListXmlDocument.Parse(TidyHTMLDocument(GetDataFromFileToString()).c_str());
     if (SubmitListXmlDocument.Error())
     {
-        cout << "Formatting submission list error, error message: " << SubmitListXmlDocument.ErrorDesc() << endl;
-        return;
+        TRIGGER_ERROR(string("Parse submission list error: ") + SubmitListXmlDocument.ErrorDesc());
     }
 
     // Get the submission ID
@@ -1431,7 +1425,7 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
                       "Body.tmp",
                       true,
                       string("submissionId=" + SubmitID +
-                             "&csrf_token=" + GetCRSF()),
+                             "&csrf_token=" + GetCSRF()),
                       HeaderList,
                       NULL,
                       FORM);
@@ -1445,9 +1439,9 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
     for (int i = 1; i <= TestNumber; i++)
     {
         // Save the input and output file
-        SetDataFromStringToFile("/workspaces/Coding/Codeforces/" + QuestionID + "_" + to_string(i) + ".in",
+        SetDataFromStringToFile("Codeforces/" + QuestionID + "_" + to_string(i) + ".in",
                                 result["input#" + to_string(i)].as_string());
-        SetDataFromStringToFile("/workspaces/Coding/Codeforces/" + QuestionID + "_" + to_string(i) + ".out",
+        SetDataFromStringToFile("Codeforces/" + QuestionID + "_" + to_string(i) + ".out",
                                 result["answer#" + to_string(i)].as_string());
 
         // Print the result
@@ -1512,9 +1506,7 @@ void TOOL::UVA::Login(string Username, string Password)
                   FORM);
     if (HTTPResponseCode == 200)
     {
-        Failed = true;
-        cout << "Failed" << endl;
-        return;
+        TRIGGER_ERROR("Login failed");
     }
     cout << "Succeed" << endl;
 }
@@ -1531,7 +1523,7 @@ void TOOL::UVA::GetQuestionDetail(string QuestionID)
                       FixedQuestionID.substr(0, FixedQuestionID.size() - 2) +
                       "/p" + FixedQuestionID + ".pdf",
                   "Header.tmp",
-                  "../../../UVa/" + QuestionID + ".pdf",
+                  "UVa/" + QuestionID + ".pdf",
                   false,
                   "",
                   NULL,
@@ -1541,9 +1533,11 @@ void TOOL::UVA::GetQuestionDetail(string QuestionID)
                   true);
     cout << "Succeed" << endl;
 
+#ifndef TEST
     // Open the pdf file
-    if (system(string("code /workspaces/Coding/UVa/" + QuestionID + ".pdf").c_str()))
-        cout << "Open file \"/workspaces/Coding/UVa/" << QuestionID << ".md\" failed, please open it manually" << endl;
+    if (system(string("code " + CurrentDir + "UVa/" + QuestionID + ".pdf").c_str()))
+        cout << "Open file \"" + CurrentDir + "UVa/" << QuestionID << ".md\" failed, please open it manually" << endl;
+#endif
 }
 void TOOL::UVA::SubmitCode(string QuestionID)
 {
@@ -1556,7 +1550,7 @@ void TOOL::UVA::SubmitCode(string QuestionID)
         FixedQuestionID.erase(0, 1);
 
     // Get the code
-    string Code = GetDataFromFileToString("../../../UVa/" + QuestionID + ".cpp");
+    string Code = GetDataFromFileToString("UVa/" + QuestionID + ".cpp");
 
     // Create the header list
     curl_slist *HeaderList = NULL;
@@ -1575,32 +1569,32 @@ void TOOL::UVA::SubmitCode(string QuestionID)
     int HTTPResponseCode = 0;
 
     // Create the multipart data
-    string tmp = "--" + MULTIPART_BOUNDARY + "\n" +
-                 "Content-Disposition: form-data; name=\"problemid\"\n" +
-                 "\n" +
-                 "\n" +
-                 "--" + MULTIPART_BOUNDARY + "\n" +
-                 "Content-Disposition: form-data; name=\"category\"\n" +
-                 "\n" +
-                 "\n" +
-                 "--" + MULTIPART_BOUNDARY + "\n" +
-                 "Content-Disposition: form-data; name=\"localid\"\n" +
-                 "\n" +
-                 FixedQuestionID + "\n" +
-                 "--" + MULTIPART_BOUNDARY + "\n" +
-                 "Content-Disposition: form-data; name=\"language\"\n" +
-                 "\n" +
-                 "5\n" +
-                 "--" + MULTIPART_BOUNDARY + "\n" +
-                 "Content-Disposition: form-data; name=\"code\"\n" +
-                 "\n" +
-                 Code + "\n" +
-                 "\n" +
-                 "--" + MULTIPART_BOUNDARY + "\n" + "Content-Disposition: form-data; name=\"codeupl\"; filename=\"\"\n" +
-                 "Content-Type: application/octet-stream\n" +
-                 "\n" +
-                 "\n" +
-                 "--" + MULTIPART_BOUNDARY + "--\n";
+    string SubmitPostBody = "--" + MULTIPART_BOUNDARY + "\n" +
+                            "Content-Disposition: form-data; name=\"problemid\"\n" +
+                            "\n" +
+                            "\n" +
+                            "--" + MULTIPART_BOUNDARY + "\n" +
+                            "Content-Disposition: form-data; name=\"category\"\n" +
+                            "\n" +
+                            "\n" +
+                            "--" + MULTIPART_BOUNDARY + "\n" +
+                            "Content-Disposition: form-data; name=\"localid\"\n" +
+                            "\n" +
+                            FixedQuestionID + "\n" +
+                            "--" + MULTIPART_BOUNDARY + "\n" +
+                            "Content-Disposition: form-data; name=\"language\"\n" +
+                            "\n" +
+                            "5\n" +
+                            "--" + MULTIPART_BOUNDARY + "\n" +
+                            "Content-Disposition: form-data; name=\"code\"\n" +
+                            "\n" +
+                            Code + "\n" +
+                            "\n" +
+                            "--" + MULTIPART_BOUNDARY + "\nContent-Disposition: form-data; name=\"codeupl\"; filename=\"\"\n" +
+                            "Content-Type: application/octet-stream\n" +
+                            "\n" +
+                            "\n" +
+                            "--" + MULTIPART_BOUNDARY + "--\n";
 
     // Submit the code
     cout << "Submitting... " << flush;
@@ -1608,15 +1602,13 @@ void TOOL::UVA::SubmitCode(string QuestionID)
                   "Header.tmp",
                   "Body.tmp",
                   true,
-                  tmp,
+                  SubmitPostBody,
                   HeaderList,
                   &HTTPResponseCode,
                   MULTIPART);
     if (HTTPResponseCode == 200)
     {
-        Failed = true;
-        cout << "Failed" << endl;
-        return;
+        TRIGGER_ERROR("Submit failed");
     }
 
     // Get the submission id
@@ -1624,9 +1616,7 @@ void TOOL::UVA::SubmitCode(string QuestionID)
     SubmissionID = SubmissionID.substr(SubmissionID.find_last_of('+') + 1);
     if (atoi(SubmissionID.c_str()) == 0)
     {
-        Failed = true;
-        cout << "Failed" << endl;
-        return;
+        TRIGGER_ERROR("Get submission id failed");
     }
     cout << "Succeed" << endl;
 
@@ -1663,7 +1653,9 @@ void TOOL::UVA::SubmitCode(string QuestionID)
             }
         }
         else
-            cout << "无法找到提交记录对应的提交信息";
+        {
+            TRIGGER_ERROR("Can not find the judge result with submission id " + SubmissionID);
+        }
     }
 }
 TOOL::TOOL(string FileName, string Operation)
@@ -1672,73 +1664,143 @@ TOOL::TOOL(string FileName, string Operation)
     if (FileName.find("Luogu") != string::npos)
     {
         LUOGU Luogu;
-        Luogu.Login(GetDataFromFileToString("../../../Keys/LuoguUsername"), GetDataFromFileToString("../../../Keys/LuoguPassword"));
-        if (Failed)
-            return;
-        if (Operation == "ClockIn")
-            Luogu.ClockIn();
-        else if (Operation == "GetQuestionDetail")
+        Luogu.Login(GetDataFromFileToString("Keys/LuoguUsername"), GetDataFromFileToString("Keys/LuoguPassword"));
+        if (Operation == "GetQuestionDetail")
+        {
+#ifdef TEST
+            OutputSummary("##### Luogu get question detail");
+#endif
             Luogu.GetQuestionDetail(GetStringBetween(FileName, "Luogu/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
         else if (Operation == "SubmitCode")
+        {
+#ifdef TEST
+            OutputSummary("##### Luogu submit code");
+#endif
             Luogu.SubmitCode(GetStringBetween(FileName, "Luogu/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
         else if (Operation == "GetAnswerOrTips")
+        {
+#ifdef TEST
+            OutputSummary("##### Luogu get answer or tips");
+#endif
             Luogu.GetAnswerOrTips(GetStringBetween(FileName, "Luogu/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
         else
-            cout << "传参错误" << endl;
-        if (Failed)
-            return;
+        {
+            TRIGGER_ERROR("Parse error");
+        }
     }
     else if (FileName.find("Etiger") != string::npos)
     {
         ETIGER Etiger;
-        Etiger.Login(GetDataFromFileToString("../../../Keys/EtigerUsername"), GetDataFromFileToString("../../../Keys/EtigerPassword"));
-        if (Failed)
-            return;
-        if (Operation == "ClockIn")
-            Etiger.ClockIn();
-        else if (Operation == "GetQuestionDetail")
+        Etiger.Login(GetDataFromFileToString("Keys/EtigerUsername"), GetDataFromFileToString("Keys/EtigerPassword"));
+        if (Operation == "GetQuestionDetail")
+        {
+#ifdef TEST
+            OutputSummary("##### Etiger get question detail");
+#endif
             Etiger.GetQuestionDetail(GetStringBetween(FileName, "Etiger/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
         else if (Operation == "SubmitCode")
+        {
+#ifdef TEST
+            OutputSummary("##### Etiger submit code");
+#endif
             Etiger.SubmitCode(GetStringBetween(FileName, "Etiger/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
         else if (Operation == "GetAnswerOrTips")
+        {
+#ifdef TEST
+            OutputSummary("##### Etiger get answer or tips");
+#endif
             Etiger.GetAnswerOrTips(GetStringBetween(FileName, "Etiger/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
         else
-            cout << "传参错误" << endl;
-        if (Failed)
-            return;
+        {
+            TRIGGER_ERROR("Parse error");
+        }
     }
     else if (FileName.find("UVa") != string::npos)
     {
         UVA UVa;
-        UVa.Login(GetDataFromFileToString("../../../Keys/UVaUsername"), GetDataFromFileToString("../../../Keys/UVaPassword"));
-        if (Failed)
-            return;
+        UVa.Login(GetDataFromFileToString("Keys/UVaUsername"), GetDataFromFileToString("Keys/UVaPassword"));
         if (Operation == "GetQuestionDetail")
+        {
+#ifdef TEST
+            OutputSummary("##### UVa get question detail");
+#endif
             UVa.GetQuestionDetail(GetStringBetween(FileName, "UVa/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
         else if (Operation == "SubmitCode")
+        {
+#ifdef TEST
+            OutputSummary("##### UVa submit code");
+#endif
             UVa.SubmitCode(GetStringBetween(FileName, "UVa/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
         else
-            cout << "传参错误" << endl;
-        if (Failed)
-            return;
+        {
+            TRIGGER_ERROR("Parse error");
+        }
     }
     else if (FileName.find("Codeforces") != string::npos)
     {
         CODEFORCES Codeforces;
-        Codeforces.Login(GetDataFromFileToString("../../../Keys/CodeforcesUsername"), GetDataFromFileToString("../../../Keys/CodeforcesPassword"));
-        if (Failed)
-            return;
+        Codeforces.Login(GetDataFromFileToString("Keys/CodeforcesUsername"), GetDataFromFileToString("Keys/CodeforcesPassword"));
         if (Operation == "GetQuestionDetail")
-            Codeforces.GetQuestionDetail(GetStringBetween(GetStringBetween(FileName, "Codeforces/", ".cpp"), "", "/"));
+        {
+#ifdef TEST
+            OutputSummary("##### Codeforces get question detail");
+#endif
+            Codeforces.GetQuestionDetail(GetStringBetween(FileName, "Codeforces/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
         else if (Operation == "SubmitCode")
+        {
+#ifdef TEST
+            OutputSummary("##### Codeforces submit code");
+#endif
             Codeforces.SubmitCode(GetStringBetween(GetStringBetween(FileName, "Codeforces/", ".cpp"), "", "/"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
         else
-            cout << "传参错误" << endl;
-        if (Failed)
-            return;
+        {
+            TRIGGER_ERROR("Parse error");
+        }
     }
     else
-        cout << "传参错误" << endl;
+    {
+        TRIGGER_ERROR("Parse error");
+    }
 }
 TOOL::TOOL(string ServerName, string Username, string Password)
 {
@@ -1758,24 +1820,44 @@ TOOL::TOOL(string ServerName, string Username, string Password)
         Etiger.ClockIn();
     }
     else
-        cout << "传参错误" << endl;
+    {
+        TRIGGER_ERROR("Parse error");
+    }
 }
 TOOL::~TOOL()
 {
-    // Clean up
-    Clean();
 }
 int main(int argc, char **argv)
 {
+    CLN_TRY
     GetCurrentDir();
-    // If the Cookies.tmp file does not exist, create it
-    if (!IfFileExist("../../../Keys/Cookies.tmp"))
-    {
-        system(string("mkdir " + CurrentDir + "../../../Keys").c_str());
-        system(string("touch " + CurrentDir + "../../../Keys/Cookies.tmp").c_str());
-    }
     try
     {
+#ifdef TEST
+        TOOL("Luogu/P1000.cpp", "GetQuestionDetail");
+        OutputSummary("");
+        TOOL("Luogu/P1000.cpp", "SubmitCode");
+        OutputSummary("");
+        TOOL("Luogu/P1000.cpp", "GetAnswerOrTips");
+        OutputSummary("");
+
+        TOOL("Etiger/0001.cpp", "GetQuestionDetail");
+        OutputSummary("");
+        TOOL("Etiger/0001.cpp", "SubmitCode");
+        OutputSummary("");
+        TOOL("Etiger/0001.cpp", "GetAnswerOrTips");
+        OutputSummary("");
+
+        TOOL("UVa/00100.cpp", "GetQuestionDetail");
+        OutputSummary("");
+        TOOL("UVa/00100.cpp", "SubmitCode");
+        OutputSummary("");
+
+        TOOL("Codeforces/1A.cpp", "GetQuestionDetail");
+        OutputSummary("");
+        TOOL("Codeforces/1A.cpp", "SubmitCode");
+        OutputSummary("");
+#else
         // If the argument count is 3, the tool is used to GetQuestionDetail/SubmitCode/GetAnswerOrTips
         if (argc == 3)
             TOOL Tool(argv[1], argv[2]);
@@ -1784,12 +1866,16 @@ int main(int argc, char **argv)
         else if (argc == 4)
             TOOL Tool(argv[1], argv[2], argv[3]);
         else
-            cout << "传参错误" << endl;
+        {
+            TRIGGER_ERROR("Parse error");
+        }
+#endif
     }
     // Catch json parsing errors
     catch (const configor::configor_exception &Exception)
     {
-        cerr << Exception.what() << endl;
+        TRIGGER_ERROR(string("JSON parse error: ") + Exception.what());
     }
+    CLN_CATCH
     return 0;
 }

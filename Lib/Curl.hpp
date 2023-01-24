@@ -3,6 +3,7 @@
 #include <curl/curl.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include "./configor/json.hpp"
 #include "./StringOperation.hpp"
 using namespace std;
@@ -19,7 +20,6 @@ struct PROGRESS
 int GetDataToFileProgressCallback(void *_Param,
                                   curl_off_t DownloadTotal, curl_off_t DownloadNow,
                                   curl_off_t UploadTotal, curl_off_t UploadNow)
-
 {
     if (DownloadTotal == 0)
         return 0;
@@ -30,15 +30,15 @@ int GetDataToFileProgressCallback(void *_Param,
 
     // Output download progress bar
     string ProgressBarString[8] = {"▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"};
-    string CurrentProgressBarString = "[";
-    int ProgressBarLength = 20;
+    string CurrentProgressBarString = "|";
+    int ProgressBarLength = 50;
     double CurrentProgressBarLength = DownloadNow * 1.0 / DownloadTotal * ProgressBarLength;
     for (int i = 0; i < floor(CurrentProgressBarLength); i++)
         CurrentProgressBarString += ProgressBarString[7];
     CurrentProgressBarString += ProgressBarString[(int)((CurrentProgressBarLength - floor(CurrentProgressBarLength)) * 8)];
     for (int i = 0; i < ProgressBarLength - ceil(CurrentProgressBarLength); i++)
         CurrentProgressBarString += " ";
-    CurrentProgressBarString += "]";
+    CurrentProgressBarString += "|";
 
     // Output network status
     string NetworkStatus;
@@ -111,19 +111,24 @@ int GetDataToFileProgressCallback(void *_Param,
     fflush(stdout);
     return 0;
 }
-int GetDataToFile(string URL,
-                  string HeaderFileName = "Header.tmp",
-                  string BodyFileName = "Body.tmp",
-                  bool IsPost = false,
-                  string PostData = "",
-                  curl_slist *HeaderList = NULL,
-                  int *HTTPResponseCode = NULL,
-                  string PostContentType = "application/json",
-                  string Cookie = "",
-                  bool ShowProgress = false)
+void GetDataToFile(string URL,
+                   string HeaderFileName = "Header.tmp",
+                   string BodyFileName = "Body.tmp",
+                   bool IsPost = false,
+                   string PostData = "",
+                   curl_slist *HeaderList = NULL,
+                   int *HTTPResponseCode = NULL,
+                   string PostContentType = "application/json",
+                   string Cookie = "",
+                   bool ShowProgress = false)
 {
     if (CurrentDir == "")
         GetCurrentDir();
+    if (!IfFileExist("Keys/Cookies.tmp"))
+    {
+        mkdir((CurrentDir + "Keys").c_str(), 0755);
+        system(string("touch " + CurrentDir + "Keys/Cookies.tmp").c_str());
+    }
     FILE *HeaderFilePointer = fopen((CurrentDir + HeaderFileName).c_str(), "w");
     FILE *BodyFilePointer = fopen((CurrentDir + BodyFileName).c_str(), "w");
     CURLcode CurlCode = curl_global_init(CURL_GLOBAL_ALL);
@@ -131,9 +136,7 @@ int GetDataToFile(string URL,
     {
         fclose(BodyFilePointer);
         fclose(HeaderFilePointer);
-        cout << "Curl init failed!" << endl
-             << CurlCode << ": " << curl_easy_strerror(CurlCode) << endl;
-        return 1;
+        TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Curl init failed", CurlCode, curl_easy_strerror(CurlCode));
     }
     CURL *Curl = curl_easy_init();
     curl_easy_setopt(Curl, CURLOPT_SSL_VERIFYHOST, false);
@@ -167,16 +170,12 @@ int GetDataToFile(string URL,
     curl_easy_setopt(Curl, CURLOPT_HTTPHEADER, HeaderList);
     CurlCode = curl_easy_perform(Curl);
     if (ShowProgress)
-    {
         cout << "\033[2K\033[?25h\033[u";
-    }
     if (CurlCode != 0)
     {
         fclose(BodyFilePointer);
         fclose(HeaderFilePointer);
-        cout << "Request with URL \"" << URL << "\" failed! " << endl
-             << CurlCode << ": " << curl_easy_strerror(CurlCode) << endl;
-        return 1;
+        TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Request URL " + URL + " failed", CurlCode, curl_easy_strerror(CurlCode));
     }
     int TempHTTPResponseCode = 0;
     curl_easy_getinfo(Curl, CURLINFO_RESPONSE_CODE, &TempHTTPResponseCode);
@@ -184,16 +183,13 @@ int GetDataToFile(string URL,
     {
         fclose(BodyFilePointer);
         fclose(HeaderFilePointer);
-        cout << "Request with URL \"" << URL << "\" failed! " << endl
-             << TempHTTPResponseCode << endl;
-        return 1;
+        TRIGGER_ERROR_WITH_CODE("Request URL " + URL + " failed", TempHTTPResponseCode);
     }
     if (HTTPResponseCode != NULL)
         *HTTPResponseCode = TempHTTPResponseCode;
     curl_easy_cleanup(Curl);
     fclose(BodyFilePointer);
     fclose(HeaderFilePointer);
-    return 0;
 }
 string EraseHTMLElement(string Data)
 {
@@ -208,13 +204,17 @@ string EraseHTMLElement(string Data)
         }
     return Data;
 }
-void Clean()
+class EXIT_CHECK
 {
-    if (CurrentDir == "")
-        GetCurrentDir();
-    remove((CurrentDir + "Body.tmp").c_str());
-    remove((CurrentDir + "Header.tmp").c_str());
-}
+public:
+    ~EXIT_CHECK()
+    {
+        if (CurrentDir == "")
+            GetCurrentDir();
+        remove((CurrentDir + "Body.tmp").c_str());
+        remove((CurrentDir + "Header.tmp").c_str());
+    }
+} ExitCheck;
 string Base64Encode(string Input)
 {
     string base64_chars =
@@ -249,10 +249,12 @@ unsigned char FromHex(unsigned char x)
     else if (x >= '0' && x <= '9')
         y = x - '0';
     else
-        assert(0);
+    {
+        TRIGGER_ERROR("Invalid Hex format");
+    }
     return y;
 }
-string URLEncode(string Input, bool EncodeSpace = false)
+string URLEncode(string Input)
 {
     string Output = "";
     size_t length = Input.length();
@@ -264,7 +266,7 @@ string URLEncode(string Input, bool EncodeSpace = false)
             (Input[i] == '.') ||
             (Input[i] == '~'))
             Output += Input[i];
-        else if (Input[i] == ' ' && !EncodeSpace)
+        else if (Input[i] == ' ')
             Output += "+";
         else
         {
@@ -306,9 +308,7 @@ string FindLocation()
         RedirectURL = GetStringBetween(Header, "location: ", "\n");
     if (RedirectURL == "")
     {
-        cout << "无法找到重定向位置" << endl;
-        getchar();
-        exit(0);
+        TRIGGER_ERROR("Can not find redirect location");
     }
     return FixString(RedirectURL.substr(0, RedirectURL.size()));
 }
