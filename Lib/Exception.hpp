@@ -1,54 +1,91 @@
 #include <stdexcept>
+#include <string>
 using namespace std;
+
+#ifdef TEST
+const bool WhetherDefineTest = true;
+#else
+const bool WhetherDefineTest = false;
+#endif
+
 #define TRIGGER_ERROR(ErrorDetail)                             \
-    throw CLNException("Error! \n" +                           \
+    throw CLNException("an error! \n" +                        \
                        string(ErrorDetail) + "\n" +            \
                        "\n" +                                  \
                        "File: " + __FILE__ + "\n" +            \
                        "Line: " + to_string(__LINE__) + "\n" + \
                        "Function: " + __func__ + "\n" +        \
                        "Errno: " + to_string(errno))
-#define TRIGGER_ERROR_WITH_CODE(ErrorDetail, ErrorCode)          \
-    throw CLNException("Error! " + to_string(ErrorCode) + "\n" + \
-                       string(ErrorDetail) + "\n" +              \
-                       "\n" +                                    \
-                       "File: " + __FILE__ + "\n" +              \
-                       "Line: " + to_string(__LINE__) + "\n" +   \
-                       "Function: " + __func__ + "\n" +          \
+#define TRIGGER_ERROR_WITH_CODE(ErrorDetail, ErrorCode)             \
+    throw CLNException("an error! " + to_string(ErrorCode) + "\n" + \
+                       string(ErrorDetail) + "\n" +                 \
+                       "\n" +                                       \
+                       "File: " + __FILE__ + "\n" +                 \
+                       "Line: " + to_string(__LINE__) + "\n" +      \
+                       "Function: " + __func__ + "\n" +             \
                        "Errno: " + to_string(errno))
-#define TRIGGER_ERROR_WITH_CODE_AND_MESSAGE(ErrorDetail, ErrorCode, ErrorMessage)      \
-    throw CLNException("Error! " + to_string(ErrorCode) + ": " + ErrorMessage + "\n" + \
-                       string(ErrorDetail) + "\n" +                                    \
-                       "\n" +                                                          \
-                       "File: " + __FILE__ + "\n" +                                    \
-                       "Line: " + to_string(__LINE__) + "\n" +                         \
-                       "Function: " + __func__ + "\n" +                                \
+#define TRIGGER_ERROR_WITH_CODE_AND_MESSAGE(ErrorDetail, ErrorCode, ErrorMessage)         \
+    throw CLNException("an error! " + to_string(ErrorCode) + ": " + ErrorMessage + "\n" + \
+                       string(ErrorDetail) + "\n" +                                       \
+                       "\n" +                                                             \
+                       "File: " + __FILE__ + "\n" +                                       \
+                       "Line: " + to_string(__LINE__) + "\n" +                            \
+                       "Function: " + __func__ + "\n" +                                   \
                        "Errno: " + to_string(errno))
+
 #define CLN_TRY \
     try         \
     {
-#ifdef TEST
-#define CLN_CATCH                                       \
-    }                                                   \
-    catch (CLNException & Exception)                    \
-    {                                                   \
-        cerr << Exception.what() << endl;               \
-        OutputSummary("```log\n" +                      \
-                      string(Exception.what()) + "\n" + \
-                      "```");                           \
-        exit(0);                                        \
+#define CLN_CATCH                                                               \
+    }                                                                           \
+    catch (const configor::configor_exception &Exception)                       \
+    {                                                                           \
+        TRIGGER_ERROR(string("a JSON error: ") + Exception.what());             \
+    }                                                                           \
+    catch (const logic_error &Exception)                                        \
+    {                                                                           \
+        TRIGGER_ERROR(string("a standard logic error: ") + Exception.what());   \
+    }                                                                           \
+    catch (const runtime_error &Exception)                                      \
+    {                                                                           \
+        TRIGGER_ERROR(string("a standard runtime error: ") + Exception.what()); \
+    }                                                                           \
+    catch (const exception &Exception)                                          \
+    {                                                                           \
+        TRIGGER_ERROR(string("a standard error: ") + Exception.what());         \
+    }                                                                           \
+    catch (const CLNException &Exception)                                       \
+    {                                                                           \
+        cerr << Exception.what() << endl;                                       \
+        if (WhetherDefineTest)                                                  \
+        {                                                                       \
+            OutputSummary("```log\n" +                                          \
+                          Exception.what() + "\n" +                             \
+                          "```");                                               \
+        }                                                                       \
+        exit(0);                                                                \
     }
-#else
-#define CLN_CATCH                         \
-    }                                     \
-    catch (CLNException & Exception)      \
-    {                                     \
-        cerr << Exception.what() << endl; \
-        exit(0);                          \
-    }
-#endif
-class CLNException : public runtime_error
+
+class CLNException
 {
+private:
+    string Content = "";
+
 public:
-    CLNException(const string &message) : runtime_error(message) {}
+    CLNException()
+    {
+    }
+    CLNException(const string &message)
+    {
+        Content = "We're sorry but this program occurred " + message + "\n" +
+                  "\n" +
+                  "Please try to run this program again later, if this error still occurred, contact the developer for help! Thanks! \n";
+    }
+    string what() const
+    {
+        return Content;
+    }
+    ~CLNException()
+    {
+    }
 };
