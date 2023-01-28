@@ -260,7 +260,7 @@ void TOOL::LUOGU::Login(string Username, string Password)
         // Predict captcha
         curl_slist *HeaderList = NULL;
         HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json");
-        cout << "Predicting captcha... " << flush;
+        cout << "Predicting captcha by web api... " << flush;
         string Captcha = "";
         try
         {
@@ -277,10 +277,20 @@ void TOOL::LUOGU::Login(string Username, string Password)
         }
         catch (CLNException &Exception)
         {
-            cout << "Failed" << endl;
-            system(("code " + CurrentDir + "Captcha.jpeg").c_str());
-            cout << "Please input the captcha: ";
-            cin >> Captcha;
+            cout << "Failed" << endl
+                 << "Predicting captcha by tensorflow... " << flush;
+            if (system(("python " + CurrentDir + "Projects/OJTool/PredictLuoguCaptcha.py > /dev/null 2>&1").c_str()) == 0)
+            {
+                cout << "Succeed" << endl;
+                Captcha = FixString(GetDataFromFileToString("Captcha.txt"));
+            }
+            else
+            {
+                cout << "Failed" << endl;
+                system(("code " + CurrentDir + "Captcha.jpeg").c_str());
+                cout << "Please input the captcha: ";
+                cin >> Captcha;
+            }
         }
         remove((CurrentDir + "Captcha.jpeg").c_str());
 
@@ -1697,7 +1707,7 @@ TOOL::TOOL(string FileName, string Operation)
         }
         else
         {
-            TRIGGER_ERROR("Parse error");
+            TRIGGER_ERROR("Arguments invalid");
         }
     }
     else if (FileName.find("Etiger") != string::npos)
@@ -1736,7 +1746,7 @@ TOOL::TOOL(string FileName, string Operation)
         }
         else
         {
-            TRIGGER_ERROR("Parse error");
+            TRIGGER_ERROR("Arguments invalid");
         }
     }
     else if (FileName.find("UVa") != string::npos)
@@ -1765,7 +1775,7 @@ TOOL::TOOL(string FileName, string Operation)
         }
         else
         {
-            TRIGGER_ERROR("Parse error");
+            TRIGGER_ERROR("Arguments invalid");
         }
     }
     else if (FileName.find("Codeforces") != string::npos)
@@ -1794,12 +1804,12 @@ TOOL::TOOL(string FileName, string Operation)
         }
         else
         {
-            TRIGGER_ERROR("Parse error");
+            TRIGGER_ERROR("Arguments invalid");
         }
     }
     else
     {
-        TRIGGER_ERROR("Parse error");
+        TRIGGER_ERROR("Arguments invalid");
     }
 }
 TOOL::TOOL(string ServerName, string Username, string Password)
@@ -1821,7 +1831,7 @@ TOOL::TOOL(string ServerName, string Username, string Password)
     }
     else
     {
-        TRIGGER_ERROR("Parse error");
+        TRIGGER_ERROR("Arguments invalid");
     }
 }
 TOOL::~TOOL()
@@ -1831,51 +1841,43 @@ int main(int argc, char **argv)
 {
     CLN_TRY
     GetCurrentDir();
-    try
-    {
 #ifdef TEST
-        TOOL("Luogu/P1000.cpp", "GetQuestionDetail");
-        OutputSummary("");
-        TOOL("Luogu/P1000.cpp", "SubmitCode");
-        OutputSummary("");
-        TOOL("Luogu/P1000.cpp", "GetAnswerOrTips");
-        OutputSummary("");
+    TOOL("Luogu/P1000.cpp", "GetQuestionDetail");
+    OutputSummary("");
+    TOOL("Luogu/P1000.cpp", "SubmitCode");
+    OutputSummary("");
+    TOOL("Luogu/P1000.cpp", "GetAnswerOrTips");
+    OutputSummary("");
 
-        TOOL("Etiger/0001.cpp", "GetQuestionDetail");
-        OutputSummary("");
-        TOOL("Etiger/0001.cpp", "SubmitCode");
-        OutputSummary("");
-        TOOL("Etiger/0001.cpp", "GetAnswerOrTips");
-        OutputSummary("");
+    TOOL("Etiger/0001.cpp", "GetQuestionDetail");
+    OutputSummary("");
+    TOOL("Etiger/0001.cpp", "SubmitCode");
+    OutputSummary("");
+    TOOL("Etiger/0001.cpp", "GetAnswerOrTips");
+    OutputSummary("");
 
-        TOOL("UVa/00100.cpp", "GetQuestionDetail");
-        OutputSummary("");
-        TOOL("UVa/00100.cpp", "SubmitCode");
-        OutputSummary("");
+    TOOL("UVa/00100.cpp", "GetQuestionDetail");
+    OutputSummary("");
+    TOOL("UVa/00100.cpp", "SubmitCode");
+    OutputSummary("");
 
-        TOOL("Codeforces/1A.cpp", "GetQuestionDetail");
-        OutputSummary("");
-        TOOL("Codeforces/1A.cpp", "SubmitCode");
-        OutputSummary("");
+    TOOL("Codeforces/1A.cpp", "GetQuestionDetail");
+    OutputSummary("");
+    TOOL("Codeforces/1A.cpp", "SubmitCode");
+    OutputSummary("");
 #else
-        // If the argument count is 3, the tool is used to GetQuestionDetail/SubmitCode/GetAnswerOrTips
-        if (argc == 3)
-            TOOL Tool(argv[1], argv[2]);
+    // If the argument count is 3, the tool is used to GetQuestionDetail/SubmitCode/GetAnswerOrTips
+    if (argc == 3)
+        TOOL Tool(argv[1], argv[2]);
 
-        // If the argument count is 4, the tool is used to login and clock in
-        else if (argc == 4)
-            TOOL Tool(argv[1], argv[2], argv[3]);
-        else
-        {
-            TRIGGER_ERROR("Parse error");
-        }
-#endif
-    }
-    // Catch json parsing errors
-    catch (const configor::configor_exception &Exception)
+    // If the argument count is 4, the tool is used to login and clock in
+    else if (argc == 4)
+        TOOL Tool(argv[1], argv[2], argv[3]);
+    else
     {
-        TRIGGER_ERROR(string("JSON parse error: ") + Exception.what());
+        TRIGGER_ERROR("Arguments invalid");
     }
+#endif
     CLN_CATCH
     return 0;
 }
