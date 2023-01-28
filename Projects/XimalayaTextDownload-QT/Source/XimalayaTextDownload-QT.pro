@@ -1,5 +1,6 @@
 QT       += core gui
 LIBS     += -lcurl -ljpeg
+INCLUDEPATH += /workspaces/Coding/Lib
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
