@@ -1,7 +1,7 @@
 name: Auto Test
 on:
-  schedule:
-    - cron:  '38 21 * * *'
+  # schedule:
+  #   - cron:  '38 21 * * *'
   workflow_dispatch: 
 jobs:
   Test:
