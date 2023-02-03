@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.9)
 project(Communication)
 
 set(CMAKE_CXX_COMPILER "g++")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
 
 add_executable(server Server.cpp)
 add_executable(client Client.cpp)

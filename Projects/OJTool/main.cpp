@@ -41,6 +41,32 @@ private:
         void SubmitCode(string QuestionID);
         void GetAnswerOrTips(string QuestionID);
     };
+    class XMOJ
+    {
+    private:
+        string ResultName[17];
+        string GetCSRF();
+        string HTMLToText(string Data);
+        void _GetQuestionDetail(string QuestionID, string QuestionHandle);
+
+    public:
+        XMOJ();
+        void Login(string Username, string Password);
+        void GetQuestionDetail(string QuestionID);
+        void SubmitCode(string QuestionID);
+        void GetContestQuestionsDetails(string ContestID);
+    };
+    class USACO
+    {
+    private:
+        string Token;
+
+    public:
+        USACO();
+        void Login(string Username, string Password);
+        void GetQuestionDetail(string QuestionID);
+        void SubmitCode(string QuestionID);
+    };
     class CODEFORCES
     {
     private:
@@ -66,6 +92,7 @@ private:
     };
 
 public:
+    TOOL();
     TOOL(string FileName, string Operation);
     TOOL(string ServerName, string Username, string Password);
     ~TOOL();
@@ -426,19 +453,27 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
     // Save data for markdown
     string OutputContent = "# " + QuestionID + " " + QuestionInfo["currentData"]["problem"]["title"].as_string() + "\n";
     if (QuestionInfo["currentData"]["problem"]["accepted"].as_bool())
-        OutputContent += string("***您已经通过此题！***\n") +
+        OutputContent += "***您已经通过此题！***\n"s +
                          "\n";
     else if (QuestionInfo["currentData"]["problem"]["submitted"].as_bool())
-        OutputContent += string("***您已经提交过此题但未通过！***\n") +
+        OutputContent += "***您已经提交过此题但未通过！***\n"s +
                          "\n";
     if (QuestionInfo["currentData"]["problem"]["background"].as_string() != "")
-        OutputContent += string("## Background\n") +
+        OutputContent += "## Background\n"s +
                          "\n" +
                          FixString(QuestionInfo["currentData"]["problem"]["background"]) + "\n" +
                          "\n";
-    OutputContent += string("## Description\n") +
+    OutputContent += "## Description\n"s +
                      "\n" +
-                     FixString(QuestionInfo["currentData"]["problem"]["description"]) + "\n\n## 输入格式\n\n" + FixString(QuestionInfo["currentData"]["problem"]["inputFormat"]) + "\n\n## 输出格式\n\n" + FixString(QuestionInfo["currentData"]["problem"]["outputFormat"]) + "\n" +
+                     FixString(QuestionInfo["currentData"]["problem"]["description"]) + "\n" +
+                     "\n" +
+                     "## Input format\n" +
+                     "\n" +
+                     FixString(QuestionInfo["currentData"]["problem"]["inputFormat"]) + "\n" +
+                     "\n" +
+                     "## Output format\n" +
+                     "\n" +
+                     FixString(QuestionInfo["currentData"]["problem"]["outputFormat"]) + "\n" +
                      "\n" +
                      "## Samples\n" +
                      "\n";
@@ -447,27 +482,27 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
     else
     {
         int Counter = 0;
-        for (auto cit : QuestionInfo["currentData"]["problem"]["samples"])
+        for (auto i : QuestionInfo["currentData"]["problem"]["samples"])
         {
             Counter++;
             OutputContent += string("Input #" + to_string(Counter) + "\n") +
                              "```\n" +
-                             FixString(cit[0].as_string()) + "\n" +
+                             FixString(i[0].as_string()) + "\n" +
                              "```\n" +
                              "Output #" + to_string(Counter) + "\n" +
                              "```\n" +
-                             FixString(cit[1].as_string()) + "\n" +
+                             FixString(i[1].as_string()) + "\n" +
                              "```\n";
         }
     }
-    OutputContent += string("\n") +
+    OutputContent += "\n"s +
                      "## Hint\n" +
                      "\n" +
                      FixString(QuestionInfo["currentData"]["problem"]["hint"]) +
                      "\n" +
                      "\n";
     OutputContent += "## Limits\n";
-    OutputContent += string("|Test case|Time limit|Memory limit|\n") +
+    OutputContent += "|Test case|Time limit|Memory limit|\n"s +
                      "|:---:|:---:|:---:|\n";
     for (unsigned int Counter = 0; Counter < QuestionInfo["currentData"]["problem"]["limits"]["memory"].size(); Counter++)
     {
@@ -475,7 +510,7 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
                          "$" + to_string(QuestionInfo["currentData"]["problem"]["limits"]["memory"][Counter].as_integer() / 1024.0) + "MB$|" +
                          "$" + to_string(QuestionInfo["currentData"]["problem"]["limits"]["time"][Counter].as_integer() / 1000) + "s$|\n";
     }
-    OutputContent += string("\n") +
+    OutputContent += "\n"s +
                      "## Last submit code\n" +
                      "\n" +
                      "```" + LanguageMarkdownName[QuestionInfo["currentData"]["lastLanguage"].as_integer()] + "\n" +
@@ -486,7 +521,7 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
                      "\n";
     string Tags = "";
     for (auto i : QuestionInfo["currentData"]["problem"]["tags"])
-        Tags += string("<span style=\"display: inline-block; ") +
+        Tags += "<span style=\"display: inline-block; "s +
                 "margin-right: 5px; " +
                 "margin-bottom: 5px; " +
                 "border-radius: 2px; " +
@@ -495,7 +530,7 @@ void TOOL::LUOGU::GetQuestionDetail(string QuestionID)
                 "background-color: #" + ColorList[TagName[i.as_integer()].second] + "; \">" +
                 TagName[i.as_integer()].first +
                 "</span>";
-    OutputContent += string("|Item|Value|\n") +
+    OutputContent += "|Item|Value|\n"s +
                      "|:---:|:---:|\n" +
                      "|Difficulty|<span style=\"font-weight: bold; color: #" + ColorList[DifficultyName[QuestionInfo["currentData"]["problem"]["difficulty"].as_integer()].second] + "\">" + DifficultyName[QuestionInfo["currentData"]["problem"]["difficulty"].as_integer()].first + "</span>|\n" +
                      "|Label|" + Tags + "|\n" +
@@ -634,7 +669,7 @@ void TOOL::LUOGU::GetAnswerOrTips(string QuestionID)
         string Answer = "";
 
         // Iterate through all the code blocks
-        vector<string> Spilt = StringSpilt(i["content"].as_string(), "```");
+        vector<string> Spilt = SpiltString(i["content"].as_string(), "```");
         for (size_t j = 0; j < Spilt.size(); j++)
         {
             if (j % 2)
@@ -793,8 +828,8 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
     CPHData["timeLimit"] = QuestionInfo["data"]["timeLimit"].as_integer() * 1000;
     string InputSample = QuestionInfo["data"]["inputSample"].as_string();
     string OutputSample = QuestionInfo["data"]["outputSample"].as_string();
-    vector<string> InputSamples = StringSpilt(InputSample, ";");
-    vector<string> OutputSamples = StringSpilt(OutputSample, ";");
+    vector<string> InputSamples = SpiltString(InputSample, ";");
+    vector<string> OutputSamples = SpiltString(OutputSample, ";");
     for (size_t i = 0; i < InputSamples.size(); i++)
     {
         string Input = FixString(InputSamples[i]);
@@ -834,11 +869,11 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
                      FixString(QuestionInfo["data"]["outputFormat"].as_string()) + "\n" +
                      "\n";
     if (!QuestionInfo["data"]["ioName"].is_null())
-        OutputContent += string("## 输入输出文件\n") +
+        OutputContent += "## 输入输出文件\n"s +
                          "\n" +
                          "`" + FixString(QuestionInfo["data"]["ioName"].as_string()) + "`\n" +
                          "\n";
-    OutputContent += string("## 输入输出样例\n") +
+    OutputContent += "## 输入输出样例\n"s +
                      "\n";
     int Counter = 1;
     while (InputSample.find(";") != string::npos && OutputSample.find(";") != string::npos)
@@ -861,12 +896,12 @@ void TOOL::ETIGER::GetQuestionDetail(string QuestionID)
     OutputContent += "\n";
     if (EraseHTMLElement(QuestionInfo["data"]["description"].as_string()) != "")
     {
-        OutputContent += string("## 说明\n") +
+        OutputContent += "## 说明\n"s +
                          "\n" +
                          FixString(EraseHTMLElement(QuestionInfo["data"]["description"].as_string())) + "\n" +
                          "\n";
     }
-    OutputContent += string("## 其他数据\n") +
+    OutputContent += "## 其他数据\n"s +
                      "\n" +
                      "|项目|值|\n" +
                      "|:---:|:---:|\n" +
@@ -1013,6 +1048,417 @@ void TOOL::ETIGER::GetAnswerOrTips(string QuestionID)
                                 Comments +
                                 "*/" +
                                 "\n");
+}
+TOOL::XMOJ::XMOJ()
+{
+    ResultName[0] = "Waiting";
+    ResultName[1] = "Waiting for rejudge";
+    ResultName[2] = "Compiling";
+    ResultName[3] = "Judging";
+    ResultName[4] = "AC";
+    ResultName[5] = "PE";
+    ResultName[6] = "WA";
+    ResultName[7] = "TE";
+    ResultName[8] = "ME";
+    ResultName[9] = "OLE";
+    ResultName[10] = "RE";
+    ResultName[11] = "CE";
+    ResultName[12] = "Compiled";
+    ResultName[13] = "Judged";
+    ResultName[14] = "Waiting";
+    ResultName[15] = "Ignored";
+    ResultName[16] = "";
+}
+string TOOL::XMOJ::GetCSRF()
+{
+    // Get csrf token
+    GetDataToFile("http://www.xmoj.tech/csrf.php");
+    string Token = GetStringBetween(GetDataFromFileToString(), "value=\"", "\"");
+    if (Token == "")
+    {
+        TRIGGER_ERROR("Can not find csrf token");
+    }
+    return Token;
+}
+string TOOL::XMOJ::HTMLToText(string Data)
+{
+    Data = EraseHTMLElement(Data);
+    Data = HTMLDecode(Data);
+    Data = StringReplaceAll(Data, "\t", "");
+    Data = StringReplaceAll(Data, "\r", "");
+    Data = StringReplaceAll(Data, "\n\n", "");
+    Data = FixString(Data);
+    return Data;
+}
+void TOOL::XMOJ::Login(string Username, string Password)
+{
+    // Check if the user is already logged in
+    cout << "Checking login... " << flush;
+    GetDataToFile("http://www.xmoj.tech/mail.php");
+    if (GetDataFromFileToString().find("请登录后继续操作") == string::npos)
+    {
+        cout << "Already logged in" << endl;
+        return;
+    }
+    cout << "Not logged in" << endl;
+    MD5 MD5Encoder;
+    cout << "Logging in... " << flush;
+    GetDataToFile("http://www.xmoj.tech/login.php",
+                  "Header.tmp",
+                  "Body.tmp",
+                  true,
+                  "user_id=" + Username +
+                      "&password=" + MD5Encoder.encode(Password) +
+                      "&submit=" +
+                      "&csrf=" + GetCSRF(),
+                  NULL,
+                  NULL,
+                  "application/x-www-form-urlencoded");
+    string HTMLData = GetDataFromFileToString();
+    if (HTMLData.find("history.go(-2);") != string::npos)
+    {
+        cout << "Success" << endl;
+    }
+    else
+    {
+        TRIGGER_ERROR("Login failed: " + GetStringBetween(HTMLData, "alert('", "');"));
+    }
+}
+void TOOL::XMOJ::GetQuestionDetail(string QuestionID)
+{
+    _GetQuestionDetail(QuestionID, "id=" + QuestionID);
+}
+void TOOL::XMOJ::_GetQuestionDetail(string QuestionID, string QuestionHandle)
+{
+    // Gets the question detail page
+    cout << "Getting question detail page... " << flush;
+    GetDataToFile("http://www.xmoj.tech/problem.php?" + QuestionHandle);
+    string HTMLData = GetDataFromFileToString();
+    string Title = GetStringBetween(HTMLData, "<h2>", "</h2>");
+    if (Title == "")
+    {
+        TRIGGER_ERROR("Get question detail failed: " + GetStringBetween(HTMLData, "<h2>", "</h2>"));
+    }
+    cout << "Succeed" << endl;
+    string InputMethod = GetStringBetween(HTMLData, "<span class=green>输入文件: </span>", "&nbsp;");
+    string OutputMethod = GetStringBetween(HTMLData, "<span class=green>输出文件: </span>", "&nbsp;");
+    string TimeLimit = GetStringBetween(HTMLData, "<span class=green>时间限制: </span>", "&nbsp;");
+    string MemoryLimit = GetStringBetween(HTMLData, "<span class=green>内存限制: </span>", "<br>");
+    string SubmitCount = GetStringBetween(HTMLData, "<span class=green>提交: </span>", "&nbsp;");
+    string PassCount = GetStringBetween(HTMLData, "<span class=green>解决: </span>", "<br>");
+    string Description = HTMLToText(GetStringBetween(HTMLData, "<div class='cnt-row'><div class='cnt-row-head title'>题目描述</div><div class='cnt-row-body'><div class=content>", "</div></div></div>"));
+    string Range = HTMLToText(GetStringBetween(HTMLData, "<div class='cnt-row-head title'>数据范围</div><div class='cnt-row-body'><div class=content>", "</div></div>"));
+    string InputFormat = HTMLToText(GetStringBetween(HTMLData, "<div class='cnt-row'><div class='cnt-row-head title'>输入</div><div class='cnt-row-body'><div class=content>", "</div></div></div>"));
+    string OutputFormat = HTMLToText(GetStringBetween(HTMLData, "<div class='cnt-row'><div class='cnt-row-head title'>输出</div><div class='cnt-row-body'><div class=content>", "</div></div></div>"));
+    vector<pair<pair<string, string>, string>> Samples;
+    while (1)
+    {
+        string InputSample = GetStringBetween(HTMLData, "<div class='in-out-item' style='margin-right:.5em;'><span class='title'>样例输入 #" + to_string(Samples.size() + 1) + "</span><a class='copy-btn'>复制</a><pre class=content style='overflow:auto;'><span class=sampledata>", "</span></pre></div>");
+        if (InputSample == "")
+            break;
+        string OutputSample = GetStringBetween(HTMLData, "<div class='in-out-item' style='margin-left:.5em;'><span class='title'>样例输出 #" + to_string(Samples.size() + 1) + "</span><a class='copy-btn'>复制</a><pre class=content style='overflow:auto;'><span class=sampledata>", "</span></pre></div>");
+        string SampleDescription = GetStringBetween(HTMLData, "<div style='margin:.5em 0;'><div class='title' style='margin:.8em 0;'>样例说明 #" + to_string(Samples.size() + 1) + "</div><div class=content>", "</div></div></div>");
+        Samples.push_back({{InputSample, OutputSample}, SampleDescription});
+    }
+
+    // Save data for CPH
+    MD5 MD5Encoder;
+    json CPHData;
+    CPHData["name"] = Title;
+    CPHData["group"] = "XMOJ - test";
+    CPHData["url"] = "http://www.xmoj.tech/problem.php?" + QuestionHandle;
+    CPHData["interactive"] = false;
+    CPHData["memoryLimit"] = atoi(MemoryLimit.substr(0, MemoryLimit.size() - 2).c_str()) * 1024 * 1024;
+    CPHData["timeLimit"] = atoi(GetStringBetween(TimeLimit, "", " ").c_str()) * 1000;
+    for (size_t i = 0; i < Samples.size(); i++)
+    {
+        json Temp;
+        Temp["id"] = i;
+        Temp["input"] = FixString(Samples[i].first.first);
+        Temp["output"] = FixString(Samples[i].first.second);
+        CPHData["tests"].push_back(json(Temp));
+    }
+    CPHData["local"] = false;
+    CPHData["srcPath"] = "/workspaces/Coding/XMOJ/" + QuestionID + ".cpp";
+    CPHData["testType"] = "single";
+    CPHData["input"]["type"] = "stdin";
+    CPHData["output"]["type"] = "stdout";
+    CPHData["languages"]["java"]["mainClass"] = "Main";
+    CPHData["languages"]["java"]["taskClass"] = "GCastleDefense";
+    CPHData["batch"]["id"] = MD5Encoder.encode(QuestionID);
+    CPHData["batch"]["size"] = 1;
+    SetDataFromStringToFile(GetCPHFileName("XMOJ", QuestionID), CPHData.dump());
+
+    // Save data for markdown
+    string OutputContent = "# " + Title + "\n";
+    OutputContent += "## Description\n"s +
+                     "\n" +
+                     FixString(Description) + "\n" +
+                     "\n" +
+                     "## Input format\n" +
+                     "\n" +
+                     FixString(InputFormat) + "\n" +
+                     "\n" +
+                     "## Output format\n" +
+                     "\n" +
+                     FixString(OutputFormat) + "\n" +
+                     "\n";
+    if (Range != "")
+        OutputContent += "## Range\n"s +
+                         "\n" +
+                         FixString(Range) + "\n" +
+                         "\n";
+    OutputContent += "## Samples\n"s +
+                     "\n";
+    int Counter = 0;
+    for (auto i : Samples)
+    {
+        Counter++;
+        OutputContent += string("Input #" + to_string(Counter) + "\n") +
+                         "```\n" +
+                         FixString(i.first.first) + "\n" +
+                         "```\n" +
+                         "Output #" + to_string(Counter) + "\n" +
+                         "```\n" +
+                         FixString(i.first.second) + "\n" +
+                         "```\n";
+        if (i.second != "")
+            OutputContent += "Description #" + to_string(Counter) + "\n" +
+                             FixString(i.second) + "\n";
+        OutputContent += "\n";
+    }
+    OutputContent += "\n"s +
+                     "## Other information\n" +
+                     "\n";
+    OutputContent += "|Item|Value|\n"s +
+                     "|:---:|:---:|\n" +
+                     "|Input method|`" + InputMethod + "`|\n" +
+                     "|Output method|`" + OutputMethod + "`|\n" +
+                     "|Time limit|$" + TimeLimit + "$|\n" +
+                     "|Memory limit|$" + MemoryLimit + "$|\n" +
+                     "|Submit count|$" + SubmitCount + "$|\n" +
+                     "|Pass count|$" + PassCount + "$|\n" +
+                     "|Pass rate|$" + to_string(atoi(PassCount.c_str()) * 100.0 / atoi(SubmitCount.c_str())) + "\\%$|\n" +
+                     "\n";
+    SetDataFromStringToFile("XMOJ/" + QuestionID + ".md", OutputContent);
+
+#ifndef TEST
+    // Open the question detail file
+    if (system(string("code /workspaces/Coding/XMOJ/" + QuestionID + ".md").c_str()))
+        cout << "Open file \"/workspaces/Coding/XMOJ/" << QuestionID << ".md\" failed, please open it manually" << endl;
+#endif
+}
+void TOOL::XMOJ::SubmitCode(string QuestionID)
+{
+    string Code = GetDataFromFileToString("XMOJ/" + QuestionID + ".cpp");
+    cout << "Getting submit page data... " << flush;
+    GetDataToFile("http://www.xmoj.tech/submitpage.php?id=" + QuestionID);
+    cout << "Succeed" << endl;
+    string SubmitPageData = GetDataFromFileToString();
+    int HTTPResponseCode = 0;
+
+    // Submit
+    cout << "Submitting... " << flush;
+    GetDataToFile("http://www.xmoj.tech/submit.php",
+                  "Header.tmp",
+                  "Body.tmp",
+                  true,
+                  "id=" + QuestionID +
+                      "&language=1" +
+                      "&source=" + URLEncode(Code) +
+                      "&enable_O2=on" +
+                      "&input_text=" + URLEncode(GetStringBetween(SubmitPageData, "<textarea style=\"width:30%\" cols=40 rows=5 id=\"input_text\" name=\"input_text\" >", "</textarea>")) +
+                      "&out=" + URLEncode(GetStringBetween(SubmitPageData, "<textarea style=\"width:30%\" cols=10 rows=5 id=\"out\" name=\"out\" >", "</textarea>")) +
+                      "&csrf=" + GetCSRF(),
+                  NULL,
+                  &HTTPResponseCode,
+                  "application/x-www-form-urlencoded");
+    if (HTTPResponseCode != 302)
+    {
+        TRIGGER_ERROR("Submit failed");
+    }
+    cout << "Succeed" << endl;
+    cout << "Getting submission id... " << flush;
+    GetDataToFile("http://www.xmoj.tech/" + FindLocation());
+    string SubmissionID = GetStringBetween(GetDataFromFileToString(), "<tbody>\r\n<tr class=\"oddrow\"><td></td><td>", "</td>");
+    if (SubmissionID == "")
+    {
+        TRIGGER_ERROR("Can not find submission id");
+    }
+    cout << "Succeed" << endl;
+
+    // Get the record info and wait for the result
+    cout << "Judging... " << flush;
+    int JudgeResult = 0;
+    do
+    {
+        GetDataToFile("http://www.xmoj.tech/status-ajax.php?solution_id=" + SubmissionID);
+        JudgeResult = atoi(GetStringBetween(GetDataFromFileToString(), "", ",").c_str());
+        usleep(500000);
+    } while (JudgeResult < 4 || JudgeResult > 11);
+    cout << "Succeed" << endl;
+    if (JudgeResult == 4)
+    {
+        // Delete the temporary files
+        remove((CurrentDir + GetCPHFileName("XMOJ", QuestionID)).c_str());
+        remove(string("/workspaces/Coding/XMOJ/" + QuestionID + ".md").c_str());
+        remove(string("/workspaces/Coding/XMOJ/" + QuestionID).c_str());
+        cout << "Congratulations! You have passed this question!" << endl;
+    }
+    else
+    {
+        // Check whether there is a compile error
+        if (JudgeResult == 11)
+        {
+            GetDataToFile("http://www.xmoj.tech/ceinfo.php?sid=" + SubmissionID);
+            cout << "Compile error: " << endl
+                 << HTMLDecode(GetStringBetween(GetDataFromFileToString(), "<pre class=\"brush:c;\" id='errtxt' >", "</pre>")) << endl;
+        }
+        else
+        {
+            GetDataToFile("http://www.xmoj.tech/reinfo.php?sid=" + SubmissionID);
+            json Result = json::parse(GetStringBetween(GetDataFromFileToString(), "var json = ", "\n"));
+            if (Result["st"].as_integer() == 0)
+            {
+                map<int, int> Index;
+                int Counter = 0;
+                for (auto i : Result["tasks"])
+                {
+                    Index[atoi(i["i"].as_string().c_str())] = Counter;
+                    Counter++;
+                }
+                for (auto i : Index)
+                    cout << "#" << i.first << " "
+                         << Result["tasks"][i.second]["sc"].as_integer() << "pts "
+                         << ResultName[Result["tasks"][i.second]["s"].as_integer()] << " "
+                         << Result["tasks"][i.second]["t"].as_integer() << "ms "
+                         << Result["tasks"][i.second]["m"].as_integer() << "B" << endl;
+            }
+            else
+            {
+                for (auto i : Result["tasks"])
+                {
+                    cout << "#" << i["i"].as_integer() << " " << i["s"].as_integer() << "pts" << endl;
+                    int Counter = 0;
+                    for (auto j : i["t"])
+                    {
+                        Counter++;
+                        cout << "    #" << Counter << " "
+                             << j["sc"].as_integer() << "pts "
+                             << ResultName[j["s"].as_integer()] << " "
+                             << j["t"].as_integer() << "ms "
+                             << j["m"].as_integer() << "B" << endl;
+                    }
+                }
+            }
+        }
+    }
+}
+void TOOL::XMOJ::GetContestQuestionsDetails(string ContestID)
+{
+    if (mkdir((CurrentDir + "XMOJ/" + ContestID).c_str(), 0755) == -1)
+    {
+        TRIGGER_ERROR("Can not create directory");
+    }
+    GetDataToFile("http://www.xmoj.tech/contest.php?cid=" + ContestID);
+    string ContestPageData = GetDataFromFileToString();
+    int QuestionCount = 0;
+    while (1)
+    {
+        string QuestionID = GetStringBetween(ContestPageData, "\t&nbsp;", " &nbsp;");
+        if (QuestionID == "")
+            break;
+        _GetQuestionDetail(QuestionID, "cid=" + ContestID + "&pid=" + to_string(QuestionCount));
+        ContestPageData = ContestPageData.substr(ContestPageData.find("\t&nbsp;") + 1);
+        QuestionCount++;
+        cout << "Question " << QuestionID << " has been downloaded" << endl;
+    }
+}
+TOOL::USACO::USACO()
+{
+}
+void TOOL::USACO::Login(string Username, string Password)
+{
+    // Login to USACO
+    cout << "Logging in... " << flush;
+    GetDataToFile("https://train.usaco.org/usacogate",
+                  "Header.tmp",
+                  "Body.tmp",
+                  true,
+                  "NAME=" + URLEncode(Username) +
+                      "&PASSWORD=" + URLEncode(Password) +
+                      "&SUBMIT=ENTER",
+                  NULL,
+                  NULL,
+                  "application/x-www-form-urlencoded");
+    Token = GetStringBetween(GetDataFromFileToString(), "a=", "\"");
+    if (Token == "")
+    {
+        TRIGGER_ERROR("Login failed");
+    }
+    cout << "Succeed" << endl;
+}
+void TOOL::USACO::GetQuestionDetail(string QuestionID)
+{
+    // Get the question detail
+    cout << "Getting question detail... " << flush;
+    GetDataToFile("https://train.usaco.org/usacoprob2?a=XKG7SarkKso&S=" + QuestionID);
+    SetDataFromStringToFile(
+        "USACO/" + QuestionID + ".md",
+        GetStringBetween(
+            GetDataFromFileToString(),
+            "<img src=\"/usaco/cow1.jpg\" width=\"742\" height=\"118\">",
+            "<div style='width:6.25in;background-color:#FFFFCC;border:1px solid black;'>"));
+    cout << "Succeed" << endl;
+
+#ifndef TEST
+    // Open the question detail file
+    if (system(string("code /workspaces/Coding/USACO/" + QuestionID + ".md").c_str()))
+        cout << "Open file \"/workspaces/Coding/USACO/" << QuestionID << ".md\" failed, please open it manually" << endl;
+#endif
+}
+void TOOL::USACO::SubmitCode(string QuestionID)
+{
+    string Code = GetDataFromFileToString("USACO/" + QuestionID + ".cpp");
+    Code = "/*\n"s +
+           "ID: " + GetDataFromFileToString("Keys/USACOUsername") + "\n" +
+           "TASK: " + QuestionID + "\n" +
+           "LANG: C++14\n" +
+           "*/\n" +
+           Code;
+    Code = FixString(Code);
+    Code += "\n";
+    string MultiPartData = "--" + MULTIPART_BOUNDARY + "\n" +
+                           "Content-Disposition: form-data; name=\"filename\"; filename=\"" + QuestionID + ".cpp\"\n" +
+                           "Content-Type: application/octet-stream\n" +
+                           "\n" +
+                           Code + "\n" +
+                           "--" + MULTIPART_BOUNDARY + "\n" +
+                           "Content-Disposition: form-data; name=\"a\"\n" +
+                           "\n" +
+                           Token + "\n" +
+                           "--" + MULTIPART_BOUNDARY + "--\n";
+    SetDataFromStringToFile("MultiPartData.tmp", MultiPartData);
+
+    // Submit code
+    cout << "Submitting code... " << flush;
+    GetDataToFile("https://train.usaco.org/upload3",
+                  "Header.tmp",
+                  "Body.tmp",
+                  true,
+                  MultiPartData,
+                  NULL,
+                  NULL,
+                  MULTIPART);
+    cout << "Succeed" << endl;
+
+    SetDataFromStringToFile("../../tmp/" + QuestionID + ".log",
+                            EraseHTMLElement(
+                                GetStringBetween(
+                                    GetDataFromFileToString(),
+                                    "<div style=background-color:white;padding:5px;>",
+                                    "</div>")));
+    system(("code /tmp/" + QuestionID + ".log").c_str());
 }
 string TOOL::CODEFORCES::GetCSRF()
 {
@@ -1304,7 +1750,7 @@ void TOOL::CODEFORCES::GetQuestionDetail(string QuestionID)
     QuestionXmlDocument.Parse(TidyHTMLDocument(GetDataFromFileToString()).c_str());
     if (QuestionXmlDocument.Error())
     {
-        TRIGGER_ERROR(string("Parse question detail error: ") + QuestionXmlDocument.ErrorDesc());
+        TRIGGER_ERROR("Parse question detail error: "s + QuestionXmlDocument.ErrorDesc());
     }
     ofstream OutputFileStream(string("/workspaces/Coding/Codeforces/" + QuestionID + ".md").c_str());
 
@@ -1408,7 +1854,7 @@ void TOOL::CODEFORCES::SubmitCode(string QuestionID)
     SubmitListXmlDocument.Parse(TidyHTMLDocument(GetDataFromFileToString()).c_str());
     if (SubmitListXmlDocument.Error())
     {
-        TRIGGER_ERROR(string("Parse submission list error: ") + SubmitListXmlDocument.ErrorDesc());
+        TRIGGER_ERROR("Parse submission list error: "s + SubmitListXmlDocument.ErrorDesc());
     }
 
     // Get the submission ID
@@ -1668,6 +2114,12 @@ void TOOL::UVA::SubmitCode(string QuestionID)
         }
     }
 }
+TOOL::TOOL()
+{
+    XMOJ _XMOJ;
+    _XMOJ.Login(GetDataFromFileToString("Keys/XMOJUsername"), GetDataFromFileToString("Keys/XMOJPassword"));
+    _XMOJ.GetContestQuestionsDetails("5519");
+}
 TOOL::TOOL(string FileName, string Operation)
 {
     // Choose the tool
@@ -1740,6 +2192,64 @@ TOOL::TOOL(string FileName, string Operation)
             OutputSummary("##### Etiger get answer or tips");
 #endif
             Etiger.GetAnswerOrTips(GetStringBetween(FileName, "Etiger/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
+        else
+        {
+            TRIGGER_ERROR("Arguments invalid");
+        }
+    }
+    else if (FileName.find("XMOJ") != string::npos)
+    {
+        XMOJ _XMOJ;
+        _XMOJ.Login(GetDataFromFileToString("Keys/XMOJUsername"), GetDataFromFileToString("Keys/XMOJPassword"));
+        if (Operation == "GetQuestionDetail")
+        {
+#ifdef TEST
+            OutputSummary("##### XMOJ get question detail");
+#endif
+            _XMOJ.GetQuestionDetail(GetStringBetween(FileName, "XMOJ/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
+        else if (Operation == "SubmitCode")
+        {
+#ifdef TEST
+            OutputSummary("##### XMOJ submit code");
+#endif
+            _XMOJ.SubmitCode(GetStringBetween(FileName, "XMOJ/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
+        else
+        {
+            TRIGGER_ERROR("Arguments invalid");
+        }
+    }
+    else if (FileName.find("USACO") != string::npos)
+    {
+        USACO _USACO;
+        _USACO.Login(GetDataFromFileToString("Keys/USACOUsername"), GetDataFromFileToString("Keys/USACOPassword"));
+        if (Operation == "GetQuestionDetail")
+        {
+#ifdef TEST
+            OutputSummary("##### USACO get question detail");
+#endif
+            _USACO.GetQuestionDetail(GetStringBetween(FileName, "USACO/", ".cpp"));
+#ifdef TEST
+            OutputSummary("Success");
+#endif
+        }
+        else if (Operation == "SubmitCode")
+        {
+#ifdef TEST
+            OutputSummary("##### USACO submit code");
+#endif
+            _USACO.SubmitCode(GetStringBetween(FileName, "USACO/", ".cpp"));
 #ifdef TEST
             OutputSummary("Success");
 #endif
@@ -1866,8 +2376,11 @@ int main(int argc, char **argv)
     TOOL("Codeforces/1A.cpp", "SubmitCode");
     OutputSummary("");
 #else
+    if (argc == 1)
+        TOOL Tool;
+
     // If the argument count is 3, the tool is used to GetQuestionDetail/SubmitCode/GetAnswerOrTips
-    if (argc == 3)
+    else if (argc == 3)
         TOOL Tool(argv[1], argv[2]);
 
     // If the argument count is 4, the tool is used to login and clock in

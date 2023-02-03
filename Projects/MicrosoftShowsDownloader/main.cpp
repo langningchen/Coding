@@ -1,7 +1,7 @@
 #include "Curl.hpp"
 string VTTToLRC(string Input)
 {
-    vector<string> Lines = StringSpilt(StringReplaceAll(Input, "\r", ""), "\n");
+    vector<string> Lines = SpiltString(StringReplaceAll(Input, "\r", ""), "\n");
     string Output = "";
     for (auto i : Lines)
         if (i == "" || i == "WEBVTT")
@@ -64,7 +64,7 @@ int main()
         true);
     cout << "Success" << endl;
     cout << "Changing audio format... " << flush;
-    if (system((string("ffmpeg -y -hide_banner -loglevel error -i ") +
+    if (system(("ffmpeg -y -hide_banner -loglevel error -i "s +
                 "\"" + CurrentDir + Name + ".mp4\" " +
                 "\"" + CurrentDir + Name + ".mp3\"")
                    .c_str()))

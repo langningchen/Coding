@@ -107,13 +107,13 @@ int main()
          << Match.str(14) << "：" << Match.str(15) << "\t" << Match.str(16) << "：" << Match.str(17) << "\t" << Match.str(20) << "：" << Match.str(21) << "\t" << Match.str(22) << "：" << Match.str(23) << endl
          << Match.str(18) << "：" << Match.str(19) << "\t" << Match.str(28) << "：" << Match.str(29) << "\t\t" << Match.str(24) << "：" << Match.str(25) << "\t" << Match.str(26) << "：" << Match.str(27) << endl
          << Match.str(30) << "风" << Match.str(31) << "级   " << Match.str(32) << "阵风" << Match.str(33) << "级     日" << Match.str(34) << ":" << Match.str(35) << "~" << Match.str(36) << ":" << Match.str(37) << "   月 " << Match.str(38) << ":" << Match.str(39) << "~" << Match.str(40) << ":" << Match.str(41) << endl;
-    vector<string> Temp = StringSpilt(Match.str(50), "&nbsp;");
+    vector<string> Temp = SpiltString(Match.str(50), "&nbsp;");
     cout << "宜：";
     for (auto i : Temp)
         cout << i << " ";
     cout << endl;
     cout << "忌：";
-    Temp = StringSpilt(Match.str(51), "&nbsp;");
+    Temp = SpiltString(Match.str(51), "&nbsp;");
     for (auto i : Temp)
         cout << i << " ";
     cout << endl;

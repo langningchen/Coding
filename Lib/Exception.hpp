@@ -9,25 +9,25 @@ const bool WhetherDefineTest = false;
 #endif
 
 #define TRIGGER_ERROR(ErrorDetail)                             \
-    throw CLNException("an error! \n" +                        \
-                       string(ErrorDetail) + "\n" +            \
+    throw CLNException("an error! \n"s +                       \
                        "\n" +                                  \
+                       string(ErrorDetail) + "\n" +            \
                        "File: " + __FILE__ + "\n" +            \
                        "Line: " + to_string(__LINE__) + "\n" + \
                        "Function: " + __func__ + "\n" +        \
                        "Errno: " + to_string(errno))
 #define TRIGGER_ERROR_WITH_CODE(ErrorDetail, ErrorCode)             \
     throw CLNException("an error! " + to_string(ErrorCode) + "\n" + \
-                       string(ErrorDetail) + "\n" +                 \
                        "\n" +                                       \
+                       string(ErrorDetail) + "\n" +                 \
                        "File: " + __FILE__ + "\n" +                 \
                        "Line: " + to_string(__LINE__) + "\n" +      \
                        "Function: " + __func__ + "\n" +             \
                        "Errno: " + to_string(errno))
 #define TRIGGER_ERROR_WITH_CODE_AND_MESSAGE(ErrorDetail, ErrorCode, ErrorMessage)         \
     throw CLNException("an error! " + to_string(ErrorCode) + ": " + ErrorMessage + "\n" + \
-                       string(ErrorDetail) + "\n" +                                       \
                        "\n" +                                                             \
+                       string(ErrorDetail) + "\n" +                                       \
                        "File: " + __FILE__ + "\n" +                                       \
                        "Line: " + to_string(__LINE__) + "\n" +                            \
                        "Function: " + __func__ + "\n" +                                   \
@@ -35,35 +35,38 @@ const bool WhetherDefineTest = false;
 
 #define CLN_TRY \
     try         \
-    {
-#define CLN_CATCH                                                               \
-    }                                                                           \
-    catch (const configor::configor_exception &Exception)                       \
-    {                                                                           \
-        TRIGGER_ERROR(string("a JSON error: ") + Exception.what());             \
-    }                                                                           \
-    catch (const logic_error &Exception)                                        \
-    {                                                                           \
-        TRIGGER_ERROR(string("a standard logic error: ") + Exception.what());   \
-    }                                                                           \
-    catch (const runtime_error &Exception)                                      \
-    {                                                                           \
-        TRIGGER_ERROR(string("a standard runtime error: ") + Exception.what()); \
-    }                                                                           \
-    catch (const exception &Exception)                                          \
-    {                                                                           \
-        TRIGGER_ERROR(string("a standard error: ") + Exception.what());         \
-    }                                                                           \
-    catch (const CLNException &Exception)                                       \
-    {                                                                           \
-        cerr << Exception.what() << endl;                                       \
-        if (WhetherDefineTest)                                                  \
-        {                                                                       \
-            OutputSummary("```log\n" +                                          \
-                          Exception.what() + "\n" +                             \
-                          "```");                                               \
-        }                                                                       \
-        exit(0);                                                                \
+    {           \
+        try     \
+        {
+#define CLN_CATCH                                                        \
+    }                                                                    \
+    catch (const configor::configor_exception &Exception)                \
+    {                                                                    \
+        TRIGGER_ERROR("a JSON error: "s + Exception.what());             \
+    }                                                                    \
+    catch (const logic_error &Exception)                                 \
+    {                                                                    \
+        TRIGGER_ERROR("a standard logic error: "s + Exception.what());   \
+    }                                                                    \
+    catch (const runtime_error &Exception)                               \
+    {                                                                    \
+        TRIGGER_ERROR("a standard runtime error: "s + Exception.what()); \
+    }                                                                    \
+    catch (const exception &Exception)                                   \
+    {                                                                    \
+        TRIGGER_ERROR("a standard error: "s + Exception.what());         \
+    }                                                                    \
+    }                                                                    \
+    catch (const CLNException &Exception)                                \
+    {                                                                    \
+        cerr << Exception.what() << endl;                                \
+        if (WhetherDefineTest)                                           \
+        {                                                                \
+            OutputSummary("```log\n" +                                   \
+                          Exception.what() + "\n" +                      \
+                          "```");                                        \
+        }                                                                \
+        exit(0);                                                         \
     }
 
 class CLNException

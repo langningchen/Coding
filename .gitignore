@@ -9,6 +9,7 @@ Tools/LockAndUnlock.cpp
 
 # Ingore generated files
 LGR*
+.ipynb_checkpoints/
 
 # Ignore temp files
 **/*.tmp
@@ -19,6 +20,10 @@ Etiger/*.out
 Luogu/*.md
 Codeforces/*.md
 UVa/*.pdf
+XMOJ/*.md
+XMOJ/*.in
+XMOJ/*.out
+USACO/*.md
 
 # Ignore build/debug/release files
 build/

@@ -14,7 +14,7 @@
 using namespace std;
 
 #define ERROR(Message) ERROR_FUNCTION(__FILE__, __LINE__, Message)
-#define ASSERT(expression) ((expression) ? void(0) : ERROR(string("Assert Failed! Expression: \"") + string(#expression) + string("\" Error Number: ") + string(to_string(errno))))
+#define ASSERT(expression) ((expression) ? void(0) : ERROR("Assert Failed! Expression: \"" + string(#expression) + "\" Error Number: " + string(to_string(errno))))
 void ERROR_FUNCTION(string File, int Line, string Message)
 {
     cout << "File " << File << " Line " << Line << ": " << Message << endl;

@@ -1,264 +1,390 @@
 #include <iostream>
-#include <fstream>
+#include <vector>
+#include <queue>
+#include <thread>
+#include <string.h>
 #include <unistd.h>
-#include "Curl.hpp"
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+#include <sys/resource.h>
+#define SE                                                                                   \
+    {                                                                                        \
+        for (unsigned int i = 0; i < TestPoints.size(); i++)                                 \
+        {                                                                                    \
+            TestPoints[i].ErrorMessage = "System error, error code: " + to_string(__LINE__); \
+            TestPoints[i].Status = "SE";                                                     \
+        }                                                                                    \
+        Status = (Status == 3 ? 4 : 3);                                                      \
+        return;                                                                              \
+    }
 using namespace std;
-string Decode(string Input, int OBFSKEY)
+
+string CurrentDir;
+class JUDGE
 {
-    for (unsigned int i = 0; i < Input.size(); i++)
-    {
-        Input[i] -= 32;
-        if (Input[i] < 95)
-            Input[i] = (Input[i] + 95 - OBFSKEY) % 95;
-        Input[i] += 32;
-    }
-    return Input;
-}
+private:
+    int TempExitNumberTransfer = 0;
+    int Status = 0;
+    void __Compile();
+    static void *_Compile(void *This);
+    void __Judge();
+    static void *_Judge(void *This);
+    string StringReplaceAll(string Input, string Before, string After);
 
-// Copied from Projects/OJTool/main.cpp TOOL::LUOGU::GetCSRF
-string GetCSRF()
+public:
+    string MySystem(string Command, FILE *InputRedirect = NULL, FILE *OutputRedirect = NULL, int *Status = NULL);
+    struct TEST_POINT
+    {
+        string StanderInput = "";
+        string StanderOutput = "";
+        string UserOutput = "";
+        int MemoryLimit = 128 * 1024;
+        int MemoryUsed = 0;
+        int TimeLimit = 1000;
+        int TimeUsed = 0;
+        string Status = "UKE";
+        string ErrorMessage = "";
+    };
+    int Score = 0;
+    string SourceCode = "";
+    string IOFileName = "";
+    string JudgeFolderName = "";
+    string StanderInputFileName = "Answer.in";
+    string UserOutputFileName = "Answer.out";
+    string SourceCodeName = "main.cpp";
+    string ExecutableFileName = "main";
+    bool Compiled = false;
+    bool RunFinished = false;
+    bool Accepted = false;
+    vector<TEST_POINT> TestPoints;
+    void Init();
+    void Compile();
+    void Judge();
+    void Clean();
+};
+string JUDGE::MySystem(string Command, FILE *InputRedirect, FILE *OutputRedirect, int *Status)
 {
-    // Get csrf token
-    string Token = GetStringBetween(GetDataFromFileToString(),
-                                    "<meta name=\"csrf-token\" content=\"", "\"");
-    if (Token == "")
+    Command += " ";
+    int __fd[2];
+    FILE *__stream;
+    pid_t pid;
+    if (pipe(__fd) != 0)
+        return "ERR1";
+    if ((pid = vfork()) < 0)
+        return "ERR2";
+    else if (pid == 0)
     {
-        TRIGGER_ERROR("Can not find csrf token");
-    }
-    return Token;
-}
-
-// Copied from Projects/OJTool/main.cpp TOOL::LUOGU::Login
-void LoginLuogu(string Username, string Password)
-{
-
-    // Check if the user is logged in.
-    int HTTPResponseCode = 0;
-    cout << "Checking login... " << flush;
-    GetDataToFile("https://www.luogu.com.cn/auth/login",
-                  "Header.tmp",
-                  "Body.tmp",
-                  false,
-                  "",
-                  NULL,
-                  &HTTPResponseCode);
-    if (HTTPResponseCode == 302)
-    {
-        cout << "Already logged in" << endl;
-        return;
-    }
-    cout << "Not logged in" << endl;
-
-    string Token = GetCSRF();
-    int ErrorCounter = 0;
-    while (1)
-    {
-        // Get login captcha
-        cout << "Getting login captcha... " << flush;
-        GetDataToFile("https://www.luogu.com.cn/api/verify/captcha",
-                      "Header.tmp",
-                      "Captcha.jpeg");
-        cout << "Succeed" << endl;
-
-        // Predict captcha
-        curl_slist *HeaderList = NULL;
-        HeaderList = curl_slist_append(HeaderList, "Content-Type: application/json");
-        cout << "Predicting captcha... " << flush;
-        string Captcha = "";
-        try
+        queue<string> TempArguments;
+        int FileNameStartPos = Command.find(" ");
+        string FileName = Command.substr(0, FileNameStartPos);
+        TempArguments.push(FileName);
+        Command = Command.substr(FileNameStartPos + 1, string::npos);
+        while (Command != "")
         {
-            GetDataToFile("https://luogu-captcha-bypass.piterator.com/predict/",
-                          "Header.tmp",
-                          "Body.tmp",
-                          true,
-                          "data:image/jpeg;base64," +
-                              Base64Encode(
-                                  GetDataFromFileToString("Captcha.jpeg")),
-                          HeaderList);
-            cout << "Succeed" << endl;
-            Captcha = GetDataFromFileToString();
+            int ArgumentStartPos = Command.find(" ");
+            TempArguments.push(Command.substr(0, ArgumentStartPos));
+            Command = Command.substr(ArgumentStartPos + 1, string::npos);
         }
-        catch (CLNException Exception)
+        char **Arguments = new char *[TempArguments.size() + 1];
+        int Counter = 0;
+        while (!TempArguments.empty())
         {
-            cout << "Failed" << endl;
-            system(("code " + CurrentDir + "Captcha.jpeg").c_str());
-            cout << "Please input the captcha: ";
-            cin >> Captcha;
+            Arguments[Counter] = new char[TempArguments.front().size() + 1];
+            strcpy(Arguments[Counter], TempArguments.front().c_str());
+            TempArguments.pop();
+            Counter++;
         }
-        remove((CurrentDir + "Captcha.jpeg").c_str());
-
-        // Create a json object to store the login request info
-        json LoginRequest;
-        LoginRequest["username"] = Username;
-        LoginRequest["password"] = Password;
-        LoginRequest["captcha"] = Captcha;
-
-        // Create a header list for the curl request
-        HeaderList = NULL;
-        HeaderList = curl_slist_append(HeaderList, string("X-CSRF-TOKEN: " + Token).c_str());
-        HeaderList = curl_slist_append(HeaderList, string("Content-Length: " +
-                                                          to_string(LoginRequest.dump().size()))
-                                                       .c_str());
-        HeaderList = curl_slist_append(HeaderList, "Host: www.luogu.com.cn");
-        HeaderList = curl_slist_append(HeaderList, "Referer: https://www.luogu.com.cn/auth/login");
-        HeaderList = curl_slist_append(HeaderList, "Origin: https://www.luogu.com.cn");
-        HeaderList = curl_slist_append(HeaderList, "X-Requested-With: XMLHttpRequest");
-
-        // Send the login request to the server
-        cout << "Logging in... " << flush;
-        GetDataToFile("https://www.luogu.com.cn/api/auth/userPassLogin",
-                      "Header.tmp",
-                      "Body.tmp",
-                      true,
-                      LoginRequest.dump(),
-                      HeaderList);
-
-        // Parse the response to a json object
-        json LoginInfo = json::parse(GetDataFromFileToString());
-        if (!LoginInfo["status"].is_null())
+        Arguments[Counter] = NULL;
+        if (InputRedirect != NULL)
+            dup2(fileno(InputRedirect), STDIN_FILENO);
+        close(__fd[0]);
+        if (OutputRedirect == NULL)
         {
-            // If the captcha is incorrect and the error counter is less than 5, try again.
-            if (LoginInfo["data"].as_string() != "验证码错误" && ErrorCounter < 5)
-            {
-                TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Login failed",
-                                                    LoginInfo["status"].as_integer(),
-                                                    LoginInfo["data"].as_string());
-            }
-            else
-                cout << "Failed (Captcha check failed for " << ErrorCounter + 1 << " times)" << endl;
+            dup2(__fd[1], STDOUT_FILENO);
+            dup2(__fd[1], STDERR_FILENO);
         }
         else
         {
-            cout << "Succeed" << endl;
-            break;
+            dup2(fileno(OutputRedirect), STDOUT_FILENO);
+            dup2(fileno(OutputRedirect), STDERR_FILENO);
         }
-        ErrorCounter++;
+        close(__fd[1]);
+        execvp(FileName.c_str(), Arguments);
+        cout << "FAILED " << errno << endl;
+        delete Arguments;
+        _exit(127);
     }
+    close(__fd[1]);
+    if (Status != NULL)
+        waitpid(pid, Status, 0);
+    string Output = "";
+    if ((__stream = fdopen(__fd[0], "r")) == NULL)
+        return "ERR3";
+    while (!feof(__stream))
+        Output.push_back(fgetc(__stream));
+    fclose(__stream);
+    Output.erase(Output.size() - 1, 1);
+    return Output;
 }
-void Login(string Username, string Password)
+string JUDGE::StringReplaceAll(string Input, string Before, string After)
 {
-    LoginLuogu(Username, Password);
-    cout << "Logging luogu class... " << flush;
-    int HTTPResponseCode = 0;
-    GetDataToFile("https://class.luogu.com.cn/course", "Header.tmp", "Body.tmp", false, "", NULL, &HTTPResponseCode);
-    if (HTTPResponseCode != 200)
+    long unsigned int FoundedPos = Input.find(Before);
+    while (FoundedPos != string::npos)
     {
-        GetDataToFile("https://www.luogu.com.cn/api/OAuth2/authorize?response_type=code&client_id=lgclass.luoguclass&scope=oauth2.login&redirect_uri=https%3A%2F%2Fclass.luogu.com.cn%2Flogin%2Fcheck-luogu");
-        string RedirectURL = FindLocation();
-        GetDataToFile(RedirectURL);
+        Input.replace(FoundedPos, Before.size(), After);
+        FoundedPos = Input.find(Before);
     }
-    cout << "Success" << endl;
+    return Input;
 }
-void DownloadVideo(string CourseID)
+void JUDGE::Init()
 {
-    GetDataToFile(string("https://class.luogu.com.cn/classroom/" + CourseID + "?_contentOnly=1"));
-    json CourseInfo = json::parse(GetDataFromFileToString());
-    if (CourseInfo["code"].as_integer() != 200)
+    if (Status != 0)
+        SE;
+    struct timeval TimeVal;
+    struct timezone TimeZone;
+    if (gettimeofday(&TimeVal, &TimeZone) != 0)
+        SE;
+    JudgeFolderName = to_string(TimeVal.tv_sec * 1000000 + TimeVal.tv_usec);
+    if (mkdir(JudgeFolderName.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0)
+        SE;
+    if (chdir(JudgeFolderName.c_str()) != 0)
+        SE;
+    FILE *SourceOutputFilePointer = fopen(SourceCodeName.c_str(), "w");
+    if (SourceOutputFilePointer == NULL)
+        SE;
+    if (fprintf(SourceOutputFilePointer, "%s", SourceCode.c_str()) < 0)
+        SE;
+    if (fclose(SourceOutputFilePointer) != 0)
+        SE;
+    if (IOFileName != "")
     {
-        TRIGGER_ERROR_WITH_CODE_AND_MESSAGE("Get course info", CourseInfo["code"].as_integer(), CourseInfo["currentData"]["errorMessage"].as_string());
+        StanderInputFileName = IOFileName + ".in";
+        UserOutputFileName = IOFileName + ".out";
+    }
+    Status = 1;
+}
+void *JUDGE::_Compile(void *This)
+{
+    JUDGE *CurrentClass = (JUDGE *)This;
+    CurrentClass->__Compile();
+    return NULL;
+}
+void JUDGE::__Compile()
+{
+    MySystem(string("gcc " + SourceCodeName + " -O2 -std=c++14 -lstdc++ -lm -DONLINE_JUDGE -o " + ExecutableFileName));
+    Compiled = true;
+    sleep(INT32_MAX);
+}
+void JUDGE::Compile()
+{
+    if (Status != 1)
+        return;
+    pthread_t CompileThread;
+    if (pthread_create(&CompileThread, NULL, _Compile, (void *)this) != 0)
+        SE;
+    time_t Now = time(NULL);
+    while (time(NULL) - Now < 10 && !Compiled)
+        ;
+    if (pthread_cancel(CompileThread) != 0)
+        SE;
+    if (pthread_join(CompileThread, NULL) != 0)
+        SE;
+    if (!Compiled)
+    {
+        for (unsigned int i = 0; i < TestPoints.size(); i++)
+        {
+            TestPoints[i].ErrorMessage = "Compile time limit exceeded. ";
+            TestPoints[i].Status = "CE";
+        }
+        Status = 3;
         return;
     }
-    unsigned int M3U8Counter = 0;
-    for (json::iterator jit = CourseInfo["currentData"]["replayFiles"].begin(); jit != CourseInfo["currentData"]["replayFiles"].end(); jit++)
+    struct stat Temp;
+    if (stat(ExecutableFileName.c_str(), &Temp) != 0)
     {
-        GetDataToFile(
-            Decode(jit.value()["url"]["HD"].as_string(),
-                   CourseInfo["currentData"]["obfsKey"].as_integer()),
-            "Header.tmp",
-            "Body.tmp",
-            false,
-            "",
-            NULL,
-            NULL,
-            "application/json",
-            "",
-            true);
-        string M3U8Detail = GetDataFromFileToString();
-        unsigned int TSCounter = 0;
-        if (system(string("mkdir \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "\"").c_str()) != 0)
+        for (unsigned int i = 0; i < TestPoints.size(); i++)
         {
-            TRIGGER_ERROR("Create dir failed");
+            TestPoints[i].ErrorMessage = "Compile failed. ";
+            TestPoints[i].Status = "CE";
         }
-        ofstream OutputFileStream(string(CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.m3u8"));
-        if (OutputFileStream.bad())
-        {
-            TRIGGER_ERROR("Open output file failed");
-        }
-        queue<string> TsUrlList;
-        for (unsigned int i = 0; i < M3U8Detail.size(); i++)
-        {
-            unsigned int LineStartPos = i;
-            unsigned int LineEndPos = i + 1;
-            while (LineEndPos < M3U8Detail.size() && M3U8Detail[LineEndPos] != '\n')
-                LineEndPos++;
-            string Line = M3U8Detail.substr(LineStartPos, LineEndPos - LineStartPos);
-            if (Line.size() > 0)
-            {
-                if (Line[0] != '#')
-                    TSCounter++;
-                else if (Line.find("https://class.luogu.com.cn/") != string::npos && Line.find("https://class.luogu.com.cn/api/") == string::npos)
-                    Line.replace(Line.find("https://class.luogu.com.cn/"), 27, "https://class.luogu.com.cn/api/");
-            }
-            TsUrlList.push(Line);
-            i = LineEndPos;
-        }
-        int CurrentTSIndex = 0;
-        while (!TsUrlList.empty())
-        {
-            if (TsUrlList.front()[0] == '#')
-                OutputFileStream << TsUrlList.front() << endl;
-            else
-            {
-                GetDataToFile(string("https://class.luogu.com.cn/api/live/signReplay?url=https://video.class.luogu.com.cn/yugu-live/" + CourseID + "/" + TsUrlList.front()));
-                json TsUrlInfo = json::parse(GetDataFromFileToString());
-                cout << "\r" << CurrentTSIndex << "/" << TSCounter;
-                fflush(stdout);
-                try
-                {
-                    GetDataToFile(TsUrlInfo["url"].as_string(), "Header.tmp", string(CourseInfo["currentData"]["lesson"]["name"].as_string() + "/" + to_string(CurrentTSIndex) + ".ts"));
-                }
-                catch (CLNException)
-                {
-                    CurrentTSIndex--;
-                    continue;
-                }
-                OutputFileStream << CurrentTSIndex << ".ts" << endl;
-                CurrentTSIndex++;
-            }
-            TsUrlList.pop();
-        }
-        OutputFileStream.close();
-        if (system((string("ffmpeg -y -hide_banner -loglevel error -protocol_whitelist concat,file,http,https,tcp,tls,crypto -i ") +
-                    "\"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.m3u8\" " +
-                    "\"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\"")
-                       .c_str()) == 0 &&
-            system((string("cp ") +
-                    "\"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "/index.mp4\" " +
-                    "\"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() +
-                    (CourseInfo["currentData"]["replayFiles"].size() == 1
-                         ? ""
-                         : "_" + to_string(M3U8Counter)) +
-                    ".mp4\"")
-                       .c_str()) == 0)
-            system(string("rm -r \"" + CurrentDir + CourseInfo["currentData"]["lesson"]["name"].as_string() + "\"").c_str());
-        M3U8Counter++;
+        Status = 3;
+        return;
     }
+    Status = 2;
+}
+void *JUDGE::_Judge(void *This)
+{
+    JUDGE *CurrentClass = (JUDGE *)This;
+    CurrentClass->__Judge();
+    return NULL;
+}
+void JUDGE::__Judge()
+{
+    FILE *InputFileRedirect = fopen(string(CurrentDir + JudgeFolderName + "/" + StanderInputFileName).c_str(), "r");
+    if (InputFileRedirect == NULL)
+        return;
+    FILE *OutputFileRedirect = fopen(string(CurrentDir + JudgeFolderName + "/" + UserOutputFileName).c_str(), "w");
+    if (OutputFileRedirect == NULL)
+        return;
+    int ExitNumber = 0;
+    MySystem(CurrentDir + JudgeFolderName + "/" + ExecutableFileName, InputFileRedirect, OutputFileRedirect, &ExitNumber);
+    fclose(InputFileRedirect);
+    fclose(OutputFileRedirect);
+    TempExitNumberTransfer = ExitNumber;
+    RunFinished = true;
+    sleep(INT32_MAX);
+}
+void JUDGE::Judge()
+{
+    if (Status != 2)
+        return;
+    for (unsigned int i = 0; i < TestPoints.size(); i++)
+    {
+        FILE *StanderInputFilePointer = fopen(StanderInputFileName.c_str(), "w");
+        if (StanderInputFilePointer == NULL)
+            SE;
+        if (fprintf(StanderInputFilePointer, "%s", TestPoints[i].StanderInput.c_str()) < 0)
+            SE;
+        if (fclose(StanderInputFilePointer) != 0)
+            SE;
+
+        rlimit Limit;
+        Limit.rlim_cur = TestPoints[i].MemoryLimit;
+        Limit.rlim_max = TestPoints[i].MemoryLimit;
+        if (setrlimit(RLIMIT_AS, &Limit) != 0)
+            SE;
+
+        Limit.rlim_cur = TestPoints[i].TimeLimit / CLOCKS_PER_SEC;
+        Limit.rlim_max = Limit.rlim_cur + 1;
+        if (setrlimit(RLIMIT_CPU, &Limit) != 0)
+            SE;
+
+        Limit.rlim_cur = 0;
+        Limit.rlim_max = 0;
+        if (setrlimit(RLIMIT_CORE, &Limit) != 0)
+            SE;
+
+        RunFinished = false;
+        pthread_t JudgeThread;
+        if (pthread_create(&JudgeThread, NULL, _Judge, (void *)this) != 0)
+            SE;
+        clock_t Now = clock();
+        while (clock() - Now < TestPoints[i].TimeLimit && !RunFinished)
+            ;
+        TestPoints[i].TimeUsed = clock() - Now;
+        if (pthread_cancel(JudgeThread) != 0)
+            SE;
+        if (pthread_join(JudgeThread, NULL) != 0)
+            SE;
+        if (!RunFinished)
+        {
+            TestPoints[i].Status = "TLE";
+            TestPoints[i].ErrorMessage = "Time limit exceeded. ";
+            continue;
+        }
+        FILE *UserOutputFilePointer = fopen(UserOutputFileName.c_str(), "r");
+        if (UserOutputFilePointer == NULL)
+            SE;
+        while (!feof(UserOutputFilePointer))
+            TestPoints[i].UserOutput.push_back(fgetc(UserOutputFilePointer));
+        fclose(UserOutputFilePointer);
+        TestPoints[i].UserOutput.erase(TestPoints[i].UserOutput.size() - 1, 1);
+        TestPoints[i].UserOutput = StringReplaceAll(StringReplaceAll(TestPoints[i].UserOutput, " \n", "\n"), "\n\n", "\n");
+        while (TestPoints[i].UserOutput.size() > 0 && TestPoints[i].UserOutput[TestPoints[i].UserOutput.size() - 1] == '\n')
+            TestPoints[i].UserOutput.erase(TestPoints[i].UserOutput.size() - 1, 1);
+        if (WIFEXITED(TempExitNumberTransfer) && WEXITSTATUS(TempExitNumberTransfer) != 0)
+        {
+            TestPoints[i].Status = "RTE";
+            TestPoints[i].ErrorMessage = string("Run time error, Program has exited with code " + to_string(WEXITSTATUS(TempExitNumberTransfer)) + ". ");
+        }
+        else if (WIFSIGNALED(TempExitNumberTransfer))
+        {
+            TestPoints[i].Status = "RTE";
+            TestPoints[i].ErrorMessage = string("Run time error, Program has exited with signal " + to_string(WTERMSIG(TempExitNumberTransfer)) + ". ");
+        }
+        else if (WIFSTOPPED(TempExitNumberTransfer))
+        {
+            TestPoints[i].Status = "RTE";
+            TestPoints[i].ErrorMessage = string("Run time error, Program has stopped with code " + to_string(WSTOPSIG(TempExitNumberTransfer)) + ". ");
+        }
+        else if (TestPoints[i].UserOutput == TestPoints[i].StanderOutput)
+        {
+            TestPoints[i].Status = "AC";
+            TestPoints[i].ErrorMessage = "Accepted. ";
+        }
+        else
+        {
+            TestPoints[i].Status = "WA";
+            TestPoints[i].ErrorMessage = "Wrong answer. ";
+        }
+    }
+    Status = 3;
+}
+void JUDGE::Clean()
+{
+    if (Status != 3)
+        return;
+    DIR *DirPointer = opendir(".");
+    dirent *DirentPointer = NULL;
+    while ((DirentPointer = readdir(DirPointer)) != NULL)
+        if (DirentPointer->d_type == DT_REG)
+            remove(DirentPointer->d_name);
+    closedir(DirPointer);
+    if (chdir("..") != 0)
+        SE;
+    if (rmdir(JudgeFolderName.c_str()) != 0)
+        SE;
+    Status = 4;
 }
 int main()
 {
-    CLN_TRY
-    cout << "Please input the course id(LGR and lgr is different): ";
-    string CourseID;
-#ifdef TEST
-    CourseID = "LGR119";
-    cout << CourseID << endl;
-#else
-    cin >> CourseID;
-#endif
-    Login(GetDataFromFileToString("Keys/LuoguUsername"), GetDataFromFileToString("Keys/LuoguPassword"));
-    DownloadVideo(CourseID);
-#ifdef TEST
-    OutputSummary("Success");
-#endif
-    CLN_CATCH return 0;
+    JUDGE JudgeStatus;
+
+    JudgeStatus.SourceCode = R"(#include <bits/stdc++.h>
+    using namespace std;
+    int main()
+    {
+        freopen("output.in", "r", stdin);
+        freopen("output.out", "w", stdout);
+        int a;
+        cin >> a;
+        if (a == 1)
+            cout << 1 << endl;
+        else if (a == 2)
+            cout << "2    " << endl << "    " << endl << endl;
+        else if (a == 3)
+            cout << "2" << endl;
+        else if (a == 4)
+            return 1;
+        else if (a == 5)
+            while (1);
+        else if (a == 6)
+            throw("ERR");
+        return 0;
+    })";
+
+    JudgeStatus.IOFileName = "output";
+    JUDGE::TEST_POINT Temp;
+    Temp.TimeLimit = 1 * CLOCKS_PER_SEC;
+    Temp.StanderInput = Temp.StanderOutput = "1";
+    JudgeStatus.TestPoints.push_back(Temp);
+    Temp.StanderInput = Temp.StanderOutput = "2";
+    JudgeStatus.TestPoints.push_back(Temp);
+    Temp.StanderInput = Temp.StanderOutput = "3";
+    JudgeStatus.TestPoints.push_back(Temp);
+    Temp.StanderInput = Temp.StanderOutput = "4";
+    JudgeStatus.TestPoints.push_back(Temp);
+    Temp.StanderInput = Temp.StanderOutput = "5";
+    JudgeStatus.TestPoints.push_back(Temp);
+    Temp.StanderInput = Temp.StanderOutput = "6";
+    JudgeStatus.TestPoints.push_back(Temp);
+    JudgeStatus.Init();
+    JudgeStatus.Compile();
+    JudgeStatus.Judge();
+    JudgeStatus.Clean();
+    for (unsigned int i = 0; i < JudgeStatus.TestPoints.size(); i++)
+        cout << JudgeStatus.TestPoints[i].Status << " " << JudgeStatus.TestPoints[i].MemoryUsed << "MB " << JudgeStatus.TestPoints[i].TimeUsed * 1.0 / CLOCKS_PER_SEC << "s " << JudgeStatus.TestPoints[i].ErrorMessage << endl;
+    return 0;
 }

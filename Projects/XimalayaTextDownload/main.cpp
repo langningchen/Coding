@@ -7,7 +7,7 @@
 const string WEBSign = "WEB-V1-PRODUCT-E7768904917C4154A925FBE1A3848BC3E84E2C7770744E56AFBC9600C267891F";
 const string LinuxFilePath = "/mnt/d/12_Mom/";
 const string WindowsFilePath = "D:\\12_Mom\\";
-const long long INF = 0x7FFFFFFFFFFFFFFF;
+const long long INF = 0x7FFF'FFFF'FFFF'FFFF;
 struct PICTURE
 {
     struct PIXEL

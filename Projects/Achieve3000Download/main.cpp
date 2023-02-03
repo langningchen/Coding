@@ -18,7 +18,7 @@ int main()
                   "Header.tmp",
                   "Body.tmp",
                   true,
-                  string("debug=0") +
+                  "debug=0"s +
                       "&login_goto=" +
                       "&lang=1" +
                       "&ajax_yn=Y" +
@@ -160,7 +160,7 @@ int main()
     string QuestionList = "";
     for (json::iterator jit = Data["activities"]["14"][0]["questions"].begin(); jit != Data["activities"]["14"][0]["questions"].end(); jit++)
     {
-        QuestionList += string("  <span class=\"Big3\">\n") +
+        QuestionList += "  <span class=\"Big3\">\n"s +
                         "    Question " + to_string(Counter + 1) + "\n" +
                         "  </span>\n" +
                         "  <br />\n";

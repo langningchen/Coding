@@ -11,7 +11,7 @@ using namespace configor;
 string UA = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Mobile Safari/537.36 Edg/108.0.1462.76";
 const string WECHAT_UA = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36 NetType/WIFI MicroMessenger/7.0.20.1781(0x6700143B) WindowsWechat(0x6307062c)";
 const string FORM = "application/x-www-form-urlencoded";
-const string MULTIPART_BOUNDARY = "qv5wyfw459yhugv5swbmq39m8yuw4";
+const string MULTIPART_BOUNDARY = "----WebKitFormBoundarywTx7kyVBVbT6I1IG";
 const string MULTIPART = "multipart/form-data; boundary=" + MULTIPART_BOUNDARY;
 struct PROGRESS
 {
@@ -296,6 +296,30 @@ string URLDecode(string Input)
             Output += Input[i];
     }
     return Output;
+}
+string HTMLEncode(string Data)
+{
+    Data = StringReplaceAllNoLoop(Data, "&", "&amp;");
+    Data = StringReplaceAll(Data, "<", "&lt;");
+    Data = StringReplaceAll(Data, ">", "&gt;");
+    Data = StringReplaceAll(Data, "\"", "&quot;");
+    Data = StringReplaceAll(Data, "'", "&apos;");
+    Data = StringReplaceAll(Data, " ", "&nbsp;");
+    Data = StringReplaceAll(Data, "‘", "&lsquo;");
+    Data = StringReplaceAll(Data, "’", "&rsquo;");
+    return Data;
+}
+string HTMLDecode(string Data)
+{
+    Data = StringReplaceAll(Data, "&amp;", "&");
+    Data = StringReplaceAll(Data, "&lt;", "<");
+    Data = StringReplaceAll(Data, "&gt;", ">");
+    Data = StringReplaceAll(Data, "&quot;", "\"");
+    Data = StringReplaceAll(Data, "&apos;", "'");
+    Data = StringReplaceAll(Data, "&nbsp;", " ");
+    Data = StringReplaceAll(Data, "&lsquo;", "‘");
+    Data = StringReplaceAll(Data, "&rsquo;", "’");
+    return Data;
 }
 string FindLocation()
 {

@@ -1,4 +1,5 @@
 #include <string>
+#include <fstream>
 #include <string.h>
 #include <unistd.h>
 #include <vector>
@@ -55,7 +56,7 @@ string GetStringBetween(string Data, string Start, string End)
         return "";
     return Data.substr(StartPos, EndPos - StartPos);
 }
-vector<string> StringSpilt(string Input, string Seperator)
+vector<string> SpiltString(string Input, string Seperator)
 {
     Input += Seperator;
     vector<string> Output;
@@ -112,7 +113,17 @@ void SetDataFromStringToFile(string FileName, string Data)
 }
 string FixString(string Data)
 {
-    return (Data[Data.size() - 1] == '\n' || Data[Data.size() - 1] == '\r' || Data[Data.size() - 1] == ' ' ? FixString(Data.erase(Data.size() - 1, 1)) : Data);
+    while (Data[0] == '\n' ||
+           Data[0] == '\t' ||
+           Data[0] == '\r' ||
+           Data[0] == ' ')
+        Data.erase(0, 1);
+    while (Data[Data.size() - 1] == '\n' ||
+           Data[Data.size() - 1] == '\t' ||
+           Data[Data.size() - 1] == '\r' ||
+           Data[Data.size() - 1] == ' ')
+        Data.erase(Data.size() - 1, 1);
+    return Data;
 }
 void OutputSummary(string Data)
 {

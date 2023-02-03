@@ -120,7 +120,7 @@ string JUDGE::MySystem(string Command, FILE *InputRedirect, FILE *OutputRedirect
     if (Status != NULL)
         waitpid(pid, Status, 0);
     string Output = "";
-    if ((__stream = fdopen(__fd[0], string("r").c_str())) == NULL)
+    if ((__stream = fdopen(__fd[0], "r")) == NULL)
         return "ERR3";
     while (!feof(__stream))
         Output.push_back(fgetc(__stream));
@@ -173,7 +173,7 @@ void *JUDGE::_Compile(void *This)
 }
 void JUDGE::__Compile()
 {
-    MySystem(string("gcc " + SourceCodeName + " -O2 -std=c++11 -lstdc++ -lm -DONLINE_JUDGE -o " + ExecutableFileName));
+    MySystem(string("gcc " + SourceCodeName + " -O2 -std=c++14 -lstdc++ -lm -DONLINE_JUDGE -o " + ExecutableFileName));
     Compiled = true;
     sleep(INT32_MAX);
 }
@@ -249,11 +249,23 @@ void JUDGE::Judge()
             SE;
         if (fclose(StanderInputFilePointer) != 0)
             SE;
-        // rlimit Limit;
-        // Limit.rlim_cur = TestPoints[i].MemoryLimit;
-        // Limit.rlim_max = TestPoints[i].MemoryLimit;
-        // if (setrlimit(RLIMIT_AS, &Limit) != 0)
-        //     SE;
+
+        rlimit Limit;
+        Limit.rlim_cur = TestPoints[i].MemoryLimit;
+        Limit.rlim_max = TestPoints[i].MemoryLimit;
+        if (setrlimit(RLIMIT_AS, &Limit) != 0)
+            SE;
+
+        Limit.rlim_cur = TestPoints[i].TimeLimit / CLOCKS_PER_SEC;
+        Limit.rlim_max = Limit.rlim_cur + 1;
+        if (setrlimit(RLIMIT_CPU, &Limit) != 0)
+            SE;
+
+        Limit.rlim_cur = 0;
+        Limit.rlim_max = 0;
+        if (setrlimit(RLIMIT_CORE, &Limit) != 0)
+            SE;
+
         RunFinished = false;
         pthread_t JudgeThread;
         if (pthread_create(&JudgeThread, NULL, _Judge, (void *)this) != 0)
