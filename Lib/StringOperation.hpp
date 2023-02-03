@@ -137,3 +137,15 @@ void OutputSummary(string Data)
         TRIGGER_ERROR("Output Github summary failed");
     }
 }
+void OutputSummary(string Data)
+{
+    Data = StringReplaceAll(Data, "\n", "\\n");
+    Data = StringReplaceAll(Data, "\t", "\\t");
+    Data = StringReplaceAll(Data, "\r", "\\r");
+    Data = StringReplaceAllNoLoop(Data, "`", "\\`");
+    Data = StringReplaceAllNoLoop(Data, "\"", "\\\"");
+    if (system(string("echo \"" + Data + "\" >> $GITHUB_STEP_SUMMARY").c_str()))
+    {
+        TRIGGER_ERROR("Output Github summary failed");
+    }
+}
