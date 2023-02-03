@@ -2,7 +2,7 @@
 using namespace std;
 typedef long long ll;
 const ll N = 4005;
-const ll INF = 0x7FFFFFFFFFFFFFFF;
+const ll INF = 0x7FFF'FFFF'FFFF'FFFF;
 ll n, ans, sL[2][N], gL[2][N], sR[2][N], gR[2][N], c[2][N], f[N][2];
 void upd(ll &x, ll v)
 {

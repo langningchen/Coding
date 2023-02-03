@@ -3,7 +3,7 @@ using namespace std;
 typedef long long ll;
 const int M = 105;
 const int N = 10005;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 struct Student
 {
     string name;

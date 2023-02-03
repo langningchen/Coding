@@ -3,7 +3,7 @@ using namespace std;
 typedef long long ll;
 const ll N = 105;
 const ll MAXV = 100005;
-const ll INF = 0x7FFFFFFFFFFFFFFF / 2;
+const ll INF = 0x7FFF'FFFF'FFFF'FFFF / 2;
 ll n, W, w[N], v[N], g[N][MAXV];
 int main()
 {

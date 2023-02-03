@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 505;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 int n, f[N][N];
 int main()
 {

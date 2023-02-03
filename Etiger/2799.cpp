@@ -2,7 +2,7 @@
 using namespace std;
 typedef long long ll;
 const int N = 105;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 ll n, ans = -INF, x[N];
 ll reach(int start, bool goleft)
 {

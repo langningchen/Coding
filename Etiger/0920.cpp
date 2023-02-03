@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 10005;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 typedef long long ll;
 ll n, m, id[N];
 struct node

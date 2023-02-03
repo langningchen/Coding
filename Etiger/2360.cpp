@@ -2,7 +2,7 @@
 using namespace std;
 typedef long long ll;
 const int N = 100005;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 ll n, a, b, q[N], x[N], f[N];
 int main()
 {

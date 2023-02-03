@@ -2,7 +2,7 @@
 using namespace std;
 const int N = 20005;
 typedef long long ll;
-const ll INF = 0x7FFFFFFFFFFFFFFF;
+const ll INF = 0x7FFF'FFFF'FFFF'FFFF;
 ll n, m, in[N], cnt[N], dst[N], x[N];
 vector<ll> to[N], w[N];
 bool spfa()

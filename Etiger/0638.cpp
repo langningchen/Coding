@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 2005;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 int n, A[N][N], ans, ok[N], d[N];
 void Dijkstra()
 {

@@ -2,7 +2,7 @@
 using namespace std;
 typedef long long ll;
 const int N = 100005;
-const ll INF = 0x7FFFFFFFFFFFFFFF;
+const ll INF = 0x7FFF'FFFF'FFFF'FFFF;
 ll m, n, B, b[N], x[N], y[N];
 pair<ll, ll> a[N], as[N];
 ll query(ll l, ll r, ll k)

@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 400005;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 int n, s[N], x[N], leftMax[N], rightMax[N], preMax[N], postMax[N], leftMin[N], rightMin[N], preMin[N], postMin[N];
 void solveMax()
 {

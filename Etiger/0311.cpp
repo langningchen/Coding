@@ -2,7 +2,7 @@
 using namespace std;
 typedef long long ll;
 const int N = 15;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 ll x[N][N], k[N][N];
 int main()
 {

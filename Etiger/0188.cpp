@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int N = 1005;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 int n, lis[N], lds[N], x[N], ans;
 int main()
 {

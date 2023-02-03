@@ -3,7 +3,7 @@ using namespace std;
 typedef long long ll;
 const int N = 105;
 const int M = 1005;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 ll n, a[N], b[N], s[M], ans;
 int main()
 {

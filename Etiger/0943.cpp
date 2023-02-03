@@ -2,7 +2,7 @@
 using namespace std;
 const int N = 20005;
 typedef long long ll;
-const ll INF = 0x7FFFFFFFFFFFFFFF;
+const ll INF = 0x7FFF'FFFF'FFFF'FFFF;
 bool ok[N];
 ll n, m, dst[N], x[N];
 vector<ll> to[N], w[N];

@@ -2,7 +2,7 @@
 using namespace std;
 typedef long long ll;
 const int N = 360;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 ll n, m, c1, c2, d;
 ll sx, sy, tx, ty;
 string s;

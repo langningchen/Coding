@@ -2,7 +2,7 @@
 using namespace std;
 const int N = 105;
 const int M = 1005;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 int n, ans, z[N], r[N], g[N][N * M * 2];
 int id(int i)
 {

@@ -1,6 +1,6 @@
 #include <bits/stdc++.h>
 using namespace std;
-const int INF = 0x7FFFFFFF;
+const int INF = 0x7FFF'FFFF;
 const int N = 2505;
 int n, p, m, d[N];
 vector<int> to[N];

@@ -2,7 +2,7 @@
 using namespace std;
 typedef long long ll;
 const ll N = 100005;
-const ll INF = 0x7FFFFFFF;
+const ll INF = 0x7FFF'FFFF;
 ll T, n1, n2, p, c1, c2, d[N];
 struct Cover
 {
