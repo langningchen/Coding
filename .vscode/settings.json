@@ -1,0 +1,18 @@
+{
+    "C_Cpp.errorSquiggles": "enabled",
+    "cSpell.words": [
+        "codeforces",
+        "configor",
+        "etiger",
+        "getline",
+        "libcurl",
+        "libjpeg",
+        "lodepng",
+        "luogu",
+        "TINYXML",
+        "ximalaya"
+    ],
+    "python.formatting.provider": "autopep8",
+    "python.analysis.typeCheckingMode": "basic",
+    "cmake.sourceDirectory": "${workspaceFolder}/Projects/Achieve3000Download"
+}

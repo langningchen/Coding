@@ -1,0 +1,31 @@
+#ifndef JUDGE_RESULT_HPP
+#define JUDGE_RESULT_HPP
+
+#include <string>
+
+enum JUDGE_RESULT
+{
+    UNKNOWN_ERROR,
+    ACCEPTED,
+    PRESENTATION_ERROR,
+    WRONG_ANSWER,
+    TIME_LIMIT_EXCEEDED,
+    MEMORY_LIMIT_EXCEEDED,
+    OUTPUT_LIMIT_EXCEEDED,
+    RUNTIME_ERROR,
+    RESTRICTED_FUNCTION,
+    COMPILATION_ERROR,
+    SYSTEM_ERROR,
+    WAITING,
+    FETCHED,
+    COMPILING,
+    COMPILED,
+    JUDGING,
+    SKIPPED,
+    REJECTED
+};
+
+std::string GetJudgeResultString(JUDGE_RESULT JudgeResult);
+std::string GetJudgeResultColorString(JUDGE_RESULT JudgeResult);
+
+#endif

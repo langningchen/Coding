@@ -1,0 +1,211 @@
+{
+	"folders": [
+		{
+			"name": "Coding",
+			"path": "."
+		},
+		{
+			"name": "OJTool",
+			"path": "Projects/OJTool"
+		},
+		{
+			"name": "OJ",
+			"path": "Projects/OJ"
+		}
+	],
+	"settings": {
+		"terminal.integrated.defaultProfile.linux": "fish",
+		"C_Cpp.default.includePath": [
+			"${fileDirname}",
+			"${workspaceFolder}/Lib",
+			"~/Qt5.14.2/5.14.2/gcc_64/include/**",
+			"/home/langningc2009/Coding/Lib"
+		],
+		"files.associations": {
+			"iostream": "cpp",
+			"ostream": "cpp",
+			"any": "cpp",
+			"array": "cpp",
+			"atomic": "cpp",
+			"bit": "cpp",
+			"*.tcc": "cpp",
+			"bitset": "cpp",
+			"cctype": "cpp",
+			"cfenv": "cpp",
+			"charconv": "cpp",
+			"chrono": "cpp",
+			"cinttypes": "cpp",
+			"clocale": "cpp",
+			"cmath": "cpp",
+			"codecvt": "cpp",
+			"complex": "cpp",
+			"condition_variable": "cpp",
+			"csetjmp": "cpp",
+			"csignal": "cpp",
+			"cstdarg": "cpp",
+			"cstddef": "cpp",
+			"cstdint": "cpp",
+			"cstdio": "cpp",
+			"cstdlib": "cpp",
+			"cstring": "cpp",
+			"ctime": "cpp",
+			"cuchar": "cpp",
+			"cwchar": "cpp",
+			"cwctype": "cpp",
+			"deque": "cpp",
+			"forward_list": "cpp",
+			"list": "cpp",
+			"map": "cpp",
+			"set": "cpp",
+			"unordered_map": "cpp",
+			"unordered_set": "cpp",
+			"vector": "cpp",
+			"exception": "cpp",
+			"algorithm": "cpp",
+			"functional": "cpp",
+			"iterator": "cpp",
+			"memory": "cpp",
+			"memory_resource": "cpp",
+			"numeric": "cpp",
+			"optional": "cpp",
+			"random": "cpp",
+			"ratio": "cpp",
+			"regex": "cpp",
+			"string": "cpp",
+			"string_view": "cpp",
+			"system_error": "cpp",
+			"tuple": "cpp",
+			"type_traits": "cpp",
+			"utility": "cpp",
+			"fstream": "cpp",
+			"future": "cpp",
+			"initializer_list": "cpp",
+			"iomanip": "cpp",
+			"iosfwd": "cpp",
+			"istream": "cpp",
+			"limits": "cpp",
+			"mutex": "cpp",
+			"new": "cpp",
+			"scoped_allocator": "cpp",
+			"shared_mutex": "cpp",
+			"sstream": "cpp",
+			"stdexcept": "cpp",
+			"streambuf": "cpp",
+			"thread": "cpp",
+			"typeindex": "cpp",
+			"typeinfo": "cpp",
+			"valarray": "cpp",
+			"variant": "cpp",
+			"cassert": "cpp",
+			"qtranslator": "cpp",
+			"cerrno": "cpp",
+			"queue": "cpp",
+			"stack": "cpp",
+			"ccomplex": "cpp",
+			"cfloat": "cpp",
+			"ciso646": "cpp",
+			"climits": "cpp",
+			"cstdalign": "cpp",
+			"cstdbool": "cpp",
+			"ctgmath": "cpp",
+			"filesystem": "cpp",
+			"ios": "cpp",
+			"locale": "cpp",
+			"version": "cpp",
+			"barrier": "cpp",
+			"compare": "cpp",
+			"concepts": "cpp",
+			"coroutine": "cpp",
+			"source_location": "cpp",
+			"latch": "cpp",
+			"numbers": "cpp",
+			"ranges": "cpp",
+			"semaphore": "cpp",
+			"span": "cpp",
+			"stop_token": "cpp",
+			"syncstream": "cpp"
+		},
+		"highlight.regex.regexes": [
+			{
+				"languageIds": [
+					"c",
+					"cpp"
+				],
+				"regexes": [
+					{
+						"regex": "// TODO(.*)",
+						"regexFlag": "g",
+						"regexLimit": 25000,
+						"decorations": [
+							{
+								"index": 0,
+								"fontWeight": "bold",
+								"overviewRulerColor": "red",
+								"overviewRulerLane": 4,
+								"light": {
+									"color": "#000000",
+									"backgroundColor": "red"
+								},
+								"dark": {
+									"color": "#FFFFFF",
+									"backgroundColor": "red"
+								}
+							}
+						]
+					},
+					{
+						"regex": "\"([a-zA-Z0-9!@#$%^&*\\(\\)\\-=_+\\[\\]\\\\;',\\. /{}:\"<>\\?]{16})\"",
+						"regexFlag": "gm",
+						"regexLimit": 25000,
+						"regexes": [
+							{
+								"regex": "^()$",
+								"regexFlag": "gm",
+								"regexLimit": 25000,
+								"decorations": [
+									{
+										"index": 0,
+										"fontWeight": "bold",
+										"overviewRulerColor": "red",
+										"overviewRulerLane": 4,
+										"light": {
+											"color": "#000000",
+											"backgroundColor": "red"
+										},
+										"dark": {
+											"color": "#FFFFFF",
+											"backgroundColor": "red"
+										}
+									}
+								]
+							}
+						]
+					}
+				]
+			}
+		],
+		"cSpell.words": [
+			"codeforces",
+			"configor",
+			"etiger",
+			"getline",
+			"libcurl",
+			"libjpeg",
+			"lodepng",
+			"luogu",
+			"SPFA",
+			"TINYXML",
+			"Topo",
+			"USACO",
+			"Ximalaya",
+			"XMOJ"
+		],
+		"python.formatting.provider": "autopep8",
+		"python.analysis.typeCheckingMode": "basic",
+		"material-icon-theme.opacity": 1
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": []
+	}
+}

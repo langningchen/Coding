@@ -1,0 +1,162 @@
+<html>
+
+<head>
+    <title>
+        ${LESSON_NAME}
+    </title>
+    <style>
+        * {
+            font-size: 15px;
+        }
+
+        .Big1,
+        .Big2,
+        .Big3 {
+            font-weight: 600;
+        }
+
+        .Big1 {
+            font-size: 25px;
+        }
+
+        .Big2 {
+            font-size: 20px;
+        }
+
+        .Big3 {
+            font-size: 18px;
+        }
+
+        .Code,
+        .CodeBlock {
+            border-radius: 3px;
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 2px 5px;
+            color: black;
+        }
+
+        .CodeBlock {
+            border-radius: 10px;
+            width: 100%;
+        }
+
+        .CheckBox {
+            vertical-align: middle;
+            height: 20px;
+            width: 20px;
+        }
+
+        hr {
+            height: 4px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-style: none;
+            margin: 20px 0px;
+            border-radius: 3px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <span class="Big1">
+        ${LESSON_NAME}
+    </span>
+    <br />
+    <br />
+    <span class="Big2">
+        Ready
+    </span>
+    <br />
+    <br />
+    <span>
+        ${POLL_QUESTION}
+    </span>
+    <br />
+    <span>
+        ${OPTION_STATEMENT}
+    </span>
+    <br />
+    ${POLL_CHOICES}
+    <span>
+        Explain why you voted the way you did.
+    </span>
+    <br />
+    <br />
+    <div class="CodeBlock">
+        <br />
+        <br />
+        <br />
+    </div>
+    <hr />
+    <span class="Big2">
+        Vocabulary
+    </span>
+    <br />
+    <br />
+    ${VOCABULARY_LIST}
+    <hr />
+    <span class="Big2">
+        Ready
+    </span>
+    <br />
+    <br />
+    ${ARTICLE_CONTENT}
+    <br />
+    ${ARTICLE_IMAGES}
+    <hr />
+    <span class="Big2">
+        Respond
+    </span>
+    <br />
+    <br />
+    ${QUESTION_LIST}
+    <hr />
+    <span class="Big2">
+        Reflect
+    </span>
+    <br />
+    <br />
+    <span>
+        ${POLL_QUESTION}
+    </span>
+    <br />
+    <span>
+        ${OPTION_STATEMENT}
+    </span>
+    <br />
+    ${POLL_CHOICES}
+    <span>
+        Explain why you voted the way you did.
+    </span>
+    <br />
+    <br />
+    <div class="CodeBlock">
+        <br />
+        <br />
+        <br />
+    </div>
+    <hr />
+    <span class="Big2">
+        Write
+    </span>
+    <br />
+    <br />
+    ${WRITING_QUESTION}
+    <br />
+    <br />
+    <div class="CodeBlock">
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+    </div>
+    <script>
+        window.print();
+        setTimeout(function () {
+            window.close();
+        }, 1500);
+    </script>
+</body>
+
+</html>
