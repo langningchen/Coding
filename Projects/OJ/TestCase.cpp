@@ -414,7 +414,13 @@ void TEST_CASE::ChildProcess()
     }
     Logger.Info("Traced self");
 
-    execl("/main", "main", nullptr);
+    for (int i = 0; i < 5; i++)
+    {
+        execl("/main", "main", nullptr);
+        if (errno != 26)
+            break;
+        Logger.Warning("Error 26");
+    }
 
     Result = JUDGE_RESULT::SYSTEM_ERROR;
     Description = "Can not execute program";
@@ -697,13 +703,13 @@ void TEST_CASE::Run()
     if (PID == 0)
     {
         ChildProcess();
+        Logger.Debug(GetJudgeResultColorString(Result));
         exit(0);
     }
     else
     {
         this->PID = PID;
         ParentProcess();
-
         RemoveEnvrionment();
     }
 }
@@ -828,10 +834,10 @@ bool TEST_CASE::LoadFromSubmission(std::string SubmissionID, std::string TestGro
         !Utilities.LoadFile(WorkDir + "/Answer", Answer) ||
         !Utilities.LoadFile(WorkDir + "/IOFileName", IOFileName))
     {
-        Logger.Warning("Submission " + SubmissionID + " test group " + TestGroupID + " test case " + ID + " load failed");
+        Logger.Error("Submission " + SubmissionID + " test group " + TestGroupID + " test case " + ID + " load failed");
         return false;
     }
-    Logger.Info("Submission " + SubmissionID + " test group " + TestGroupID + " test case " + ID + " loaded");
+    Logger.Debug("Submission " + SubmissionID + " test group " + TestGroupID + " test case " + ID + " loaded");
     return true;
 }
 bool TEST_CASE::LoadFromProblem(std::string ProblemID, std::string TestGroupID, std::string ID)
@@ -848,7 +854,7 @@ bool TEST_CASE::LoadFromProblem(std::string ProblemID, std::string TestGroupID, 
         return false;
     }
     this->ID = atoi(ID.c_str());
-    Logger.Info("Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + ID + " loaded");
+    Logger.Debug("Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + ID + " loaded");
     return true;
 }
 bool TEST_CASE::SaveToProblem(std::string ProblemID, std::string TestGroupID)
@@ -862,10 +868,10 @@ bool TEST_CASE::SaveToProblem(std::string ProblemID, std::string TestGroupID)
         !Utilities.SaveFile(CurrentTestCaseBaseFolder + "/MemoryLimit", MemoryLimit) ||
         !Utilities.SaveFile(CurrentTestCaseBaseFolder + "/Score", Score))
     {
-        Logger.Warning("Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + std::to_string(ID) + " save failed");
+        Logger.Error("Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + std::to_string(ID) + " save failed");
         return false;
     }
-    Logger.Info("Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + std::to_string(ID) + " saved");
+    Logger.Debug("Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + std::to_string(ID) + " saved");
     return true;
 }
 bool TEST_CASE::SaveToSubmission()
@@ -882,10 +888,10 @@ bool TEST_CASE::SaveToSubmission()
         !Utilities.SaveFile(WorkDir + "/Answer", Answer) ||
         !Utilities.SaveFile(WorkDir + "/IOFileName", IOFileName))
     {
-        Logger.Warning("Submission " + SubmissionID + " test group " + TestGroupID + " test case " + std::to_string(ID) + " save failed");
+        Logger.Error("Submission " + SubmissionID + " test group " + TestGroupID + " test case " + std::to_string(ID) + " save failed");
         return false;
     }
-    Logger.Info("Submission " + SubmissionID + " test group " + TestGroupID + " test case " + std::to_string(ID) + " saved");
+    Logger.Debug("Submission " + SubmissionID + " test group " + TestGroupID + " test case " + std::to_string(ID) + " saved");
     return true;
 }
 void TEST_CASE::UpdateWorkDir()

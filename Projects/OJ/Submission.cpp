@@ -586,14 +586,14 @@ bool SUBMISSION::Load(int ID)
         !Utilities.LoadFile(WorkDir + "/Score", Score) ||
         !Utilities.LoadFile(WorkDir + "/EnableO2", (int &)EnableO2))
     {
-        Logger.Warning("Submission " + std::to_string(ID) + " load failed");
+        Logger.Error("Submission " + std::to_string(ID) + " load failed");
         return false;
     }
     Problem.Load(ProblemID);
     DIR *Dir = opendir(WorkDir.c_str());
     if (Dir == nullptr)
     {
-        Logger.Warning("Submission " + std::to_string(ID) + " load failed");
+        Logger.Error("Submission " + std::to_string(ID) + " load failed");
         return false;
     }
     struct dirent *DirEntry;
@@ -616,7 +616,7 @@ bool SUBMISSION::Load(int ID)
     closedir(Dir);
     if (TestGroups.size() == 0)
         CopyTestGroups();
-    Logger.Info("Submission " + std::to_string(ID) + " loaded");
+    Logger.Debug("Submission " + std::to_string(ID) + " loaded");
     return true;
 }
 bool SUBMISSION::Save()
@@ -631,13 +631,13 @@ bool SUBMISSION::Save()
         !Utilities.SaveFile(WorkDir + "/Score", Score) ||
         !Utilities.SaveFile(WorkDir + "/EnableO2", EnableO2))
     {
-        Logger.Warning("Submission " + std::to_string(ID) + " save failed");
+        Logger.Error("Submission " + std::to_string(ID) + " save failed");
         return false;
     }
     for (auto i : TestGroups)
         if (!i.SaveToSubmission())
             return false;
-    Logger.Info("Submission " + std::to_string(ID) + " saved");
+    Logger.Debug("Submission " + std::to_string(ID) + " saved");
     return true;
 }
 

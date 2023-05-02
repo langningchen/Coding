@@ -1,6 +1,7 @@
 #include "Logger.hpp"
 #include <sys/time.h>
 #include <string.h>
+#include <unistd.h>
 
 LOGGER::LOGGER() { SetLogFileName("Log.log"); }
 LOGGER::LOGGER(const LOGGER &Other) { SetLogFileName(Other.LogFileName); }
@@ -34,12 +35,13 @@ void LOGGER::Output(std::string Type, std::string Style, std::string Data)
     char CurrentTime[80] = {0};
     struct tm TempTime;
     localtime_r(&CurrentSecond.tv_sec, &TempTime);
-    strftime(CurrentTime, sizeof(CurrentTime), "%Y%m%d%H%M%S", &TempTime);
+    strftime(CurrentTime, sizeof(CurrentTime), "%Y-%m-%d %H:%M:%S", &TempTime);
 
     OutputMutex.lock();
-    fprintf(LogFile, "\033[%sm[%7s] [%s%03d] %s\033[0m\n",
+    fprintf(LogFile, "\033[%sm%s[%s.%03d][%d-%d] %s\033[0m\n",
             Style.c_str(), Type.c_str(),
             CurrentTime, MilliSecond,
+            getpid(), gettid(),
             Data.c_str());
     fflush(LogFile);
 
@@ -49,13 +51,13 @@ void LOGGER::Output(std::string Type, std::string Style, std::string Data)
 
 void LOGGER::Debug(std::string Data)
 {
-    Output("DEBUG", "36", Data);
+    Output("D", "36", Data);
 }
-void LOGGER::Info(std::string Data) { Output("INFO", "32", Data); }
-void LOGGER::Warning(std::string Data) { Output("WARNING", "33", Data); }
-void LOGGER::Error(std::string Data) { Output("ERROR", "31", Data + ", " + std::to_string(errno) + ": " + std::string(strerror(errno))); }
+void LOGGER::Info(std::string Data) { Output("I", "32", Data); }
+void LOGGER::Warning(std::string Data) { Output("W", "33", Data); }
+void LOGGER::Error(std::string Data) { Output("E", "31", Data + ", " + std::to_string(errno) + ": " + std::string(strerror(errno))); }
 void LOGGER::Fetal(std::string Data)
 {
-    Output("FETAL", "1;4;5;31", Data);
+    Output("F", "1;4;5;31", Data);
     exit(1);
 }

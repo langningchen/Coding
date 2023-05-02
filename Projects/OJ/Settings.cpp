@@ -25,7 +25,7 @@ void SETTINGS::Save()
         !Utilities.SaveFile(SettingBaseFolder + "/SystemCalls", SystemCallsString))
         Logger.Error("Can not save settings");
     else
-        Logger.Info("Settings saved");
+        Logger.Debug("Settings saved");
 }
 void SETTINGS::Load(std::string JudgeUser)
 {
@@ -59,7 +59,7 @@ void SETTINGS::Load(std::string JudgeUser)
         SystemCalls[i].AvailableCount = SystemCallAvailableCount;
     }
     CheckSettings();
-    Logger.Info("Settings loaded");
+    Logger.Debug("Settings loaded");
 }
 
 std::string SETTINGS::GetBaseFolder() { return BaseFolder; }

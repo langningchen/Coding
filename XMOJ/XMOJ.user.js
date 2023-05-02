@@ -6,19 +6,37 @@
 // @match        http://www.xmoj.tech/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=xmoj.tech
 // @require      https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js
-// @grant        none
+// @require      https://cdn.bootcdn.net/ajax/libs/crypto-js/4.1.1/crypto-js.min.js
+// @require      https://cdn.bootcdn.net/ajax/libs/crypto-js/4.1.1/hmac-sha1.min.js
+// @require      https://raw.githubusercontent.com/drudru/ansi_up/master/ansi_up.js
+// @grant        GM_registerMenuCommand
 // ==/UserScript==
 
 let QuestionSize = 0;
 let AddedSubmissionCount = 0;
 let ProgressBar = null;
 let SubmitRecord = null;
-(function() {
+(async () => {
     "use strict";
+    GM_registerMenuCommand("重置数据", () => {
+        for (let i = 0; i < localStorage.length; i++) {
+            if (localStorage.key(i).substr(0, 10) == "UserScript") {
+                localStorage.removeItem(localStorage.key(i));
+            }
+        }
+        location.reload();
+    });
 
-    let Discuss = document.createElement("li");
-    document.querySelector("#navbar > ul:nth-child(1)").appendChild(Discuss);
-    Discuss.innerHTML = "<a href=\"./bbs.php\">讨论</a>";
+    if (document.querySelector("#profile") != null &&
+        document.querySelector("#profile").innerHTML == "登录" &&
+        location.pathname != "/login.php" &&
+        location.pathname != "/loginpage.php" &&
+        location.pathname != "/lostpassword.php") {
+        localStorage.setItem("UserScript-LastPage", location.pathname + location.search);
+        location.href = "loginpage.php";
+    }
+
+
     if (document.querySelector("#navbar > ul:nth-child(1)").childElementCount > 8) {
         let ACMRank = document.createElement("li");
         document.querySelector("#navbar > ul:nth-child(1)").insertBefore(ACMRank, document.querySelector("#navbar > ul:nth-child(1) > li:nth-child(9)"));
@@ -43,7 +61,7 @@ let SubmitRecord = null;
         document.querySelector("body > div.container > div > table:nth-child(2) > tbody > tr > td").childNodes[1].remove();
     }
 
-    var Style = document.createElement("style");
+    let Style = document.createElement("style");
     document.body.appendChild(Style);
     Style.innerHTML = "";
     Style.innerHTML += "marquee {";
@@ -139,18 +157,18 @@ let SubmitRecord = null;
     Style.innerHTML += "  background-color: #52c41a;";
     Style.innerHTML += "}";
 
-    if (location.href.indexOf("/problemset.php") != -1) {
+    if (location.pathname == "/problemset.php") {
         document.querySelector("body > div > div > center > table:nth-child(2) > tbody > tr > td:nth-child(2) > form > input").placeholder = "题目编号";
         document.querySelector("body > div > div > center > table:nth-child(2) > tbody > tr > td:nth-child(2) > form > button").innerText = "确认";
         document.querySelector("body > div > div > center > table:nth-child(2) > tbody > tr > td:nth-child(3) > form > input").placeholder = "标题或内容";
         document.querySelector("#problemset > thead > tr > th:nth-child(1)").innerText = "状态";
-    } else if (location.href.indexOf("/problem.php") != -1) {
+    } else if (location.pathname == "/problem.php") {
         document.getElementsByTagName("center")[1].style.display = "none";
-        $(".copy-btn").click(function() {
+        $(".copy-btn").click(() => {
             const span = $(this).next().find(".sampledata");
             if (!span.length) {
                 $(this).text("未找到pre").addClass("done");
-                setTimeout(function() {
+                setTimeout(() => {
                     $(".copy-btn").text("复制").removeClass("done");
                 }, 1000);
                 return;
@@ -160,20 +178,51 @@ let SubmitRecord = null;
             textarea.select();
             if (document.execCommand("copy")) {
                 $(this).text("复制成功").addClass("done");
-                setTimeout(function() {
+                setTimeout(() => {
                     $(".copy-btn").text("复制").removeClass("done");
                 }, 1000);
             }
             document.body.removeChild(textarea[0]);
         });
-        let DiscussButton = document.createElement("button");
-        document.querySelector("body > div.container > div > center").appendChild(DiscussButton);
-        DiscussButton.className = "UserScriptDefinedButton";
-        DiscussButton.innerText = "讨论";
-        DiscussButton.onclick = function() {
-            window.open("http://www.xmoj.tech/discuss3/discuss.php?p" + location.href.substring(location.href.indexOf("id=")));
+        let IOFileElement = document.querySelector("body > div > div > center > h3");
+        if (IOFileElement != null) {
+            while (IOFileElement.childNodes.length >= 1) {
+                IOFileElement.parentNode.insertBefore(IOFileElement.childNodes[0], IOFileElement);
+            }
+            IOFileElement.parentNode.insertBefore(document.createElement("br"), IOFileElement);
+            IOFileElement.remove();
+            let IOFileName = document.querySelector("body > div > div > center").childNodes[2].data.trim();
+            IOFileName = IOFileName.substr(0, IOFileName.length - 3);
+            let SearchParams = new URLSearchParams(location.search);
+            if (SearchParams.get("id") != null) {
+                localStorage.setItem("UserScript-Problem-" + SearchParams.get("id") + "-IOFileName", IOFileName);
+            } else if (SearchParams.get("cid") != null && SearchParams.get("pid") != null) {
+                localStorage.setItem("UserScript-Contest-" + SearchParams.get("cid") + "-Problem-" + SearchParams.get("pid") + "-IOFileName", IOFileName);
+            }
+        }
+    } else if (location.pathname == "/status.php") {
+        const SizeToStringSize = (Memory) => {
+            if (Memory < 1024) {
+                return Memory + "B";
+            } else if (Memory < 1024 * 1024) {
+                return (Memory / 1024).toFixed(2) + "KB";
+            } else if (Memory < 1024 * 1024 * 1024) {
+                return (Memory / 1024 / 1024).toFixed(2) + "MB";
+            } else {
+                return (Memory / 1024 / 1024 / 1024).toFixed(2) + "GB";
+            }
         };
-    } else if (location.href.indexOf("/status.php") != -1) {
+        const TimeToStringTime = (Time) => {
+            if (Time < 1000) {
+                return Time + "ms";
+            } else if (Time < 1000 * 60) {
+                return (Time / 1000).toFixed(2) + "s";
+            } else if (Time < 1000 * 60 * 60) {
+                return (Time / 1000 / 60).toFixed(2) + "min";
+            } else {
+                return (Time / 1000 / 60 / 60).toFixed(2) + "h";
+            }
+        };
         document.querySelector("#simform > input:nth-child(2)").style.display = "none";
         document.querySelector("#simform").innerHTML = document.querySelector("#simform").innerHTML.replaceAll("用户:", "");
         document.querySelector("#simform").innerHTML = document.querySelector("#simform").innerHTML.replaceAll(":", ": ");
@@ -182,7 +231,7 @@ let SubmitRecord = null;
         document.querySelector("body > div.container > div > div.input-append").appendChild(CompareButton);
         CompareButton.className = "UserScriptDefinedButton";
         CompareButton.innerText = "比较提交记录";
-        CompareButton.onclick = function() {
+        CompareButton.onclick = () => {
             location.href = "comparesource.php";
         };
         CompareButton.style.marginBottom = "7px";
@@ -191,49 +240,80 @@ let SubmitRecord = null;
         document.querySelector("#result-tab > thead > tr > th:nth-child(3)").style.display = "none";
         document.querySelector("#result-tab > thead > tr > th:nth-child(11)").style.display = "none";
         document.querySelector("#result-tab > thead > tr > th:nth-child(12)").style.display = "none";
-        var Temp = document.querySelector("#result-tab > tbody").childNodes;
+        let Temp = document.querySelector("#result-tab > tbody").childNodes;
         for (let i = 1; i < Temp.length; i += 2) {
             Temp[i].childNodes[0].style.display = "none";
             Temp[i].childNodes[1].innerHTML = "<a href=\"showsource.php?id=" + Temp[i].childNodes[1].innerText + "\">" + Temp[i].childNodes[1].innerText + "</a>";
             Temp[i].childNodes[2].style.display = "none";
             Temp[i].childNodes[7].innerText = Temp[i].childNodes[7].childNodes[0].innerText;
-            let Memory = parseInt(Temp[i].childNodes[5].childNodes[0].innerText);
-            let StringMemory = "";
-            if (Memory < 1024) {
-                StringMemory = Memory + "B";
-            } else if (Memory < 1024 * 1024) {
-                StringMemory = (Memory / 1024).toFixed(2) + "KB";
-            } else if (Memory < 1024 * 1024) {
-                StringMemory = (Memory / 1024 / 1024).toFixed(2) + "MB";
-            } else {
-                StringMemory = (Memory / 1024 / 1024 / 1024).toFixed(2) + "GB";
-            }
-            Temp[i].childNodes[5].childNodes[0].innerText = StringMemory;
-            let Time = parseInt(Temp[i].childNodes[6].childNodes[0].innerText);
-            let StringTime = "";
-            if (Time < 1000) {
-                StringTime = Time + "ms";
-            } else {
-                StringTime = (Time / 1000).toFixed(2) + "s";
-            }
-            Temp[i].childNodes[6].childNodes[0].innerText = StringTime;
-            let Length = parseInt(String(Temp[i].childNodes[8].innerText).substr(0, String(Temp[i].childNodes[8].innerText).length - 2));
-            let StringLength = "";
-            if (Length < 1024) {
-                StringLength = Length + "B";
-            } else {
-                StringLength = (Length / 1024).toFixed(2) + "KB";
-            }
-            Temp[i].childNodes[8].innerText = StringLength;
+            Temp[i].childNodes[5].childNodes[0].innerText = SizeToStringSize(Temp[i].childNodes[5].childNodes[0].innerText);
+            Temp[i].childNodes[6].childNodes[0].innerText = TimeToStringTime(Temp[i].childNodes[6].childNodes[0].innerText);
+            Temp[i].childNodes[8].innerText = SizeToStringSize(Temp[i].childNodes[8].innerText.substr(0, Temp[i].childNodes[8].innerText.length - 1));
             Temp[i].childNodes[10].style.display = "none";
             Temp[i].childNodes[11].style.display = "none";
         }
 
         document.querySelector("#result-tab > tbody").innerHTML =
             String(document.querySelector("#result-tab > tbody").innerHTML).replaceAll("class=\"center\"", "");
-    } else if (location.href.indexOf("/contest.php") != -1) {
-        clock = function() {
-            function ClockTick() {
+
+        let Rows = document.getElementById("result-tab").rows;
+        let Points = Array();
+        for (let i = Rows.length - 1; i > 0; i--) {
+            Rows[i].cells[4].className = "td_result";
+            let SolutionID = Rows[i].cells[1].innerText;
+            if (Rows[i].cells[4].children.length == 2) {
+                Points[SolutionID] = Rows[i].cells[4].children[1].innerText;
+                Rows[i].cells[4].children[1].remove();
+            }
+            Rows[i].cells[4].innerHTML += "<img height=\"18\" width=\"18\" src=\"image/loader.gif\">";
+            setTimeout(() => {
+                RefreshResult(SolutionID);
+            }, 0);
+        }
+
+        const FindRow = (SolutionID) => {
+            let Rows = document.getElementById("result-tab").rows;
+            for (let i = 1; i < Rows.length; i++) {
+                if (Rows[i].cells[1].innerText == SolutionID) {
+                    return Rows[i];
+                }
+            }
+            return null;
+        }
+
+        const RefreshResult = async (SolutionID) => {
+            let CurrentRow = FindRow(SolutionID);
+            await fetch("status-ajax.php?solution_id=" + SolutionID)
+                .then((Response) => { return Response.text(); })
+                .then((Response) => {
+                    let ResponseData = Response.split(",");
+                    CurrentRow.cells[5].innerHTML = "<div id=\"center\" class=\"red\">" + SizeToStringSize(ResponseData[1]) + "</div>";
+                    CurrentRow.cells[6].innerHTML = "<div id=\"center\" class=\"red\">" + TimeToStringTime(ResponseData[2]) + "</div>";
+                    let TempHTML = "<span class=\"" + judge_color[ResponseData[0]] + "\">";
+                    if (ResponseData[0] == 6 || ResponseData[0] == 10 || ResponseData[0] == 11) {
+                        TempHTML += "<a style=\"color: white\" href=\"" + (ResponseData[0] == 11 ? "ce" : "re") + "info.php?sid=" + SolutionID + "\">" + judge_result[ResponseData[0]] + "</a>";
+                    } else {
+                        TempHTML += judge_result[ResponseData[0]];
+                    }
+                    TempHTML += "</span>";
+                    if (Points[SolutionID] != undefined) {
+                        TempHTML += "<span class=\"btn btn-info\">" + Points[SolutionID] + "</span>";
+                    }
+                    if (ResponseData[0] < 4) {
+                        setTimeout(() => {
+                            RefreshResult(SolutionID)
+                        }, 500);
+                        TempHTML += "<img height=\"18\" width=\"18\" src=\"image/loader.gif\">";
+                    }
+                    CurrentRow.cells[4].innerHTML = TempHTML;
+                });
+        };
+    } else if (location.pathname == "/contest.php") {
+        onfocus = () => {
+            location.reload();
+        };
+        clock = () => {
+            setInterval(() => {
                 let CurrentDate = new Date(new Date().getTime() + diff);
                 let Year = CurrentDate.getFullYear();
                 if (Year > 3000) {
@@ -251,29 +331,35 @@ let SubmitRecord = null;
                     (Hours < 10 ? "0" : "") + Hours + ":" +
                     (Minutes < 10 ? "0" : "") + Minutes + ":" +
                     (Seconds < 10 ? "0" : "") + Seconds;
-            }
-            setInterval(ClockTick, 200);
+            }, 200);
         }
         if (location.href.indexOf("?cid=") == -1) {
             document.querySelector("body > div > div > center").innerHTML =
                 String(document.querySelector("body > div > div > center").innerHTML).replaceAll("ServerTime:", "服务器时间：");
             document.querySelector("body > div > div > center > table").style.marginTop = "10px";
-            document.querySelector("body > div > div > center > form").style.display = "none";
+            document.querySelector("body > div > div > center > form").childNodes[0].data = "";
+            document.querySelector("body > div > div > center > form > input[type=text]:nth-child(1)").className = "form-control";
+            document.querySelector("body > div > div > center > form > input[type=text]:nth-child(1)").style.width = "200px";
+            document.querySelector("body > div > div > center > form > input[type=text]:nth-child(1)").style.display = "inline-block";
+            document.querySelector("body > div > div > center > form > input[type=submit]:nth-child(2)").value = "搜索";
+            document.querySelector("body > div > div > center > form > input[type=submit]:nth-child(2)").className = "form-control";
+            document.querySelector("body > div > div > center > form > input[type=submit]:nth-child(2)").style.width = "unset";
+            document.querySelector("body > div > div > center > form > input[type=submit]:nth-child(2)").style.display = "inline-block";
             document.querySelector("body > div > div > center > table > thead > tr").childNodes[0].innerText = "编号";
             document.querySelector("body > div > div > center > table > thead > tr").childNodes[1].innerText = "标题";
             document.querySelector("body > div > div > center > table > thead > tr").childNodes[2].innerText = "状态";
-            document.querySelector("body > div > div > center > table > thead > tr").childNodes[3].innerText = "私有";
+            document.querySelector("body > div > div > center > table > thead > tr").childNodes[3].style.display = "none";
             document.querySelector("body > div > div > center > table > thead > tr").childNodes[4].innerText = "创建者";
-            Temp = document.querySelector("body > div > div > center > table > tbody").childNodes;
+            let Temp = document.querySelector("body > div > div > center > table > tbody").childNodes;
             for (let i = 1; i < Temp.length; i++) {
-                var CurrentElement = Temp[i].childNodes[2].childNodes;
+                let CurrentElement = Temp[i].childNodes[2].childNodes;
                 if (CurrentElement[1].childNodes[0].data.indexOf("运行中") != -1) {
                     let Time = String(CurrentElement[1].childNodes[1].innerText).substr(4);
                     let Day = parseInt(Time.substring(0, Time.indexOf("天")));
                     let Hour = parseInt(Time.substring(Time.indexOf("天") + 1, Time.indexOf("小时")));
                     let Minute = parseInt(Time.substring(Time.indexOf("小时") + 2, Time.indexOf("分")));
                     let Second = parseInt(Time.substring(Time.indexOf("分") + 1, Time.indexOf("秒")));
-                    let TimeStamp = new Date().getTime() + diff + (((Day * 24 + Hour) * 60 + Minute) * 60 + Second) * 1000;
+                    let TimeStamp = new Date().getTime() + diff + ((((isNaN(Day) ? 0 : Day) * 24 + Hour) * 60 + Minute) * 60 + Second) * 1000;
                     CurrentElement[1].childNodes[1].setAttribute("EndTime", TimeStamp);
                     CurrentElement[1].childNodes[1].classList.add("UpdateByJS");
                 } else if (CurrentElement[1].childNodes[0].data.indexOf("开始于") != -1) {
@@ -290,16 +376,17 @@ let SubmitRecord = null;
                     Temp.className = "green";
                     Temp.innerHTML = TimeStamp;
                 }
+                Temp[i].childNodes[3].style.display = "none";
                 Temp[i].childNodes[4].innerHTML = "<a href=\"userinfo.php?user=" + Temp[i].childNodes[4].innerHTML + "\">" + Temp[i].childNodes[4].innerHTML + "</a>";
             }
 
-            function UpdateJS() {
+            setInterval(() => {
                 Temp = document.getElementsByClassName("UpdateByJS");
                 for (let i = 0; i < Temp.length; i++) {
                     let TimeStamp = parseInt(Temp[i].getAttribute("EndTime"));
                     TimeStamp = TimeStamp - new Date().getTime() - diff;
                     if (TimeStamp < 0) {
-                        window.location.reload();
+                        location.reload();
                     }
                     let CurrentDate = new Date(TimeStamp);
                     let Day = parseInt(TimeStamp / 1000 / 60 / 60 / 24);
@@ -307,12 +394,11 @@ let SubmitRecord = null;
                     let Minute = CurrentDate.getUTCMinutes();
                     let Second = CurrentDate.getUTCSeconds();
                     Temp[i].innerText = (Day != 0 ? Day + "天" : "") +
-                        (Hour < 10 ? "0" : "") + Hour + ":" +
-                        (Minute < 10 ? "0" : "") + Minute + ":" +
-                        (Second < 10 ? "0" : "") + Second;
+                        (Hour < 10 ? "0" : "") + Hour + "小时" +
+                        (Minute < 10 ? "0" : "") + Minute + "分" +
+                        (Second < 10 ? "0" : "") + Second + "秒";
                 }
-            }
-            setInterval(UpdateJS, 200);
+            }, 200);
         } else {
             document.querySelector("body > div > div > center > br:nth-child(2)").remove();
             document.querySelector("body > div > div > center > br:nth-child(2)").remove();
@@ -329,7 +415,7 @@ let SubmitRecord = null;
             document.querySelector("body > div > div > center > div > span:nth-child(10)").appendChild(StaticButton);
             StaticButton.classList.add("UserScriptDefinedButton");
             StaticButton.innerText = "统计";
-            StaticButton.onclick = function() {
+            StaticButton.onclick = () => {
                 location.href = "/conteststatistics.php" + location.href.substr(location.href.indexOf("?cid="));
             };
 
@@ -352,8 +438,78 @@ let SubmitRecord = null;
             }
 
             document.querySelector("#problemset > thead > tr > td:nth-child(1)").innerText = "状态";
+
+            document.querySelector("#problemset").style.marginTop = "10px";
+            let OpenAllDiv = document.createElement("div");
+            OpenAllDiv.style.marginTop = "20px";
+            OpenAllDiv.style.textAlign = "left";
+            document.querySelector("body > div > div > center").insertBefore(OpenAllDiv, document.querySelector("#problemset"));
+            let OpenAllButton = document.createElement("button");
+            OpenAllButton.classList.add("UserScriptDefinedButton");
+            OpenAllButton.innerText = "打开全部题目";
+            OpenAllDiv.appendChild(OpenAllButton);
+            OpenAllButton.onclick = () => {
+                let Rows = document.querySelector("#problemset > tbody").rows;
+                for (let i = 0; i < Rows.length; i++) {
+                    window.open(Rows[i].children[2].children[0].href, "_blank");
+                }
+            }
+            let OpenUnsolvedButton = document.createElement("button");
+            OpenUnsolvedButton.classList.add("UserScriptDefinedButton");
+            OpenUnsolvedButton.innerText = "打开未解决题目";
+            OpenAllDiv.appendChild(OpenUnsolvedButton);
+            OpenUnsolvedButton.onclick = () => {
+                let Rows = document.querySelector("#problemset > tbody").rows;
+                for (let i = 0; i < Rows.length; i++) {
+                    if (Rows[i].children[0].childElementCount == 0 ||
+                        Rows[i].children[0].children[0].classList.contains("status_n")) {
+                        window.open(Rows[i].children[2].children[0].href, "_blank");
+                    }
+                }
+            }
+            let OpenSolvedButton = document.createElement("button");
+            OpenSolvedButton.classList.add("UserScriptDefinedButton");
+            OpenSolvedButton.innerText = "打开已解决题目";
+            OpenAllDiv.appendChild(OpenSolvedButton);
+            OpenSolvedButton.onclick = () => {
+                let Rows = document.querySelector("#problemset > tbody").rows;
+                for (let i = 0; i < Rows.length; i++) {
+                    if (Rows[i].children[0].childElementCount != 0 &&
+                        Rows[i].children[0].children[0].classList.contains("status_y")) {
+                        window.open(Rows[i].children[2].children[0].href, "_blank");
+                    }
+                }
+            }
+            let OpenUnattemptedButton = document.createElement("button");
+            OpenUnattemptedButton.classList.add("UserScriptDefinedButton");
+            OpenUnattemptedButton.innerText = "打开未尝试题目";
+            OpenAllDiv.appendChild(OpenUnattemptedButton);
+            OpenUnattemptedButton.onclick = () => {
+                let Rows = document.querySelector("#problemset > tbody").rows;
+                for (let i = 0; i < Rows.length; i++) {
+                    if (Rows[i].children[0].childElementCount == 0) {
+                        window.open(Rows[i].children[2].children[0].href, "_blank");
+                    }
+                }
+            }
+            let OpenUnsolvedAttemptedButton = document.createElement("button");
+            OpenUnsolvedAttemptedButton.classList.add("UserScriptDefinedButton");
+            OpenUnsolvedAttemptedButton.innerText = "打开已尝试未解决题目";
+            OpenAllDiv.appendChild(OpenUnsolvedAttemptedButton);
+            OpenUnsolvedAttemptedButton.onclick = () => {
+                let Rows = document.querySelector("#problemset > tbody").rows;
+                for (let i = 0; i < Rows.length; i++) {
+                    if (Rows[i].children[0].childElementCount != 0 &&
+                        !Rows[i].children[0].children[0].classList.contains("status_y")) {
+                        window.open(Rows[i].children[2].children[0].href, "_blank");
+                    }
+                }
+            }
         }
-    } else if (location.href.indexOf("/contestrank-oi.php") != -1) {
+    } else if (location.pathname == "/contestrank-oi.php") {
+        onfocus = () => {
+            location.reload();
+        };
         if (document.getElementById("rank") == null) {
             document.body.innerHTML = "";
             let NewURL = new URL(location.href);
@@ -372,7 +528,7 @@ let SubmitRecord = null;
             document.querySelector("body > div.container > div > center").appendChild(DownloadButton);
             DownloadButton.classList.add("UserScriptDefinedButton");
             DownloadButton.innerText = "下载排名";
-            DownloadButton.onclick = function() {
+            DownloadButton.onclick = () => {
                 let NewURL = new URL(location.href);
                 NewURL.pathname = "/contestrank.xls.php";
                 location.href = NewURL.toString();
@@ -396,36 +552,33 @@ let SubmitRecord = null;
             Style.innerHTML += "  background-color: #33ff33;";
             Style.innerHTML += "}";
             QuestionSize = document.querySelector("#rank > thead > tr").childNodes.length - 8;
-            var ReloadProgress = document.createElement("button");
+            let ReloadProgress = document.createElement("button");
             ReloadProgress.classList.add("UserScriptDefinedButton");
             ReloadProgress.style.marginRight = "20px";
             ReloadProgress.style.marginBottom = "5px";
             ReloadProgress.innerText = "重新播放动画";
-            ReloadProgress.onclick = function() {
+            ReloadProgress.onclick = () => {
                 PlaySubmission();
             }
             document.querySelector("body > div.container > div").insertBefore(ReloadProgress, document.querySelector("#rank"));
-            var Reload = document.createElement("button");
+            let Reload = document.createElement("button");
             Reload.classList.add("UserScriptDefinedButton");
             Reload.innerText = "重新加载排名";
-            Reload.onclick = function() {
+            Reload.onclick = () => {
                 ReloadRank();
             }
             document.querySelector("body > div.container > div").insertBefore(Reload, document.querySelector("#rank"));
         }
-    } else if (location.href.indexOf("/reinfo.php") != -1) {
-        Temp = document.querySelector("#results > div").childNodes;
-        for (let i = 1; i < Temp.length; i++) {}
-    } else if (location.href.indexOf("contestrank-correct.php") != -1) {
+    } else if (location.pathname == "/contestrank-correct.php") {
         document.querySelector("body > div.container > div > center > a").style.display = "none";
-    } else if (location.href.indexOf("/submitpage.php") != -1) {
+    } else if (location.pathname == "/submitpage.php") {
         document.querySelector("#enable_O2").checked = true;
         document.querySelector("#frmSolution").childNodes[0].nodeValue = "题目";
         document.querySelector("#language_span").childNodes[0].nodeValue = "语言：";
         document.querySelector("#language").style.marginTop = "10px";
         document.querySelector("#language").style.marginBottom = "10px";
         document.querySelector("#source").classList.add("form-control");
-        let CheckInterval = setInterval(function() {
+        let CheckInterval = setInterval(() => {
             if (document.querySelector("#edit_area_toggle_reg_syntax\\.js > label") != null) {
                 document.querySelector("#EditAreaArroundInfos_source").style.display = "block";
                 document.querySelector("#EditAreaArroundInfos_source").style.height = "0px";
@@ -449,69 +602,106 @@ let SubmitRecord = null;
                 Temp[i + 1].remove();
             }
         }
-    } else if (location.href.indexOf("/discuss3/discuss.php") != -1) {
-        let Temp = document.querySelector("body > div.container > div > center > div > table > tbody").children;
-        for (let i = 0; i < Temp.length; i++) {
-            Temp[i].children[0].style.display = "none";
-            Temp[i].children[1].style.display = "none";
+        let ErrorElement = document.createElement("div");
+        ErrorElement.style.marginTop = "10px";
+        ErrorElement.style.display = "none";
+        ErrorElement.style.textAlign = "left";
+        ErrorElement.style.padding = "10px";
+        document.querySelector("body > div > div > center").appendChild(ErrorElement);
+        let ErrorMessage = document.createElement("div");
+        ErrorMessage.style.whiteSpace = "pre";
+        ErrorMessage.style.backgroundColor = "rgb(0, 0, 0, 0.1)";
+        ErrorMessage.style.padding = "10px";
+        ErrorMessage.style.borderRadius = "5px";
+        ErrorElement.appendChild(ErrorMessage);
+        let PassCheck = document.createElement("button");
+        PassCheck.classList.add("UserScriptDefinedButton");
+        PassCheck.style.marginTop = "10px";
+        PassCheck.innerText = "我没错！让我提交！";
+        PassCheck.onclick = () => {
+            document.querySelector("#Submit").disabled = true;
+            document.querySelector("#Submit").value = "正在提交...";
+            document.querySelector("#frmSolution").submit();
         }
-        document.querySelector("body > div.container > div > center > div > div:nth-child(2)").childNodes[0].data = "当前位置：";
-        document.querySelector("body > div.container > div > center > div > div:nth-child(2) > a:nth-child(1)").innerText = "主面板";
-        document.querySelector("body > div.container > div > center > div > div:nth-child(1) > a").innerText = "发起讨论";
-        document.querySelector("body > div.container > div > center > div > table > tbody > tr.toprow > td:nth-child(3)").innerHTML = "题目编号";
-        document.querySelector("body > div.container > div > center > div > table > tbody > tr.toprow > td:nth-child(4)").innerHTML = "发起人";
-        document.querySelector("body > div.container > div > center > div > table > tbody > tr.toprow > td:nth-child(5)").innerHTML = "标题";
-        document.querySelector("body > div.container > div > center > div > table > tbody > tr.toprow > td:nth-child(6)").innerHTML = "发布日期";
-        document.querySelector("body > div.container > div > center > div > table > tbody > tr.toprow > td:nth-child(7)").innerHTML = "最后回复";
-        document.querySelector("body > div.container > div > center > div > table > tbody > tr.toprow > td:nth-child(8)").innerHTML = "回复数";
-        if (document.querySelector("body > div.container > div > center > div > div:nth-child(3) > a") != null) {
-            document.querySelector("body > div.container > div > center > div > div:nth-child(3) > a").innerText = "返回题目";
-            document.querySelector("body > div.container > div > center > div > div:nth-child(2) > a:nth-child(2)").innerText =
-                document.querySelector("body > div.container > div > center > div > div:nth-child(2) > a:nth-child(2)").innerText.
-            replaceAll("Problem", "题目");
-        }
-        if (document.querySelector("body > div.container > div > center > div > table > tbody > tr.evenrow > td:nth-child(2)").innerText == "No thread here.") {
-            document.querySelector("body > div.container > div > center > div > table > tbody > tr.evenrow > td:nth-child(2)").innerText = "没有讨论，快来发起讨论吧！";
-        }
-    } else if (location.href.indexOf("/discuss3/thread.php") != -1) {
-        if (document.querySelector("body > div.container > div > center > div > table > tbody > tr.toprow > td > a").innerText.indexOf("Problem") != -1) {
-            document.querySelector("body > div.container > div > center > div > table > tbody > tr.toprow > td > a").innerText =
-                document.querySelector("body > div.container > div > center > div > table > tbody > tr.toprow > td > a").innerText.
-            replaceAll("Problem", "题目");
-        } else if (document.querySelector("body > div.container > div > center > div > table > tbody > tr.toprow > td > a").innerText.indexOf("Main") != -1) {
-            document.querySelector("body > div.container > div > center > div > table > tbody > tr.toprow > td > a").innerText = "主面板";
-        }
-        document.querySelector("body > div.container > div > center > div > div:nth-child(1) > a").innerText = "发起讨论";
-        let Temp = document.querySelector("body > div.container > div > center > div > table > tbody").children;
-        for (let i = 1; i < Temp.length; i++) {
-            Temp[i].children[0].children[2].children[0].remove();
-            Temp[i].children[0].children[2].children[0].remove();
-            Temp[i].children[0].children[2].children[0].remove();
-        }
-        document.querySelector("body > div.container > div > center > div > div:nth-child(4) > div").innerText = "回复：";
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(2) > textarea").setAttribute("style", "");
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(2) > textarea").classList.add("form-control");
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(3) > input[type=submit]").innerText = "提交";
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(3) > input[type=submit]").classList.add("form-control");
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(3) > input[type=submit]").style.marginLeft = "0px";
-        document.querySelector("body > div.container > div > center > div > div:nth-child(3) > button:nth-child(1)").innerText = "返回首页";
-        document.querySelector("body > div.container > div > center > div > div:nth-child(3) > button:nth-child(2)").innerText = "前一页";
-        document.querySelector("body > div.container > div > center > div > div:nth-child(3) > button:nth-child(3)").innerText = "后一页";
-    } else if (location.href.indexOf("/discuss3/newpost.php") != -1) {
-        document.querySelector("body > div.container > div > center > div > h2").innerText = "发布新的讨论";
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(2)").innerText = "题目编号：";
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(3) > input").setAttribute("style", "");
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(3) > input").classList.add("form-control");
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(4)").innerText = "标题";
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(5) > input").setAttribute("style", "");
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(5) > input").classList.add("form-control");
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(6)").innerText = "内容";
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(7) > textarea").setAttribute("style", "");
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(7) > textarea").classList.add("form-control");
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(8) > input[type=submit]").value = "提交";
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(8) > input[type=submit]").classList.add("form-control");
-        document.querySelector("body > div.container > div > center > div > form > div:nth-child(8) > input[type=submit]").style.marginLeft = "0px";
-    } else if (location.href.indexOf("modifypage.php") != -1) {
+        ErrorElement.appendChild(PassCheck);
+
+        document.querySelector("#Submit").type = "button";
+        document.querySelector("#Submit").onclick = async () => {
+            ErrorElement.style.display = "none";
+            document.querySelector("#Submit").disabled = true;
+            document.querySelector("#Submit").value = "正在检查...";
+            eAL.toggle("source");
+            eAL.toggle("source");
+            let Source = document.getElementById("source").value;
+            let SearchParams = new URL(location.href).searchParams;
+            if (SearchParams.get("id") != null) {
+                let IOFileName = localStorage.getItem("UserScript-Problem-" + SearchParams.get("id") + "-IOFileName");
+                if (IOFileName != null) {
+                    if (Source.indexOf(IOFileName) == -1) {
+                        ErrorElement.style.display = "block";
+                        ErrorMessage.style.color = "red";
+                        ErrorMessage.innerText = "此题输入输出文件名为" + IOFileName + "，请检查是否填错";
+                        document.querySelector("#Submit").disabled = false;
+                        document.querySelector("#Submit").value = "提交";
+                        return false;
+                    }
+                }
+            } else if (SearchParams.get("cid") != null && SearchParams.get("pid") != null) {
+                let IOFileName = localStorage.getItem("UserScript-Contest-" + SearchParams.get("cid") + "-Problem-" + SearchParams.get("pid") + "-IOFileName");
+                if (IOFileName != null) {
+                    if (Source.indexOf(IOFileName) == -1) {
+                        ErrorElement.style.display = "block";
+                        ErrorMessage.style.color = "red";
+                        ErrorMessage.innerText = "此题输入输出文件名为" + IOFileName + "，请检查是否填错";
+                        document.querySelector("#Submit").disabled = false;
+                        document.querySelector("#Submit").value = "提交";
+                        return false;
+                    }
+                }
+            } else if (Source == "") {
+                ErrorElement.style.display = "block";
+                ErrorMessage.style.color = "red";
+                ErrorMessage.innerText = "源代码为空";
+                document.querySelector("#Submit").disabled = false;
+                document.querySelector("#Submit").value = "提交";
+                return false;
+            } else if (Source.indexOf("int main") == -1) {
+                ErrorElement.style.display = "block";
+                ErrorMessage.style.color = "red";
+                ErrorMessage.innerText = "主函数返回值类型错误";
+                document.querySelector("#Submit").disabled = false;
+                document.querySelector("#Submit").value = "提交";
+                return false;
+            }
+            await fetch("https://gcc.godbolt.org/api/compiler/g131/compile", {
+                "headers": {
+                    "accept": "application/json"
+                },
+                "body": Source,
+                "method": "POST"
+            })
+                .then(Response => Response.json())
+                .then(Response => {
+                    var Transferer = new AnsiUp();
+                    let CompileError = "";
+                    for (let i = 0; i < Response.stderr.length; i++) {
+                        CompileError += Transferer.ansi_to_html(Response.stderr[i].text) + "<br>";
+                    }
+                    if (CompileError != "") {
+                        ErrorElement.style.display = "block";
+                        ErrorMessage.style.color = "";
+                        ErrorMessage.innerHTML = "编译错误：<br>" + CompileError;
+                        document.querySelector("#Submit").disabled = false;
+                        document.querySelector("#Submit").value = "提交";
+                        return false;
+                    }
+                });
+            if (ErrorElement.style.display == "none") {
+                PassCheck.click();
+            }
+            return true;
+        };
+    } else if (location.pathname == "/modifypage.php") {
         document.querySelector("body > div.container > div > form > center > table > tbody > tr:nth-child(1) > td").innerText = "修改账号";
         for (let i = 3; i <= 12; i++) {
             document.querySelector("body > div.container > div > form > center > table > tbody > tr:nth-child(" + i + ") > td:nth-child(2) > input").classList.add("form-control");
@@ -534,19 +724,19 @@ let SubmitRecord = null;
         document.querySelector("body > div.container > div").appendChild(ExportACCode);
         ExportACCode.innerText = "导出AC代码";
         ExportACCode.classList.add("UserScriptDefinedButton");
-        ExportACCode.onclick = function() {
+        ExportACCode.onclick = () => {
             let ExportProgressBar = document.getElementsByTagName("progress")[0] || document.createElement("progress");
             ExportProgressBar.removeAttribute("value");
             ExportProgressBar.removeAttribute("max");
             document.querySelector("body > div.container > div").appendChild(ExportProgressBar);
             ExportACCode.innerText = "正在导出...";
             let Request = new XMLHttpRequest();
-            Request.onreadystatechange = function() {
+            Request.onreadystatechange = () => {
                 if (Request.readyState == 4) {
                     if (Request.status == 200) {
                         let Response = Request.responseText;
                         let ACCode = Response.split("------------------------------------------------------\r\n");
-                        var Zip = new JSZip();
+                        let Zip = new JSZip();
                         ExportProgressBar.max = ACCode.length - 1;
                         for (let i = 0; i < ACCode.length; i++) {
                             let CurrentCode = ACCode[i];
@@ -559,10 +749,10 @@ let SubmitRecord = null;
                             ExportProgressBar.value = i + 1;
                         }
                         Zip.generateAsync({ type: "blob" })
-                            .then(function(content) {
-                                var CurrentBlob = new Blob([content], { type: "application/zip" });
-                                var CurrentURL = URL.createObjectURL(CurrentBlob);
-                                var CurrentLink = document.createElement("a");
+                            .then(Content => {
+                                let CurrentBlob = new Blob([Content], { type: "application/zip" });
+                                let CurrentURL = URL.createObjectURL(CurrentBlob);
+                                let CurrentLink = document.createElement("a");
                                 CurrentLink.href = CurrentURL;
                                 CurrentLink.download = "AC代码.zip";
                                 CurrentLink.click();
@@ -576,13 +766,13 @@ let SubmitRecord = null;
             Request.open("GET", "http://www.xmoj.tech/export_ac_code.php", true);
             Request.send();
         }
-    } else if (location.href.indexOf("/userinfo.php") != -1) {
+    } else if (location.pathname == "/userinfo.php") {
         let Temp = document.getElementById("submission").childNodes;
         for (let i = 0; i < Temp.length; i++) {
             Temp[i].remove();
         }
         eval(document.querySelector("body > script:nth-child(6)").innerHTML);
-    } else if (location.href.indexOf("/conteststatistics.php") != -1) {
+    } else if (location.pathname == "/conteststatistics.php") {
         let Temp = document.getElementById("submission").childNodes;
         for (let i = 0; i < Temp.length; i++) {
             Temp[i].remove();
@@ -595,17 +785,17 @@ let SubmitRecord = null;
         document.querySelector("#cs > tbody > tr:last-child > td").innerText = "总和";
         Temp = document.querySelector("#cs > tbody").children;
         for (let i = 0; i < Temp.length; i++) {
-            let Temp2 = Temp[i].children;
-            for (let j = 0; j < Temp2.length; j++) {
+            let CurrentRow = Temp[i].children;
+            for (let j = 0; j < CurrentRow.length; j++) {
                 if (j == 9 || j == 14) {
-                    Temp2[j].style.display = "none";
+                    CurrentRow[j].style.display = "none";
                 }
-                if (Temp2[j].innerText == "") {
-                    Temp2[j].innerText = "0";
+                if (CurrentRow[j].innerText == "") {
+                    CurrentRow[j].innerText = "0";
                 }
             }
         }
-    } else if (location.href.indexOf("/comparesource.php") != -1) {
+    } else if (location.pathname == "/comparesource.php") {
         document.querySelector("body > div.container > div").innerHTML = "";
         let LeftCodeText = document.createElement("span");
         document.querySelector("body > div.container > div").appendChild(LeftCodeText);
@@ -627,12 +817,121 @@ let SubmitRecord = null;
         document.querySelector("body > div.container > div").appendChild(CompareButton);
         CompareButton.innerText = "比较";
         CompareButton.classList.add("UserScriptDefinedButton");
-        CompareButton.onclick = function() {
+        CompareButton.onclick = () => {
             location.href = "/comparesource.php?left=" + LeftCode.value + "&right=" + RightCode.value;
         };
+    } else if (location.pathname == "/loginpage.php") {
+        let ErrorText = document.createElement("div");
+        ErrorText.style.color = "red";
+        ErrorText.style.marginBottom = "5px";
+        document.querySelector("#login").appendChild(ErrorText);
+        let LoginButton = document.querySelector("#login > div:nth-child(4) > div.col-sm-offset-4.col-sm-4 > button");
+        LoginButton.type = "button";
+        LoginButton.onclick = async () => {
+            let Username = document.querySelector("#login > div:nth-child(2) > div > input").value;
+            let Password = document.querySelector("#login > div:nth-child(3) > div > input").value;
+            if (Username == "" ||
+                Password == "") {
+                ErrorText.innerText = "用户名或密码不能为空";
+            } else {
+                await fetch("http://www.xmoj.tech/login.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: "user_id=" + encodeURIComponent(Username) +
+                        "&password=" + hex_md5(Password)
+                })
+                    .then(Response => { return Response.text(); })
+                    .then(Response => {
+                        console.log(Response);
+                        if (Response.indexOf("history.go(-2);") != -1) {
+                            localStorage.setItem("UserScript-Username", Username);
+                            localStorage.setItem("UserScript-Password", Password);
+                            let NewPage = localStorage.getItem("UserScript-LastPage");
+                            if (NewPage == null) {
+                                NewPage = "/index.php";
+                            }
+                            location.href = NewPage;
+                        } else {
+                            localStorage.removeItem("UserScript-Username");
+                            localStorage.removeItem("UserScript-Password");
+                            Response = Response.substr(Response.indexOf("alert('") + 7);
+                            Response = Response.substr(0, Response.indexOf("');"));
+                            if (Response == "UserName or Password Wrong!") {
+                                ErrorText.innerText = "用户名或密码错误！";
+                            }
+                            else {
+                                ErrorText.innerText = Response;
+                            }
+                        }
+                    });
+            }
+        };
+        if (localStorage.getItem("UserScript-Username") != null &&
+            localStorage.getItem("UserScript-Password") != null) {
+            document.querySelector("#login > div:nth-child(2) > div > input").value = localStorage.getItem("UserScript-Username");
+            document.querySelector("#login > div:nth-child(3) > div > input").value = localStorage.getItem("UserScript-Password");
+            LoginButton.click();
+        }
+    } else if (location.pathname == "/contest_video.php") {
+        let ScriptData = document.querySelector("body > div > div > center > script").innerHTML;
+        eval(ScriptData);
+        ScriptData = ScriptData.substr(ScriptData.indexOf("{"));
+        ScriptData = ScriptData.substr(0, ScriptData.indexOf("}") + 1);
+        ScriptData = ScriptData.replace(/([a-zA-Z0-9]+) ?:/g, "\"$1\":");
+        ScriptData = ScriptData.replace(/'/g, "\"");
+        let VideoData = JSON.parse(ScriptData);
+        const RandomUUID = () => {
+            const t = "0123456789abcdef";
+            let e = [];
+            for (let r = 0; r < 36; r++)
+                e[r] = t.substr(Math.floor(16 * Math.random()), 1);
+            e[14] = "4";
+            e[19] = t.substr(3 & e[19] | 8, 1);
+            e[8] = e[13] = e[18] = e[23] = "-";
+            return e.join("");
+        };
+        let URLParams = new URLSearchParams({
+            "AccessKeyId": VideoData.accessKeyId,
+            "Action": "GetPlayInfo",
+            "VideoId": VideoData.vid,
+            "Formats": "",
+            "AuthTimeout": 7200,
+            "Rand": RandomUUID(),
+            "SecurityToken": VideoData.securityToken,
+            "StreamType": "video",
+            "Format": "JSON",
+            "Version": "2017-03-21",
+            "SignatureMethod": "HMAC-SHA1",
+            "SignatureVersion": "1.0",
+            "SignatureNonce": RandomUUID(),
+            "PlayerVersion": "2.9.3",
+            "Channel": "HTML5"
+        });
+        URLParams.sort();
+        await fetch("https://vod." + VideoData.region + ".aliyuncs.com/?" +
+            URLParams.toString() +
+            "&Signature=" +
+            encodeURIComponent(CryptoJS.HmacSHA1("GET&%2F&" + encodeURIComponent(URLParams.toString()),
+                VideoData.accessKeySecret + "&").toString(CryptoJS.enc.Base64)))
+            .then(Response => { return Response.json(); })
+            .then(Response => {
+                console.log(Response["VideoBase"]["Title"]);
+                console.log(Response["PlayInfoList"]["PlayInfo"][0]["PlayURL"]);
+                let DownloadButton = document.createElement("a");
+                DownloadButton.classList.add("UserScriptDefinedButton");
+                DownloadButton.innerText = "下载";
+                DownloadButton.href = Response["PlayInfoList"]["PlayInfo"][0]["PlayURL"];
+                DownloadButton.download = Response["VideoBase"]["Title"];
+                document.querySelector("body > div > div > center").appendChild(DownloadButton);
+            });
+    } else if (location.pathname == "/login.php") {
+        location.href = "/loginpage.php";
     }
 
-    Temp = document.getElementsByClassName("status_y");
+
+    let Temp = document.getElementsByClassName("status_y");
     for (let i = 0; i < Temp.length; i++) {
         Temp[i].innerText = "✓";
     }
@@ -641,9 +940,9 @@ let SubmitRecord = null;
         Temp[i].innerText = "×";
     }
 
-    var LastSortDownList = [];
-    var LastSortUpList = [];
-    setInterval(function() {
+    let LastSortDownList = [];
+    let LastSortUpList = [];
+    setInterval(() => {
         for (let i = 0; i < LastSortDownList.length; i++) {
             if (LastSortDownList[i].className.indexOf("headerSortDown") == -1) {
                 let Text = LastSortDownList[i].innerText;
@@ -676,12 +975,19 @@ let SubmitRecord = null;
             }
         }
 
-        if (document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(3) > a > span").innerText != "个人中心") {
+        if (document.querySelector("#profile").innerHTML == "登录") {
+            if (document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul").childNodes.length == 3) {
+                document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul").childNodes[3].remove();
+            }
+        }
+        else {
+            if (document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(3) > a > span").innerText != "个人中心") {
             document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(3) > a > span").innerText = "个人中心";
             document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(4)").style.display = "none";
             document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(5)").style.display = "none";
             document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(6)").style.display = "none";
             document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul").innerHTML = String(document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul").innerHTML).replaceAll("&nbsp;", "");
+        }
         }
     }, 100);
 
@@ -691,7 +997,7 @@ let SubmitRecord = null;
     }
 })();
 
-function ShowMetal() {
+const ShowMetal = () => {
     let Table = document.getElementById("rank").rows;
     let ParticipantsNumbers = Table.length - 1;
     for (let Rank = 1; Rank < Table.length; Rank++) {
@@ -709,7 +1015,7 @@ function ShowMetal() {
     }
 }
 
-function AddSubmission() {
+const AddSubmission = () => {
     ProgressBar.setAttribute("value", AddedSubmissionCount);
     if (AddedSubmissionCount >= SubmitRecord.length) {
         return ShowMetal();
@@ -725,12 +1031,12 @@ function AddSubmission() {
     AddedSubmissionCount++;
     SortTable(Table[0].rows);
     ShowMetal();
-    setTimeout(function() {
+    setTimeout(() => {
         AddSubmission()
     }, 10);
 }
 
-function SecondsToString(InputSeconds) {
+const SecondsToString = (InputSeconds) => {
     let Hours = Math.floor(InputSeconds / 3600);
     let Minutes = Math.floor((InputSeconds % 3600) / 60);
     let Seconds = InputSeconds % 60;
@@ -739,14 +1045,14 @@ function SecondsToString(InputSeconds) {
         (Seconds < 10 ? "0" : "") + Seconds;
 }
 
-function StringToSeconds(InputString) {
+const StringToSeconds = (InputString) => {
     let SplittedString = InputString.split(":");
     return parseInt(SplittedString[0]) * 60 * 60 +
         parseInt(SplittedString[1]) * 60 +
         parseInt(SplittedString[2]);
 }
 
-function SetColor(Cell, IsAC, ErrorTimes) {
+const SetColor = (Cell, IsAC, ErrorTimes) => {
     ErrorTimes *= 10
     if (ErrorTimes > 255) {
         ErrorTimes = 255;
@@ -762,7 +1068,7 @@ function SetColor(Cell, IsAC, ErrorTimes) {
     }
 }
 
-function UpdateRow(Row, Submission) {
+const UpdateRow = (Row, Submission) => {
     let Colum = parseInt(Submission.num) + 5;
     if (Colum > Row.cells.length - 1) {
         return;
@@ -793,7 +1099,7 @@ function UpdateRow(Row, Submission) {
     }
 }
 
-function SortTable(rows) {
+const SortTable = (rows) => {
     for (let i = 1; i < rows.length; i++) {
         if (rows[i].childNodes[1].innerText == document.getElementById("profile").innerText) {
             rows[i].style = "background-color: yellow;";
@@ -806,7 +1112,7 @@ function SortTable(rows) {
     }
 }
 
-function SwapNode(Node1, Node2) {
+const SwapNode = (Node1, Node2) => {
     let Parent = Node1.parentNode;
     let Node1NextSibling = Node1.nextSibling;
     let Node2NextSibling = Node2.nextSibling;
@@ -816,7 +1122,7 @@ function SwapNode(Node1, Node2) {
     else Parent.appendChild(Node1);
 }
 
-function FirstBiggerThanSecond(Node1, Node2) {
+const FirstBiggerThanSecond = (Node1, Node2) => {
     let Node1AC = parseInt(Node1.cells[3].innerHTML);
     let Node2AC = parseInt(Node2.cells[3].innerHTML);
     if (Node1AC != Node2AC) {
@@ -825,7 +1131,7 @@ function FirstBiggerThanSecond(Node1, Node2) {
     return StringToSeconds(Node1.cells[4].innerHTML) < StringToSeconds(Node2.cells[4].innerHTML);
 }
 
-function CreateRowCode(Table, Submission) {
+const CreateRowCode = (Table, Submission) => {
     let IsAC = (Submission.result == 4);
     let Output = "<tr>";
     Output += "<td></td>";
@@ -847,7 +1153,7 @@ function CreateRowCode(Table, Submission) {
     return Output;
 }
 
-function FindRow(Table, UID) {
+const FindRow = (Table, UID) => {
     Table = Table[0].rows;
     for (let i = 0; i < Table.length; i++) {
         if (Table[i].cells[1].innerText == UID) {
@@ -857,7 +1163,7 @@ function FindRow(Table, UID) {
     return null;
 }
 
-function PlaySubmission() {
+const PlaySubmission = () => {
     document.querySelector("#rank > tbody").innerHTML = "";
     let Data = "";
     Data += "<tr class=\"toprow\">";
@@ -878,22 +1184,18 @@ function PlaySubmission() {
     AddSubmission();
 }
 
-function ReloadRank() {
+const ReloadRank = async () => {
     document.getElementsByTagName("progress")[0].removeAttribute("max");
     document.getElementsByTagName("progress")[0].removeAttribute("value");
-    let Request = new XMLHttpRequest();
-    Request.onreadystatechange = function() {
-        if (Request.readyState == 4 && Request.status == 200) {
-            var ResponseText = Request.responseText;
-            var StartPosition = ResponseText.indexOf("var solutions=");
-            StartPosition += 14;
-            var EndPosition = ResponseText.indexOf(";", StartPosition);
-            SubmitRecord = JSON.parse(ResponseText.substring(StartPosition, EndPosition));
-            PlaySubmission();
-        }
-    };
     let NewURL = new URL(location.href);
     NewURL.pathname = "/contestrank2.php";
-    Request.open("GET", NewURL.toString(), true);
-    Request.send();
+    await fetch(NewURL.toString())
+        .then(Response => Response.text())
+        .then(Response => {
+            let StartPosition = Response.indexOf("var solutions=");
+            StartPosition += 14;
+            let EndPosition = Response.indexOf(";", StartPosition);
+            SubmitRecord = JSON.parse(Response.substring(StartPosition, EndPosition));
+            PlaySubmission();
+        });
 }

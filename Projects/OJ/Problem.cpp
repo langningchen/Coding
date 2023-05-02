@@ -99,7 +99,7 @@ bool PROBLEM::Load(std::string ID)
 
     this->ID = ID;
     UpdateWorkDir();
-    Logger.Info("Problem \"" + ID + "\" loaded");
+    Logger.Debug("Problem \"" + ID + "\" loaded");
     return true;
 }
 bool PROBLEM::Save()
@@ -118,7 +118,7 @@ bool PROBLEM::Save()
         Logger.Error("Problem \"" + ID + "\" save failed");
         return false;
     }
-    Logger.Info("Problem \"" + ID + "\" saved");
+    Logger.Debug("Problem \"" + ID + "\" saved");
     return true;
 }
 bool PROBLEM::LoadSamples(std::string ID)
@@ -127,7 +127,7 @@ bool PROBLEM::LoadSamples(std::string ID)
     DIR *Dir = opendir(CurrentSampleBaseFolder.c_str());
     if (Dir == nullptr)
     {
-        Logger.Warning("Problem \"" + ID + "\" samples load failed");
+        Logger.Error("Problem \"" + ID + "\" samples load failed");
         return false;
     }
     struct dirent *DirEntry;
@@ -143,13 +143,13 @@ bool PROBLEM::LoadSamples(std::string ID)
                 !Utilities.LoadFile(CurrentSampleBaseFolder + "/" + SampleID + "/Output", Sample.Output) ||
                 !Utilities.LoadFile(CurrentSampleBaseFolder + "/" + SampleID + "/Description", Sample.Description))
             {
-                Logger.Warning("Problem \"" + ID + "\" sample \"" + SampleID + "\" load failed");
+                Logger.Error("Problem \"" + ID + "\" sample \"" + SampleID + "\" load failed");
                 return false;
             }
         }
     }
     closedir(Dir);
-    Logger.Info("Problem \"" + ID + "\" samples loaded");
+    Logger.Debug("Problem \"" + ID + "\" samples loaded");
     return true;
 }
 bool PROBLEM::SaveSamples()
@@ -160,7 +160,7 @@ bool PROBLEM::SaveSamples()
     DIR *Dir = opendir(CurrentSampleBaseFolder.c_str());
     if (Dir == nullptr)
     {
-        Logger.Warning("Problem \"" + ID + "\" samples save failed");
+        Logger.Error("Problem \"" + ID + "\" samples save failed");
         return false;
     }
     struct dirent *DirEntry;
@@ -183,7 +183,7 @@ bool PROBLEM::SaveSamples()
         }
     }
     closedir(Dir);
-    Logger.Info("Problem \"" + ID + "\" samples saved");
+    Logger.Debug("Problem \"" + ID + "\" samples saved");
     return true;
 }
 bool PROBLEM::LoadTestGroups(std::string ID)
@@ -210,7 +210,7 @@ bool PROBLEM::LoadTestGroups(std::string ID)
         }
     }
     closedir(Dir);
-    Logger.Info("Problem \"" + ID + "\" test groups loaded");
+    Logger.Debug("Problem \"" + ID + "\" test groups loaded");
     return true;
 }
 bool PROBLEM::SaveTestGroups()
@@ -226,7 +226,7 @@ bool PROBLEM::SaveTestGroups()
             return false;
         }
     }
-    Logger.Info("Problem \"" + ID + "\" test groups saved");
+    Logger.Debug("Problem \"" + ID + "\" test groups saved");
     return true;
 }
 void PROBLEM::Update(std::string ID, std::string Title, std::string Description, std::string Input, std::string Output, std::vector<SAMPLE> Samples, std::string Range, std::string Hint, std::string IOFileName)

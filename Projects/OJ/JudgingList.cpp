@@ -24,7 +24,7 @@ void JUDGING_LIST::Init()
                 sleep(1);
             SUBMISSION Submission;
             if (!Submission.Load(JudgingList.front()))
-                Logger.Error("Failed to load submission " + std::to_string(JudgingList.front()));
+                Logger.Warning("Failed to load submission " + std::to_string(JudgingList.front()));
             JudgingList.pop();
             Submission.Judge();
         } });
