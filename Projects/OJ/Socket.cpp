@@ -26,11 +26,9 @@ void SOCKET::SubThread(int Socket, sockaddr_in ClientAddress, SOCKET::CALL_BACK 
         if (Length == 0)
             break;
         RequestHTTPData += std::string(Buffer, Length);
-        Logger.Debug("Received " + std::to_string(Length) + " bytes from socket " + ClientName);
-        if (Length < 1024)
+                if (Length < 1024)
             break;
     }
-    Logger.Info("Received " + std::to_string(RequestHTTPData.length()) + " bytes from socket " + ClientName + " in total");
 
     std::string ResponseHTTPData = CallBack(RequestHTTPData);
     for (size_t i = 0; i < ResponseHTTPData.length(); i += 1024)
@@ -42,14 +40,11 @@ void SOCKET::SubThread(int Socket, sockaddr_in ClientAddress, SOCKET::CALL_BACK 
             Logger.Error("Can not send to socket " + ClientName);
             break;
         }
-        Logger.Debug("Sent " + std::to_string(SendLength) + " bytes to socket " + ClientName);
-    }
-    Logger.Info("Sent " + std::to_string(ResponseHTTPData.length()) + " bytes to socket " + ClientName + " in total");
+            }
 
     if (close(Socket) == -1)
         Logger.Error("Can not close socket " + ClientName);
-    Logger.Info("Closed socket " + ClientName);
-}
+    }
 
 SOCKET::SOCKET(CALL_BACK CallBack)
 {
@@ -66,15 +61,12 @@ SOCKET::SOCKET(CALL_BACK CallBack)
     ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (ListenSocket == -1)
         Logger.Fetal("Can not create socket");
-    Logger.Info("Created socket");
 
     if (bind(ListenSocket, (struct sockaddr *)&ServerAddress, sizeof(ServerAddress)) == -1)
         Logger.Fetal("Can not bind port " + std::to_string(Port));
-    Logger.Info("Bind port " + std::to_string(Port));
 
     if (listen(ListenSocket, 1024) == -1)
         Logger.Fetal("Can not listen");
-    Logger.Info("Listened");
 
     while (true)
     {
@@ -83,8 +75,7 @@ SOCKET::SOCKET(CALL_BACK CallBack)
         int ClientSocket = accept(ListenSocket, (struct sockaddr *)&ClientAddress, &ClientAddressLength);
         if (ClientSocket == -1)
             Logger.Error("Can not accept");
-        Logger.Info("Accepted socket " + std::to_string(ClientSocket));
-        // new std::thread(SubThread, ClientSocket, ClientAddress, CallBack);
+                // new std::thread(SubThread, ClientSocket, ClientAddress, CallBack);
         new std::thread(
             [this, ClientSocket, ClientAddress, CallBack]
             {

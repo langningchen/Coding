@@ -1,0 +1,7 @@
+CREATE TABLE "token" (
+    "id" INTEGER NOT NULL UNIQUE,
+    "token" TEXT NOT NULL UNIQUE,
+    "uid" INTEGER NOT NULL,
+    "expire_time" INTEGER NOT NULL,
+    PRIMARY KEY("id" AUTOINCREMENT)
+)

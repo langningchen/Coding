@@ -24,208 +24,182 @@ bool WEB_DATA_PROCEED::CheckTypes(configor::json JSON, std::vector<std::pair<std
 }
 configor::json WEB_DATA_PROCEED::Login(std::string Username, std::string Password)
 {
+    RETURN_JSON_IF_FALSE(std::regex_match(Username, REGEX_USERNAME), "Username invalid")
+    RETURN_JSON_IF_FALSE(!std::regex_match(Password, REGEX_NOT_PASSWORD), "Password invalid")
+    RETURN_JSON_IF_FALSE(access((Settings.GetUserBaseFolder() + "/" + Username).c_str(), F_OK | R_OK) == 0, "No such user")
+    RETURN_JSON_IF_FALSE(access((Settings.GetUserBaseFolder() + "/" + Username + "/Password").c_str(), F_OK | R_OK) == 0, "No password store in system")
+    std::string RightPassword;
+    RETURN_JSON_IF_FAILED(Utilities.LoadFile(Settings.GetUserBaseFolder() + "/" + Username + "/Password", RightPassword))
+    RETURN_JSON_IF_FALSE(Password == Utilities.RemoveSpaces(RightPassword), "Password incorrect")
+    std::string Token;
+    const std::string TokenCharList = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (int i = 0; i < 32; i++)
+        Token.push_back(TokenCharList[rand() % TokenCharList.size()]);
+    RETURN_JSON_IF_FAILED(Utilities.MakeDir(Settings.GetTokenBaseFolder() + "/" + Token))
+    RETURN_JSON_IF_FAILED(Utilities.SaveFile(Settings.GetTokenBaseFolder() + "/" + Token + "/Username", Username))
+    RETURN_JSON_IF_FAILED(Utilities.SaveFile(Settings.GetTokenBaseFolder() + "/" + Token + "/SaveTime", time(NULL)))
     configor::json ResponseJSON = BaseJSON;
-    if (!std::regex_match(Username, REGEX_USERNAME))
-        ResponseJSON["Message"] = "Username invalid";
-    else if (std::regex_match(Password, REGEX_NOT_PASSWORD))
-        ResponseJSON["Message"] = "Password invalid";
-    else
-    {
-        if (access((Settings.GetUserBaseFolder() + "/" + Username).c_str(), F_OK | R_OK) == -1)
-            ResponseJSON["Message"] = "No such user";
-        else if (access((Settings.GetUserBaseFolder() + "/" + Username + "/Password").c_str(), F_OK | R_OK) == -1)
-            ResponseJSON["Message"] = "No password store in system";
-        else
-        {
-            std::string RightPassword;
-            if (!Utilities.LoadFile(Settings.GetUserBaseFolder() + "/" + Username + "/Password", RightPassword))
-                ResponseJSON["Message"] = "Can not load password in system";
-            else if (Password != Utilities.RemoveSpaces(RightPassword))
-                ResponseJSON["Message"] = "Password incorrect";
-            else
-            {
-                std::string Token;
-                for (int i = 0; i < 32; i++)
-                    Token.push_back(random() % 95 + 32);
-                if (!Utilities.MakeDir(Settings.GetTokenBaseFolder() + "/" + Token) ||
-                    !Utilities.SaveFile(Settings.GetTokenBaseFolder() + "/" + Token + "/Username", Username) ||
-                    !Utilities.SaveFile(Settings.GetTokenBaseFolder() + "/" + Token + "/SaveTime", time(NULL)))
-                    ResponseJSON["Message"] = "Can not save token data";
-                else
-                {
-                    ResponseJSON["Success"] = true;
-                    ResponseJSON["Data"]["Token"] = Token;
-                }
-            }
-        }
-    }
+    ResponseJSON["Success"] = true;
+    ResponseJSON["Message"] = "Login success";
+    ResponseJSON["Data"]["Token"] = Token;
     return ResponseJSON;
 }
 configor::json WEB_DATA_PROCEED::CheckUsernameAvailable(std::string Username)
 {
-    configor::json ResponseJSON = BaseJSON;
-    if (!std::regex_match(Username, REGEX_USERNAME))
-        ResponseJSON["Message"] = "Username invalid";
-    else if (access((Settings.GetUserBaseFolder() + "/" + Username).c_str(), F_OK | R_OK) == -1)
-        ResponseJSON["Success"] = true;
-    else
-        ResponseJSON["Message"] = "Username already exist";
-    return ResponseJSON;
+    RETURN_JSON_IF_FALSE(std::regex_match(Username, REGEX_USERNAME), "Username invalid")
+    RETURN_JSON_IF_FALSE(access((Settings.GetUserBaseFolder() + "/" + Username).c_str(), F_OK | R_OK) == -1, "Username already exist")
+    CREATE_JSON(true, "Username available");
 }
 configor::json WEB_DATA_PROCEED::SendVerifyCode(std::string EmailAddress)
 {
-    configor::json ResponseJSON = BaseJSON;
-    if (!std::regex_match(EmailAddress, REGEX_EMAIL_ADDRESS))
-        ResponseJSON["Message"] = "Email address invalid";
-    else
-    {
-        int TempCorrectCode = rand() % 1000000;
-        std::string CorrectCode;
-        if (TempCorrectCode < 10)
-            CorrectCode += "0";
-        if (TempCorrectCode < 100)
-            CorrectCode += "0";
-        if (TempCorrectCode < 1000)
-            CorrectCode += "0";
-        if (TempCorrectCode < 10000)
-            CorrectCode += "0";
-        if (TempCorrectCode < 100000)
-            CorrectCode += "0";
-        CorrectCode += std::to_string(TempCorrectCode);
-        if (!Utilities.SaveFile(Settings.GetVerifyCodeBaseFolder() + "/" + EmailAddress, CorrectCode))
-            ResponseJSON["Message"] = "Can not save verify code";
-        else
-        {
-            std::string EmailContent = "Your verify code is " + CorrectCode;
-            if (!Utilities.SendEmail(EmailAddress, "Verify Code", EmailContent))
-                ResponseJSON["Message"] = "Can not send email";
-            else
-                ResponseJSON["Success"] = true;
-        }
-    }
-    return ResponseJSON;
+    RETURN_JSON_IF_FALSE(std::regex_match(EmailAddress, REGEX_EMAIL_ADDRESS), "Email address invalid")
+    int TempCorrectCode = rand() % 1000000;
+    std::string CorrectCode;
+    if (TempCorrectCode < 10)
+        CorrectCode += "0";
+    if (TempCorrectCode < 100)
+        CorrectCode += "0";
+    if (TempCorrectCode < 1000)
+        CorrectCode += "0";
+    if (TempCorrectCode < 10000)
+        CorrectCode += "0";
+    if (TempCorrectCode < 100000)
+        CorrectCode += "0";
+    CorrectCode += std::to_string(TempCorrectCode);
+    RETURN_JSON_IF_FAILED(Utilities.SaveFile(Settings.GetVerifyCodeBaseFolder() + "/" + EmailAddress, CorrectCode))
+    std::string EmailContent = "Your verify code is " + CorrectCode;
+    RETURN_JSON_IF_FAILED(Utilities.SendEmail(EmailAddress, "Verify Code", EmailContent))
+    CREATE_JSON(true, "Send verify code success")
 }
 configor::json WEB_DATA_PROCEED::Register(std::string Username, std::string Password, std::string Nickname, std::string EmailAddress, std::string VerifyCode)
 {
-    configor::json ResponseJSON = BaseJSON;
-    if (!std::regex_match(Username, REGEX_USERNAME))
-        ResponseJSON["Message"] = "Username invalid";
-    else if (std::regex_match(Password, REGEX_NOT_PASSWORD))
-        ResponseJSON["Message"] = "Password invalid";
-    else if (!std::regex_match(Nickname, REGEX_NICKNAME))
-        ResponseJSON["Message"] = "Nickname invalid";
-    else if (!std::regex_match(EmailAddress, REGEX_EMAIL_ADDRESS))
-        ResponseJSON["Message"] = "Email address invalid";
-    else if (!std::regex_match(VerifyCode, REGEX_VERIFY_CODE))
-        ResponseJSON["Message"] = "Verify code invalid";
-    else if (access((Settings.GetUserBaseFolder() + "/" + Username).c_str(), F_OK | R_OK) != -1)
-        ResponseJSON["Message"] = "Username already exist";
-    else
-    {
-        std::string RightVerifyCode;
-        if (!Utilities.LoadFile(Settings.GetVerifyCodeBaseFolder() + "/" + EmailAddress, RightVerifyCode))
-            ResponseJSON["Message"] = "Can not load verify code";
-        else if (VerifyCode != Utilities.RemoveSpaces(RightVerifyCode))
-            ResponseJSON["Message"] = "Verify code incorrect";
-        else if (!Utilities.MakeDir(Settings.GetUserBaseFolder() + "/" + Username) ||
-                 !Utilities.SaveFile(Settings.GetUserBaseFolder() + "/" + Username + "/Password", Password) ||
-                 !Utilities.SaveFile(Settings.GetUserBaseFolder() + "/" + Username + "/Nickname", Nickname) ||
-                 !Utilities.SaveFile(Settings.GetUserBaseFolder() + "/" + Username + "/EmailAddress", EmailAddress) ||
-                 !Utilities.SaveFile(Settings.GetUserBaseFolder() + "/" + Username + "/RegisterTime", time(NULL)))
-            ResponseJSON["Message"] = "Can not save user data";
-        else
-            ResponseJSON["Success"] = true;
-    }
-    return ResponseJSON;
+    RETURN_JSON_IF_FALSE(std::regex_match(Username, REGEX_USERNAME), "Username invalid")
+    RETURN_JSON_IF_FALSE(!std::regex_match(Password, REGEX_NOT_PASSWORD), "Password invalid")
+    RETURN_JSON_IF_FALSE(std::regex_match(Nickname, REGEX_NICKNAME), "Nickname invalid")
+    RETURN_JSON_IF_FALSE(std::regex_match(EmailAddress, REGEX_EMAIL_ADDRESS), "Email address invalid")
+    RETURN_JSON_IF_FALSE(std::regex_match(VerifyCode, REGEX_VERIFY_CODE), "Verify code invalid")
+    RETURN_JSON_IF_FALSE(access((Settings.GetUserBaseFolder() + "/" + Username).c_str(), F_OK | R_OK) == -1, "Username already exist")
+    std::string RightVerifyCode;
+    RETURN_JSON_IF_FAILED(Utilities.LoadFile(Settings.GetVerifyCodeBaseFolder() + "/" + EmailAddress, RightVerifyCode))
+    RETURN_JSON_IF_FALSE(VerifyCode == Utilities.RemoveSpaces(RightVerifyCode), "Verify code incorrect")
+    RETURN_JSON_IF_FAILED(Utilities.MakeDir(Settings.GetUserBaseFolder() + "/" + Username))
+    RETURN_JSON_IF_FAILED(Utilities.SaveFile(Settings.GetUserBaseFolder() + "/" + Username + "/Password", Password))
+    RETURN_JSON_IF_FAILED(Utilities.SaveFile(Settings.GetUserBaseFolder() + "/" + Username + "/Nickname", Nickname))
+    RETURN_JSON_IF_FAILED(Utilities.SaveFile(Settings.GetUserBaseFolder() + "/" + Username + "/EmailAddress", EmailAddress))
+    RETURN_JSON_IF_FAILED(Utilities.SaveFile(Settings.GetUserBaseFolder() + "/" + Username + "/RegisterTime", time(NULL)))
+    CREATE_JSON(true, "Register success")
 }
 configor::json WEB_DATA_PROCEED::CheckTokenAvailable(std::string Token)
 {
-    configor::json ResponseJSON = BaseJSON;
-    std::string CurrentTokenBaseFolder = Settings.GetTokenBaseFolder() + "/" + Token;
-    if (access(CurrentTokenBaseFolder.c_str(), F_OK | R_OK) == -1)
-        ResponseJSON["Message"] = "Token does not exist";
-    else
-    {
-        int SaveTime;
-        std::string Username;
-        if (!Utilities.LoadFile(CurrentTokenBaseFolder + "/SaveTime", SaveTime) ||
-            !Utilities.LoadFile(CurrentTokenBaseFolder + "/Username", Username))
-        {
-            ResponseJSON["Message"] = "Token does not exist";
-            Utilities.RemoveDir(CurrentTokenBaseFolder);
-        }
-        else if (time(NULL) - SaveTime > 7 * 24 * 60 * 60)
-        {
-            ResponseJSON["Message"] = "Token expired";
-            Utilities.RemoveDir(CurrentTokenBaseFolder);
-        }
-        else
-            ResponseJSON["Success"] = true;
-    }
-    return ResponseJSON;
+    RETURN_JSON_IF_FALSE(access((Settings.GetTokenBaseFolder() + "/" + Token).c_str(), F_OK | R_OK) == 0, "Token does not exist")
+    int SaveTime;
+    std::string Username;
+    RETURN_JSON_IF_FAILED(Utilities.LoadFile(Settings.GetTokenBaseFolder() + "/" + Token + "/SaveTime", SaveTime))
+    RETURN_JSON_IF_FAILED(Utilities.LoadFile(Settings.GetTokenBaseFolder() + "/" + Token + "/Username", Username))
+    RETURN_JSON_IF_FALSE_WITH_OPERATION(time(NULL) - SaveTime < 7 * 24 * 60 * 60, "Token expired", Utilities.RemoveDir(Settings.GetTokenBaseFolder() + "/" + Token))
+    CREATE_JSON(true, "Token available")
 }
 configor::json WEB_DATA_PROCEED::GetSubmission(int SubmissionID)
 {
-    configor::json ResponseJSON = BaseJSON;
     SUBMISSION Submission;
-    if (!Submission.Load(SubmissionID))
-        ResponseJSON["Message"] = "Submission load failed";
-    else
+    RETURN_JSON_IF_FAILED(Submission.Load(SubmissionID))
+    configor::json ResponseJSON = BaseJSON;
+    ResponseJSON["Success"] = true;
+    ResponseJSON["Data"]["Result"] = (int)Submission.Result;
+    ResponseJSON["Data"]["Description"] = Submission.Description;
+    ResponseJSON["Data"]["ProblemID"] = Submission.ProblemID;
+    ResponseJSON["Data"]["Source"] = Submission.Source;
+    ResponseJSON["Data"]["Time"] = Submission.Time;
+    ResponseJSON["Data"]["TimeSum"] = Submission.TimeSum;
+    ResponseJSON["Data"]["Memory"] = Submission.Memory;
+    ResponseJSON["Data"]["Score"] = Submission.Score;
+    configor::json::array_type TestGroups;
+    for (auto i : Submission.TestGroups)
     {
-        ResponseJSON["Success"] = true;
-        ResponseJSON["Data"]["Result"] = (int)Submission.Result;
-        ResponseJSON["Data"]["Description"] = Submission.Description;
-        ResponseJSON["Data"]["ProblemID"] = Submission.ProblemID;
-        ResponseJSON["Data"]["Source"] = Submission.Source;
-        ResponseJSON["Data"]["Time"] = Submission.Time;
-        ResponseJSON["Data"]["TimeSum"] = Submission.TimeSum;
-        ResponseJSON["Data"]["Memory"] = Submission.Memory;
-        ResponseJSON["Data"]["Score"] = Submission.Score;
-        configor::json::array_type TestGroups;
-        for (auto i : Submission.TestGroups)
+        configor::json TempTestGroup;
+        TempTestGroup["Index"] = i.ID;
+        TempTestGroup["Score"] = i.Score;
+        TempTestGroup["Result"] = (int)i.Result;
+        TempTestGroup["TestCasesPassed"] = i.TestCasesPassed;
+        TempTestGroup["Time"] = i.Time;
+        TempTestGroup["TimeSum"] = i.TimeSum;
+        TempTestGroup["Memory"] = i.Memory;
+        TempTestGroup["TestCases"].array({});
+        configor::json::array_type TestCases;
+        for (auto j : i.TestCases)
         {
-            configor::json TempTestGroup;
-            TempTestGroup["Index"] = i.ID;
-            TempTestGroup["Score"] = i.Score;
-            TempTestGroup["Result"] = (int)i.Result;
-            TempTestGroup["TestCasesPassed"] = i.TestCasesPassed;
-            TempTestGroup["Time"] = i.Time;
-            TempTestGroup["TimeSum"] = i.TimeSum;
-            TempTestGroup["Memory"] = i.Memory;
-            TempTestGroup["TestCases"].array({});
-            configor::json::array_type TestCases;
-            for (auto j : i.TestCases)
-            {
-                configor::json TempTestCase;
-                TempTestCase["Index"] = j.ID;
-                TempTestCase["Result"] = (int)j.Result;
-                TempTestCase["Description"] = j.Description;
-                TempTestCase["Time"] = j.Time;
-                TempTestCase["TimeLimit"] = j.TimeLimit;
-                TempTestCase["Memory"] = j.Memory;
-                TempTestCase["MemoryLimit"] = j.MemoryLimit;
-                TempTestCase["Score"] = j.Score;
-                TestCases.push_back(TempTestCase);
-            }
-            TempTestGroup["TestCases"] = TestCases;
-            TestGroups.push_back(TempTestGroup);
+            configor::json TempTestCase;
+            TempTestCase["Index"] = j.ID;
+            TempTestCase["Result"] = (int)j.Result;
+            TempTestCase["Description"] = j.Description;
+            TempTestCase["Time"] = j.Time;
+            TempTestCase["TimeLimit"] = j.TimeLimit;
+            TempTestCase["Memory"] = j.Memory;
+            TempTestCase["MemoryLimit"] = j.MemoryLimit;
+            TempTestCase["Score"] = j.Score;
+            TestCases.push_back(TempTestCase);
         }
-        ResponseJSON["Data"]["TestGroups"] = TestGroups;
+        TempTestGroup["TestCases"] = TestCases;
+        TestGroups.push_back(TempTestGroup);
     }
+    ResponseJSON["Data"]["TestGroups"] = TestGroups;
     return ResponseJSON;
 }
 configor::json WEB_DATA_PROCEED::Submit(std::string ProblemID, bool EnableO2, std::string Code)
 {
-    configor::json ResponseJSON = BaseJSON;
-    SUBMISSION Submission(Code, ProblemID);
+    SUBMISSION Submission;
+    RETURN_JSON_IF_FAILED(Submission.Set(Code, ProblemID))
     Submission.EnableO2 = EnableO2;
-    int SubmissionID = JudgingList.Add(Submission);
-    if (SubmissionID == 0)
-        ResponseJSON["Message"] = "Submit failed";
+    int SubmissionID;
+    RETURN_JSON_IF_FAILED(JudgingList.Add(Submission, SubmissionID))
+    configor::json ResponseJSON = BaseJSON;
+    ResponseJSON["Success"] = true;
+    ResponseJSON["Message"] = "Submit success";
+    ResponseJSON["Data"]["SubmissionID"] = SubmissionID;
+    return ResponseJSON;
+}
+configor::json WEB_DATA_PROCEED::GetProblem(std::string ProblemID)
+{
+    configor::json ResponseJSON = BaseJSON;
+    PROBLEM Problem;
+    RETURN_JSON_IF_FAILED(Problem.Load(ProblemID))
+    ResponseJSON["Success"] = true;
+    ResponseJSON["Data"]["ID"] = Problem.ID;
+    ResponseJSON["Data"]["Title"] = Problem.Title;
+    ResponseJSON["Data"]["Description"] = Problem.Description;
+    ResponseJSON["Data"]["Input"] = Problem.Input;
+    ResponseJSON["Data"]["Output"] = Problem.Output;
+    configor::json::array_type Samples;
+    for (auto i : Problem.Samples)
     {
-        ResponseJSON["Success"] = true;
-        ResponseJSON["Data"]["SubmissionID"] = SubmissionID;
+        configor::json TempSample;
+        TempSample["Input"] = i.Input;
+        TempSample["Output"] = i.Output;
+        Samples.push_back(TempSample);
     }
+    ResponseJSON["Data"]["Samples"] = Samples;
+    configor::json::array_type TestGroups;
+    for (auto i : Problem.TestGroups)
+    {
+        configor::json TempTestGroup;
+        TempTestGroup["ID"] = i.ID;
+        configor::json::array_type TestCases;
+        for (auto j : i.TestCases)
+        {
+            configor::json TempTestCase;
+            TempTestCase["ID"] = j.ID;
+            TempTestCase["TimeLimit"] = j.TimeLimit;
+            TempTestCase["MemoryLimit"] = j.MemoryLimit;
+            TempTestCase["Score"] = j.Score;
+            ResponseJSON["Data"]["IOFileName"] = j.IOFileName;
+            TestCases.push_back(TempTestCase);
+        }
+        TempTestGroup["TestCases"] = TestCases;
+        TestGroups.push_back(TempTestGroup);
+    }
+    ResponseJSON["Data"]["TestGroups"] = TestGroups;
+    ResponseJSON["Data"]["Range"] = Problem.Range;
+    ResponseJSON["Data"]["Hint"] = Problem.Hint;
     return ResponseJSON;
 }
 
@@ -320,6 +294,16 @@ HTTP_RESPONSE WEB_DATA_PROCEED::Proceed(HTTP_REQUEST HTTPRequest)
                                               RequestJSON["Data"]["EnableO2"].as_bool(),
                                               RequestJSON["Data"]["Code"].as_string());
                 }
+                else if (RequestJSON["Action"].as_string() == "GetProblem")
+                {
+                    if (!CheckTypes(RequestJSON, {{"ProblemID", configor::config_value_type::string},
+                                                  {"Token", configor::config_value_type::string}}))
+                        ResponseJSON["Message"] = "Invalid parameters";
+                    else if (CheckTokenAvailable(RequestJSON["Data"]["Token"].as_string())["Success"].as_bool() == false)
+                        ResponseJSON["Message"] = "Invalid token";
+                    else
+                        ResponseJSON = GetProblem(RequestJSON["Data"]["ProblemID"].as_string());
+                }
                 else
                     ResponseJSON["Message"] = "No such action";
             }
@@ -333,7 +317,7 @@ HTTP_RESPONSE WEB_DATA_PROCEED::Proceed(HTTP_REQUEST HTTPRequest)
     else if (HTTPRequest.GetPath() == "/main.js")
     {
         std::string Data;
-        if (!Utilities.LoadFile(BasicFolder + "/main.js", Data))
+        if (!Utilities.LoadFile(BasicFolder + "/main.js", Data).Success)
             Data = "System error: can not load file /main.js";
         HTTPResponse.SetBody(Data);
         HTTPResponse.SetHeader("Content-Type", "application/javascript");
@@ -341,7 +325,7 @@ HTTP_RESPONSE WEB_DATA_PROCEED::Proceed(HTTP_REQUEST HTTPRequest)
     else if (HTTPRequest.GetPath() == "/main.css")
     {
         std::string Data;
-        if (!Utilities.LoadFile(BasicFolder + "/main.css", Data))
+        if (!Utilities.LoadFile(BasicFolder + "/main.css", Data).Success)
             Data = "System error: can not load file /main.css";
         HTTPResponse.SetBody(Data);
         HTTPResponse.SetHeader("Content-Type", "text/css");
@@ -349,7 +333,7 @@ HTTP_RESPONSE WEB_DATA_PROCEED::Proceed(HTTP_REQUEST HTTPRequest)
     else
     {
         std::string Data;
-        if (!Utilities.LoadFile(BasicFolder + "/main.html", Data))
+        if (!Utilities.LoadFile(BasicFolder + "/main.html", Data).Success)
             Data = "System error: can not load file /main.html";
         HTTPResponse.SetBody(Data);
     }

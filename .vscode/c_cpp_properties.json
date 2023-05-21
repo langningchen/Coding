@@ -8,7 +8,8 @@
             "defines": [],
             "compilerPath": "/usr/bin/g++",
             "intelliSenseMode": "linux-gcc-x64",
-            "configurationProvider": "ms-vscode.makefile-tools"
+            "configurationProvider": "ms-vscode.makefile-tools",
+            "cppStandard": "c++20"
         }
     ],
     "version": 4

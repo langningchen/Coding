@@ -18,6 +18,7 @@ private:
     configor::json CheckTokenAvailable(std::string Token);
     configor::json GetSubmission(int SubmissionID);
     configor::json Submit(std::string ProblemID, bool EnableO2, std::string Code);
+    configor::json GetProblem(std::string ProblemID);
 
     LOGGER Logger;
 

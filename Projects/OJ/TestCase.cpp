@@ -53,7 +53,7 @@ TEST_CASE::TEST_CASE(int ID, std::string TestGroupID, std::string Input, std::st
     this->TimeLimit = TimeLimit;
     this->MemoryLimit = MemoryLimit;
     this->Score = Score;
-    UpdateWorkDir();
+    UpdateWorkDirFromSubmission();
 }
 TEST_CASE::~TEST_CASE() {}
 
@@ -65,52 +65,28 @@ int TEST_CASE::GetTime() { return Time; }
 int TEST_CASE::GetMemory() { return Memory; }
 int TEST_CASE::GetScore() { return Score; }
 
-bool TEST_CASE::RedirectIO()
+RESULT TEST_CASE::RedirectIO()
 {
     if (freopen((WorkDir + "/" + IOFileName + ".in").c_str(), "r", stdin) == nullptr)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not open input data file";
-        Logger.Error("Can not open input data file \"" + IOFileName + ".in\"");
-        return false;
-    }
-    Logger.Info("Redirected stdin to \"" + IOFileName + ".in\"");
+        CREATE_RESULT(false, "Can not open input data file")
 
     if (IOFileName == std::to_string(ID))
     {
         if (freopen((WorkDir + "/" + IOFileName + ".out").c_str(), "w", stdout) == nullptr)
-        {
-            Result = JUDGE_RESULT::SYSTEM_ERROR;
-            Description = "Can not open output data file";
-            Logger.Error("Can not open output data file \"" + IOFileName + ".out\"");
-            return false;
-        }
-        Logger.Info("Redirected stdout to \"" + IOFileName + ".out\"");
+            CREATE_RESULT(false, "Can not open output data file");
     }
     else
     {
         if (freopen((WorkDir + "/std.out").c_str(), "w", stdout) == nullptr)
-        {
-            Result = JUDGE_RESULT::SYSTEM_ERROR;
-            Description = "Can not open output data file";
-            Logger.Error("Can not open output data file \"std.out\"");
-            return false;
-        }
-        Logger.Info("Redirected stdout to \"std.out\"");
+            CREATE_RESULT(false, "Can not open output data file")
     }
 
     if (freopen((WorkDir + "/std.err").c_str(), "w", stderr) == nullptr)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not open error data file";
-        Logger.Error("Can not open error data file \"std.err\"");
-        return false;
-    }
-    Logger.Info("Redirected stderr to \"std.err\"");
+        CREATE_RESULT(false, "Can not open error data file")
 
-    return true;
+    CREATE_RESULT(true, "Redirected IO")
 }
-bool TEST_CASE::SetupEnvrionment()
+RESULT TEST_CASE::SetupEnvrionment()
 {
     const std::string DirsToMake[7] = {
         "./root",
@@ -123,77 +99,29 @@ bool TEST_CASE::SetupEnvrionment()
     for (int i = 0; i < 7; i++)
     {
         if (mkdir(DirsToMake[i].c_str(), 0755) == -1)
-        {
-            Result = JUDGE_RESULT::SYSTEM_ERROR;
-            Description = "Can not create dir for the new root";
-            Logger.Error("Can not create dir " + DirsToMake[i] + " for the new root");
-            return false;
-        }
-        Logger.Info("Create dir \"" + DirsToMake[i] + "\" for the new root");
+            CREATE_RESULT(false, "Can not create dir for the new root")
     }
 
     if (chown("./root", Settings.GetJudgeUserID(), Settings.GetJudgeUserGroupID()) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not change the owner of the new root";
-        Logger.Error("Can not change the owner of the new root ./root");
-        return false;
-    }
-    Logger.Info("Changed the owner of the new root ./root");
+        CREATE_RESULT(false, "Can not change the owner of the new root")
 
     if (chown("./tmp", Settings.GetJudgeUserID(), Settings.GetJudgeUserGroupID()) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not change the owner of the new root";
-        Logger.Error("Can not change the owner of the new root ./tmp");
-        return false;
-    }
-    Logger.Info("Changed the owner of the new root ./tmp");
+        CREATE_RESULT(false, "Can not change the owner of the new root")
 
     if (mount("/usr", "./usr", "ext4", MS_BIND, nullptr) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not mount the new root";
-        Logger.Error("Can not mount the new root ./usr");
-        return false;
-    }
-    Logger.Info("Mounted ./usr");
+        CREATE_RESULT(false, "Can not mount the new root")
 
     if (mount("/usr", "./usr", "ext4", MS_BIND | MS_REMOUNT | MS_RDONLY, nullptr) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not remount the new root";
-        Logger.Error("Can not remount the new root ./usr");
-        return false;
-    }
-    Logger.Info("Remounted ./usr");
+        CREATE_RESULT(false, "Can not remount the new root")
 
     if (mount("/proc", "./proc", "proc", MS_BIND, nullptr) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not mount the new root";
-        Logger.Error("Can not mount the new root ./proc");
-        return false;
-    }
-    Logger.Info("Mounted ./proc");
+        CREATE_RESULT(false, "Can not mount the new root")
 
     if (mount("/dev", "./dev", "devtmpfs", MS_BIND, nullptr) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not mount the new root";
-        Logger.Error("Can not mount the new root ./dev");
-        return false;
-    }
-    Logger.Info("Mounted ./dev");
+        CREATE_RESULT(false, "Can not mount the new root")
 
     if (mount("/dev", "./dev", "devtmpfs", MS_BIND | MS_REMOUNT | MS_RDONLY, nullptr) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not remount the new root";
-        Logger.Error("Can not remount the new root ./dev");
-        return false;
-    }
-    Logger.Info("Remounted ./dev");
+        CREATE_RESULT(false, "Can not remount the new root")
 
     const std::string DirsToLink[5] = {
         "bin",
@@ -204,46 +132,21 @@ bool TEST_CASE::SetupEnvrionment()
     for (int i = 0; i < 5; i++)
     {
         if (symlink(("/usr/" + DirsToLink[i]).c_str(), DirsToLink[i].c_str()) == -1)
-        {
-            Result = JUDGE_RESULT::SYSTEM_ERROR;
-            Description = "Can not create symlink for the new root";
-            Logger.Error("Can not create symlink for the new root " + DirsToLink[i]);
-            return false;
-        }
-        Logger.Info("Created symlink for the new root " + DirsToLink[i]);
+            CREATE_RESULT(false, "Can not create symlink for the new root")
     }
 
-    if (!Utilities.CopyDir("/etc/alternatives", "./etc/alternatives"))
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not copy alternatives for the new root";
-        Logger.Error("Can not copy alternatives for the new root");
-        return false;
-    }
+    RETURN_IF_FAILED(Utilities.CopyDir("/etc/alternatives", "./etc/alternatives"))
 
     if (chroot(WorkDir.c_str()) != 0)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not change root dir";
-        Logger.Error("Can not change root dir " + WorkDir);
-        return false;
-    }
+        CREATE_RESULT(false, "Can not change root dir")
     Logger.SetLogFileName("Log.log");
-    Logger.Info("Changed root dir to " + WorkDir);
 
-    Logger.Warning("Environment setted");
-
-    return true;
+    CREATE_RESULT(true, "Environment setted")
 }
-bool TEST_CASE::RemoveEnvrionment()
+RESULT TEST_CASE::RemoveEnvrionment()
 {
     if (chdir(WorkDir.c_str()) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not change directory";
-        Logger.Error("Can not change directory to " + WorkDir);
-        return false;
-    }
+        CREATE_RESULT(false, "Can not change directory")
 
     const std::string DirsToUmount[4] = {
         "usr",
@@ -251,10 +154,7 @@ bool TEST_CASE::RemoveEnvrionment()
         "dev",
         "usr"};
     for (int i = 0; i < 4; i++)
-        if (umount(DirsToUmount[i].c_str()) == -1)
-            Logger.Warning("Can not unmount directory " + DirsToUmount[i]);
-        else
-            Logger.Info("Unmounted " + DirsToUmount[i]);
+        umount(DirsToUmount[i].c_str());
 
     const std::string FilesToRemove[5] = {
         "bin",
@@ -263,10 +163,7 @@ bool TEST_CASE::RemoveEnvrionment()
         "lib64",
         "libx32"};
     for (int i = 0; i < 5; i++)
-        if (remove(FilesToRemove[i].c_str()) == -1)
-            Logger.Warning("Can not remove file " + FilesToRemove[i]);
-        else
-            Logger.Info("Removed file \"" + FilesToRemove[i] + "\"");
+        remove(FilesToRemove[i].c_str());
 
     const std::string DirsToRemove[6] = {
         "root",
@@ -276,237 +173,128 @@ bool TEST_CASE::RemoveEnvrionment()
         "tmp",
         "usr"};
     for (int i = 0; i < 6; i++)
-        if (!Utilities.RemoveDir(DirsToRemove[i].c_str()))
-            Logger.Warning("Can not remove directory " + DirsToRemove[i]);
-        else
-            Logger.Info("Removed directory \"" + DirsToRemove[i] + "\"");
+        RETURN_IF_FAILED(Utilities.RemoveDir(DirsToRemove[i].c_str()))
 
-    Logger.Warning("Environment removed");
-
-    return true;
+    CREATE_RESULT(true, "Environment removed")
 }
-bool TEST_CASE::ChangeUser()
+RESULT TEST_CASE::ChangeUser()
 {
-    while (setgid(Settings.GetJudgeUserGroupID()) != 0)
-        sleep(1);
-    while (setuid(Settings.GetJudgeUserID()) != 0)
-        sleep(1);
-    while (setresuid(Settings.GetJudgeUserID(),
-                     Settings.GetJudgeUserID(),
-                     Settings.GetJudgeUserID()) != 0)
-        sleep(1);
-    while (setresgid(Settings.GetJudgeUserGroupID(),
-                     Settings.GetJudgeUserGroupID(),
-                     Settings.GetJudgeUserGroupID()) != 0)
-        sleep(1);
-    Logger.Info("Changed uid to " + std::to_string(Settings.GetJudgeUserID()) + " and gid to " + std::to_string(Settings.GetJudgeUserGroupID()));
+    if (setgid(Settings.GetJudgeUserGroupID()) != 0)
+        CREATE_RESULT(false, "Can not change gid")
+    if (setuid(Settings.GetJudgeUserID()) != 0)
+        CREATE_RESULT(false, "Can not change uid")
+    if (setresgid(Settings.GetJudgeUserGroupID(),
+                  Settings.GetJudgeUserGroupID(),
+                  Settings.GetJudgeUserGroupID()) != 0)
+        CREATE_RESULT(false, "Can not change real gid")
+    if (setresuid(Settings.GetJudgeUserID(),
+                  Settings.GetJudgeUserID(),
+                  Settings.GetJudgeUserID()) != 0)
+        CREATE_RESULT(false, "Can not change real uid")
 
-    return true;
+    CREATE_RESULT(true, "Changed uid and gid")
 }
-bool TEST_CASE::SetLimits()
+RESULT TEST_CASE::SetLimits()
 {
     struct rlimit Limit;
     Limit.rlim_cur = Limit.rlim_max = TimeLimit + 1;
     if (setrlimit(RLIMIT_CPU, &Limit))
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not set cpu limit";
-        Logger.Error("Can not set cpu limit");
-        return false;
-    }
-    Logger.Info("Set cpu limit to " + std::to_string(TimeLimit + 1));
+        CREATE_RESULT(false, "Can not set cpu limit")
 
     if (alarm(ceil(TimeLimit / 1000.0) + 1) != 0)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not set alarm";
-        Logger.Error("Can not set alarm to " + std::to_string(ceil(TimeLimit / 1000.0) + 1));
-        return false;
-    }
-    Logger.Info("Set alarm to " + std::to_string(ceil(TimeLimit / 1000.0) + 1));
+        CREATE_RESULT(false, "Can not set alarm")
 
     Limit.rlim_max = MemoryLimit + 1024 * 1024;
     Limit.rlim_cur = MemoryLimit;
     if (setrlimit(RLIMIT_AS, &Limit))
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not set memory limit";
-        Logger.Error("Can not set memory limit");
-        return false;
-    }
-    Logger.Info("Set memory limit to " + std::to_string(MemoryLimit + 1024 * 1024));
+        CREATE_RESULT(false, "Can not set memory limit")
 
     Limit.rlim_max = 32 * 1024 * 1024 + 1024 * 1024;
     Limit.rlim_cur = 32 * 1024 * 1024;
     if (setrlimit(RLIMIT_FSIZE, &Limit))
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not set file size limit";
-        Logger.Error("Can not set file size limit");
-        return false;
-    }
-    Logger.Info("Set file size limit to " + std::to_string(32 * 1024 * 1024 + 1024 * 1024));
+        CREATE_RESULT(false, "Can not set file size limit")
 
     Limit.rlim_max = Limit.rlim_cur = 1;
     if (setrlimit(RLIMIT_NPROC, &Limit))
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not set process limit";
-        Logger.Error("Can not set process limit");
-        return false;
-    }
-    Logger.Info("Set process limit to 1");
+        CREATE_RESULT(false, "Can not set process limit")
 
     Limit.rlim_max = 256 * 1024 * 1024 + 1024 * 1024;
     Limit.rlim_cur = 256 * 1024 * 1024;
     if (setrlimit(RLIMIT_STACK, &Limit))
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not set stack limit";
-        Logger.Error("Can not set stack limit");
-        return false;
-    }
-    Logger.Info("Set stack limit to " + std::to_string(256 * 1024 * 1024 + 1024 * 1024));
+        CREATE_RESULT(false, "Can not set stack limit")
 
     Limit.rlim_max = Limit.rlim_cur = 0;
     if (setrlimit(RLIMIT_CORE, &Limit))
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not set core limit";
-        Logger.Error("Can not set core limit");
-        return false;
-    }
-    Logger.Info("Set core limit to 0");
+        CREATE_RESULT(false, "Can not set core limit")
 
-    return true;
+    CREATE_RESULT(true, "Set limits")
 }
-void TEST_CASE::ChildProcess()
+RESULT TEST_CASE::ChildProcess()
 {
-    Logger.Info("Entered child process");
 
     if (nice(19) != 19)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not change nice value";
-        Logger.Error("Can not change nice value to 19");
-        return;
-    }
-    Logger.Info("Changed nice value to 19");
-
+        CREATE_RESULT(false, "Can not change nice value")
     if (chdir(WorkDir.c_str()) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not change to work dir";
-        Logger.Error("Can not change to work dir " + WorkDir);
-        return;
-    }
-    Logger.Info("Changed to work dir \"" + WorkDir + "\"");
+        CREATE_RESULT(false, "Can not change to work dir")
 
-    if (!RedirectIO() || !SetupEnvrionment() || !ChangeUser() || !SetLimits())
-        return;
+    RETURN_IF_FAILED(RedirectIO())
+    RETURN_IF_FAILED(SetupEnvrionment())
+    RETURN_IF_FAILED(ChangeUser())
+    RETURN_IF_FAILED(SetLimits())
 
     if (ptrace(PTRACE_TRACEME, 0, nullptr, nullptr) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not trace self";
-        Logger.Error("Can not trace self");
-        return;
-    }
-    Logger.Info("Traced self");
+        CREATE_RESULT(false, "Can not trace self")
 
-    for (int i = 0; i < 5; i++)
-    {
-        execl("/main", "main", nullptr);
-        if (errno != 26)
-            break;
-        Logger.Warning("Error 26");
-    }
+    execl("/main", "main", nullptr);
 
-    Result = JUDGE_RESULT::SYSTEM_ERROR;
-    Description = "Can not execute program";
-    Logger.Error("Can not execute program");
+    CREATE_RESULT(false, "Can not execute program");
 }
-bool TEST_CASE::CheckSignal()
+RESULT TEST_CASE::CheckSignal()
 {
     int Status;
     struct rusage Usage;
     if (wait4(PID, &Status, 0, &Usage) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not wait for child process";
-        Logger.Error("Can not wait for child process");
-        kill(PID, SIGKILL);
-        return false;
-    }
+        CREATE_RESULT(false, "Can not wait for child process")
+    Time = (Usage.ru_utime.tv_sec * 1000 + Usage.ru_utime.tv_usec / 1000) +
+           (Usage.ru_stime.tv_sec * 1000 + Usage.ru_stime.tv_usec / 1000);
     if (WIFEXITED(Status))
     {
         int ExitCode = WEXITSTATUS(Status);
-        Logger.Info("Child process exited with code " + std::to_string(ExitCode));
         if (ExitCode != 0)
         {
             Result = JUDGE_RESULT::RUNTIME_ERROR;
-            Description = "Child process exited with code " + std::to_string(ExitCode);
-            Logger.Warning("This is recognized as runtime error");
+            Description = "Child process exited with code " + std::to_string(ExitCode) + " which is recognized as runtime error";
+            CREATE_RESULT(false, "Child process exited with code " + std::to_string(ExitCode))
         }
-        Time = (Usage.ru_utime.tv_sec * 1000 + Usage.ru_utime.tv_usec / 1000) +
-               (Usage.ru_stime.tv_sec * 1000 + Usage.ru_stime.tv_usec / 1000);
-        if (Time > TimeLimit)
-        {
-            Result = JUDGE_RESULT::TIME_LIMIT_EXCEEDED;
-            Description = "Time limit exceeded";
-            Logger.Warning("Time limit exceeded");
-        }
-        return false;
+        Result = JUDGE_RESULT::JUDGED;
+        CREATE_RESULT(false, "Judged")
     }
     if (WIFSIGNALED(Status))
     {
         int Signal = WTERMSIG(Status);
-        Logger.Info("Child process terminated by signal " + std::to_string(Signal) + ": " + strsignal(Signal));
-        if (Signal == SIGVTALRM || Signal == SIGCHLD)
-        {
-            alarm(0);
-            Result = JUDGE_RESULT::TIME_LIMIT_EXCEEDED;
-            Description = "Time limit exceeded";
-            Logger.Warning("Time limit exceeded");
-            kill(PID, SIGKILL);
-        }
-        else if (Signal == SIGALRM || Signal == SIGXCPU)
+        if (Signal == SIGVTALRM || Signal == SIGALRM || Signal == SIGXCPU)
         {
             Result = JUDGE_RESULT::TIME_LIMIT_EXCEEDED;
-            Description = "Time limit exceeded";
-            Logger.Warning("Time limit exceeded");
-            kill(PID, SIGKILL);
+            DEBUG_HERE
+            CREATE_RESULT(false, "Time limit exceeded");
         }
         else if (Signal == SIGXFSZ)
         {
             Result = JUDGE_RESULT::OUTPUT_LIMIT_EXCEEDED;
-            Description = "Output limit exceeded";
-            Logger.Warning("Output limit exceeded");
-            kill(PID, SIGKILL);
+            CREATE_RESULT(false, "Output limit exceeded");
         }
         else if (Signal == SIGSEGV)
         {
             Result = JUDGE_RESULT::MEMORY_LIMIT_EXCEEDED;
-            Description = "Memory limit exceeded";
-            Logger.Warning("Memory limit exceeded");
-            kill(PID, SIGKILL);
+            CREATE_RESULT(false, "Memory limit exceeded");
         }
         else
         {
             Result = JUDGE_RESULT::RUNTIME_ERROR;
-            Description = "Child process terminated by signal " + std::to_string(Signal);
-            Logger.Warning("Can not recognize signal");
-            kill(PID, SIGKILL);
+            CREATE_RESULT(false, "Can not recognize signal");
         }
-        Time = (Usage.ru_utime.tv_sec * 1000 + Usage.ru_utime.tv_usec / 1000) +
-               (Usage.ru_stime.tv_sec * 1000 + Usage.ru_stime.tv_usec / 1000);
-        if (Time > TimeLimit)
-        {
-            Result = JUDGE_RESULT::TIME_LIMIT_EXCEEDED;
-            Description = "Time limit exceeded";
-            Logger.Warning("Time limit exceeded");
-        }
-        return false;
+        Result = JUDGE_RESULT::JUDGED;
+        CREATE_RESULT(false, "Got signal");
     }
     if (WIFSTOPPED(Status))
     {
@@ -514,196 +302,105 @@ bool TEST_CASE::CheckSignal()
         if (Signal == SIGTRAP)
         {
             if (ptrace(PTRACE_SYSCALL, PID, nullptr, nullptr) == -1)
-            {
-                Result = JUDGE_RESULT::SYSTEM_ERROR;
-                Description = "Can not continue child process";
-                Logger.Error("Can not continue child process");
-                kill(PID, SIGKILL);
-                return false;
-            }
+                CREATE_RESULT(false, "Can not continue child process");
         }
         else
         {
-            Logger.Info("Child process stopped by signal " + std::to_string(Signal) + ": " + strsignal(Signal));
             if (ptrace(PTRACE_SYSCALL, PID, nullptr, Signal) == -1)
-            {
-                Result = JUDGE_RESULT::SYSTEM_ERROR;
-                Description = "Can not continue child process";
-                Logger.Error("Can not continue child process");
-                kill(PID, SIGKILL);
-                return false;
-            }
+                CREATE_RESULT(false, "Can not continue child process");
         }
     }
-    return true;
+    CREATE_RESULT(true, "No signal");
 }
-bool TEST_CASE::CheckMemory()
+RESULT TEST_CASE::CheckMemory()
 {
     std::ifstream ProcessStatus("/proc/" + std::to_string(PID) + "/status");
     if (!ProcessStatus.is_open())
-    {
-        Logger.Warning("Can not open process status file /proc/" + std::to_string(PID) + "/status");
-        return true;
-    }
+        CREATE_RESULT(false, "Can not open process status file");
     std::string Line;
     while (std::getline(ProcessStatus, Line))
-    {
         if (Line.substr(0, 6) == "VmPeak")
         {
-            int CurrentMemory = std::stoi(Line.substr(7, Line.find("kB") - 7));
-            if (CurrentMemory > Memory)
-            {
-                Memory = CurrentMemory;
-                Logger.Info("Current memory usage is " + std::to_string(Memory) + "kB");
-            }
+            Memory = std::max(Memory, std::stoi(Line.substr(7, Line.find("kB") - 7)));
             if (Memory > MemoryLimit)
             {
                 Result = JUDGE_RESULT::MEMORY_LIMIT_EXCEEDED;
-                Description = "Memory limit exceeded";
-                Logger.Warning("Memory limit exceeded");
-                kill(PID, SIGKILL);
-                return false;
+                CREATE_RESULT(false, "Memory limit exceeded");
             }
             break;
         }
-    }
     ProcessStatus.close();
-    return true;
+    CREATE_RESULT(true, "Memory is OK");
 }
-bool TEST_CASE::CheckSystemCall()
+RESULT TEST_CASE::CheckSystemCall()
 {
     struct user_regs_struct Regs;
     if (ptrace(PTRACE_GETREGS, PID, nullptr, &Regs) == -1)
-    {
-        Logger.Warning("Can not get register of child process");
-        return true;
-    }
+        CREATE_RESULT(true, "Can not get registers")
     int CallID = (unsigned int)Regs.orig_rax % Settings.SystemCallCount;
     SystemCallCount[CallID]++;
-    Logger.Info("Child process tried to execute system call " + std::to_string(CallID) + ": \"" + Settings.GetSystemCallName(CallID) + "\" for " + std::to_string(SystemCallCount[CallID]) + " times");
     if (Settings.IsBannedSystemCall(CallID, SystemCallCount[CallID]))
     {
         Result = JUDGE_RESULT::RESTRICTED_FUNCTION;
         Description = "Child process tried to execute system call " + std::to_string(CallID);
-        Logger.Warning("The system call is banned");
-        kill(PID, SIGKILL);
-        return false;
+        CREATE_RESULT(false, "The system call is banned")
     }
     if (ptrace(PTRACE_SYSCALL, PID, nullptr, nullptr) != 0)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not trace system calls";
-        Logger.Error("Can not trace system calls");
-        kill(PID, SIGKILL);
-        return false;
-    }
-    return true;
+        CREATE_RESULT(false, "Can not trace system calls")
+    CREATE_RESULT(true, "No banned system call");
 }
-void TEST_CASE::ParentProcess()
+RESULT TEST_CASE::ParentProcess()
 {
-    Logger.Info("Entered parent process, child process is " + std::to_string(PID));
     while (1)
     {
-        Logger.Debug("Waiting for child process");
-
         if (Result != JUDGE_RESULT::JUDGING)
-        {
-            Logger.Warning("Judge stopped because of status is not JUDGING");
-            return;
-        }
+            CREATE_RESULT(true, "Judge stopped because of status is not JUDGING")
 
-        if (!CheckSignal() || !CheckMemory() || !CheckSystemCall())
-            return;
+        RETURN_IF_FAILED(CheckSignal())
+        RETURN_IF_FAILED(CheckMemory())
+        RETURN_IF_FAILED(CheckSystemCall())
     }
+    CREATE_RESULT(false, "Shouldn't go here");
 }
-void TEST_CASE::Run()
+RESULT TEST_CASE::Run()
 {
     std::ofstream InputFile(WorkDir + "/" + IOFileName + ".in");
     if (!InputFile.is_open())
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not open data file";
-        Logger.Error("Can not open data file " + WorkDir + "/" + IOFileName + ".in");
-        return;
-    }
+        CREATE_RESULT(false, "Can not open data file")
     InputFile << Input;
     InputFile.close();
-    Logger.Info("Input file written");
 
     if (chown((WorkDir + "/" + IOFileName + ".in").c_str(), Settings.GetJudgeUserID(), Settings.GetJudgeUserGroupID()) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not change group of input file";
-        Logger.Error("Can not change group of input file \"" + IOFileName + ".in\"");
-        return;
-    }
-    Logger.Info("Changed group of input file \"" + IOFileName + ".in\"");
+        CREATE_RESULT(false, "Can not change group of input file")
 
     if (chmod((WorkDir + "/" + IOFileName + ".in").c_str(), 0740) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not change permission of input file";
-        Logger.Error("Can not change permission of input file \"" + IOFileName + ".in\"");
-        return;
-    }
-    Logger.Info("Changed permission of input file \"" + IOFileName + ".in\"");
+        CREATE_RESULT(false, "Can not change permission of input file")
 
     std::ofstream OutputFile(WorkDir + "/" + IOFileName + ".out");
     if (!OutputFile.is_open())
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not open data file";
-        Logger.Error("Can not open data file \"" + WorkDir + "/" + IOFileName + ".out\"");
-        return;
-    }
+        CREATE_RESULT(false, "Can not open data file")
     OutputFile.close();
-    Logger.Info("Output file created");
 
     if (chown((WorkDir + "/" + IOFileName + ".out").c_str(), Settings.GetJudgeUserID(), Settings.GetJudgeUserGroupID()) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not change group of output file";
-        Logger.Error("Can not change group of output file \"" + IOFileName + ".out\"");
-        return;
-    }
-    Logger.Info("Changed group of output file \"" + IOFileName + ".out\"");
+        CREATE_RESULT(false, "Can not change group of output file")
 
     if (chmod((WorkDir + "/" + IOFileName + ".out").c_str(), 0760) == -1)
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not change permission of output file";
-        Logger.Error("Can not change permission of output file \"" + IOFileName + ".out\"");
-        return;
-    }
-    Logger.Info("Changed permission of output file \"" + IOFileName + ".out\"");
+        CREATE_RESULT(false, "Can not change permission of output file")
 
     std::ofstream StandardOutputFile(WorkDir + "/std.out");
     if (!StandardOutputFile.is_open())
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not open data file";
-        Logger.Error("Can not open data file \"" + WorkDir + "/std.out\"");
-        return;
-    }
+        CREATE_RESULT(false, "Can not open data file")
     StandardOutputFile.close();
-    Logger.Info("Standard error file created");
 
     std::ofstream StandardErrorFile(WorkDir + "/std.err");
     if (!StandardErrorFile.is_open())
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not open data file";
-        Logger.Error("Can not open data file \"" + WorkDir + "/std.err\"");
-        return;
-    }
+        CREATE_RESULT(false, "Can not open data file")
     StandardErrorFile.close();
-    Logger.Info("Standard error file created");
 
     pid_t PID = fork();
     if (PID == 0)
     {
-        ChildProcess();
-        Logger.Debug(GetJudgeResultColorString(Result));
+        RETURN_IF_FAILED(ChildProcess())
         exit(0);
     }
     else
@@ -712,54 +409,37 @@ void TEST_CASE::Run()
         ParentProcess();
         RemoveEnvrionment();
     }
+
+    CREATE_RESULT(true, "Run ended");
 }
-void TEST_CASE::Compare()
+RESULT TEST_CASE::Compare()
 {
-    if (Result != JUDGE_RESULT::JUDGING)
-    {
-        Logger.Warning("Can not compare test case because it is not judging");
-        return;
-    }
+    if (Result != JUDGE_RESULT::JUDGED)
+        CREATE_RESULT(true, "Judge stopped because of status is not JUDGED")
+
+    Result = JUDGE_RESULT::COMPARING;
 
     std::string Line;
     std::ifstream OutputFile(WorkDir + "/" + IOFileName + ".out");
     if (!OutputFile.is_open())
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not open data file";
-        Logger.Error("Can not open data file " + WorkDir + "/" + IOFileName + ".out");
-        return;
-    }
+        CREATE_RESULT(false, "Can not open data file")
     while (std::getline(OutputFile, Line))
         Output += Line + "\n";
     OutputFile.close();
-    Logger.Info("Output file read");
 
     std::ifstream StandardOutputFile(WorkDir + "/std.out");
     if (!StandardOutputFile.is_open())
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not open data file";
-        Logger.Error("Can not open data file " + WorkDir + "/std.out");
-        return;
-    }
+        CREATE_RESULT(false, "Can not open data file")
     while (std::getline(StandardOutputFile, Line))
         StandardOutput += Line + "\n";
     StandardOutputFile.close();
-    Logger.Info("Standard output file read");
 
     std::ifstream StandardErrorFile(WorkDir + "/std.err");
     if (!StandardErrorFile.is_open())
-    {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = "Can not open data file";
-        Logger.Error("Can not open data file " + WorkDir + "/std.err");
-        return;
-    }
+        CREATE_RESULT(false, "Can not open data file")
     while (std::getline(StandardErrorFile, Line))
         StandardError += Line + "\n";
     StandardErrorFile.close();
-    Logger.Info("Standard error file read");
 
     Output = Utilities.RemoveSpaces(Output);
     Answer = Utilities.RemoveSpaces(Answer);
@@ -774,13 +454,6 @@ void TEST_CASE::Compare()
     FixedAnswer = Utilities.StringReplaceAll(FixedAnswer, "\n", "");
     FixedAnswer = Utilities.StringReplaceAll(FixedAnswer, "\t", "");
     FixedAnswer = Utilities.StringReplaceAll(FixedAnswer, " ", "");
-
-    Logger.Info("Output: \"" + Output + "\"");
-    Logger.Info("Answer: \"" + Answer + "\"");
-    Logger.Info("Standard output: \"" + StandardOutput + "\"");
-    Logger.Info("Standard error: \"" + StandardError + "\"");
-    Logger.Info("Fixed output: \"" + FixedOutput + "\"");
-    Logger.Info("Fixed answer: \"" + FixedAnswer + "\"");
 
     if (StandardError != "")
     {
@@ -815,126 +488,114 @@ void TEST_CASE::Compare()
             Description = "Wrong answer";
         }
     }
+    CREATE_RESULT(true, "Compared");
 }
 
-bool TEST_CASE::LoadFromSubmission(std::string SubmissionID, std::string TestGroupID, std::string ID)
+RESULT TEST_CASE::LoadFromSubmission(std::string SubmissionID, std::string TestGroupID, std::string ID)
 {
     this->SubmissionID = SubmissionID;
     this->TestGroupID = TestGroupID;
     this->ID = atoi(ID.c_str());
-    UpdateWorkDir();
-    if (!Utilities.LoadFile(WorkDir + "/Result", (int &)Result) ||
-        !Utilities.LoadFile(WorkDir + "/Description", Description) ||
-        !Utilities.LoadFile(WorkDir + "/Time", Time) ||
-        !Utilities.LoadFile(WorkDir + "/TimeLimit", TimeLimit) ||
-        !Utilities.LoadFile(WorkDir + "/Memory", Memory) ||
-        !Utilities.LoadFile(WorkDir + "/MemoryLimit", MemoryLimit) ||
-        !Utilities.LoadFile(WorkDir + "/Score", Score) ||
-        !Utilities.LoadFile(WorkDir + "/Input", Input) ||
-        !Utilities.LoadFile(WorkDir + "/Answer", Answer) ||
-        !Utilities.LoadFile(WorkDir + "/IOFileName", IOFileName))
-    {
-        Logger.Error("Submission " + SubmissionID + " test group " + TestGroupID + " test case " + ID + " load failed");
-        return false;
-    }
-    Logger.Debug("Submission " + SubmissionID + " test group " + TestGroupID + " test case " + ID + " loaded");
-    return true;
+    UpdateWorkDirFromSubmission();
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Result", (int &)Result))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Description", Description))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Time", Time))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/TimeLimit", TimeLimit))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Memory", Memory))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/MemoryLimit", MemoryLimit))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Score", Score))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Input", Input))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Answer", Answer))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/IOFileName", IOFileName))
+    CREATE_RESULT(true, "Submission " + SubmissionID + " test group " + TestGroupID + " test case " + ID + " loaded");
 }
-bool TEST_CASE::LoadFromProblem(std::string ProblemID, std::string TestGroupID, std::string ID)
+RESULT TEST_CASE::LoadFromProblem(std::string ProblemID, std::string TestGroupID, std::string ID)
 {
-    std::string CurrentTestCaseBaseFolder = Settings.GetProblemBaseFolder() + "/" + ProblemID + "/TestGroups/" + TestGroupID + "/" + ID;
-    if (!Utilities.LoadFile(CurrentTestCaseBaseFolder + "/Input", Input) ||
-        !Utilities.LoadFile(CurrentTestCaseBaseFolder + "/Answer", Answer) ||
-        !Utilities.LoadFile(CurrentTestCaseBaseFolder + "/IOFileName", IOFileName) ||
-        !Utilities.LoadFile(CurrentTestCaseBaseFolder + "/TimeLimit", TimeLimit) ||
-        !Utilities.LoadFile(CurrentTestCaseBaseFolder + "/MemoryLimit", MemoryLimit) ||
-        !Utilities.LoadFile(CurrentTestCaseBaseFolder + "/Score", Score))
-    {
-        Logger.Warning("Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + ID + " load failed");
-        return false;
-    }
+    this->ProblemID = ProblemID;
+    this->TestGroupID = TestGroupID;
+    UpdateWorkDirFromProblem();
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Input", Input))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Answer", Answer))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/TimeLimit", TimeLimit))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/MemoryLimit", MemoryLimit))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Score", Score))
     this->ID = atoi(ID.c_str());
-    Logger.Debug("Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + ID + " loaded");
-    return true;
+    CREATE_RESULT(true, "Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + ID + " loaded");
 }
-bool TEST_CASE::SaveToProblem(std::string ProblemID, std::string TestGroupID)
+RESULT TEST_CASE::SaveToProblem(std::string ProblemID, std::string TestGroupID)
 {
-    std::string CurrentTestCaseBaseFolder = Settings.GetProblemBaseFolder() + "/" + ProblemID + "/TestGroups/" + TestGroupID + "/" + std::to_string(ID);
-    if (!Utilities.MakeDir(CurrentTestCaseBaseFolder) ||
-        !Utilities.SaveFile(CurrentTestCaseBaseFolder + "/Input", Input) ||
-        !Utilities.SaveFile(CurrentTestCaseBaseFolder + "/Answer", Answer) ||
-        !Utilities.SaveFile(CurrentTestCaseBaseFolder + "/IOFileName", IOFileName) ||
-        !Utilities.SaveFile(CurrentTestCaseBaseFolder + "/TimeLimit", TimeLimit) ||
-        !Utilities.SaveFile(CurrentTestCaseBaseFolder + "/MemoryLimit", MemoryLimit) ||
-        !Utilities.SaveFile(CurrentTestCaseBaseFolder + "/Score", Score))
-    {
-        Logger.Error("Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + std::to_string(ID) + " save failed");
-        return false;
-    }
-    Logger.Debug("Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + std::to_string(ID) + " saved");
-    return true;
+    this->ProblemID = ProblemID;
+    this->TestGroupID = TestGroupID;
+    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Input", Input))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Answer", Answer))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/TimeLimit", TimeLimit))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/MemoryLimit", MemoryLimit))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Score", Score))
+    CREATE_RESULT(true, "Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + std::to_string(ID) + " saved");
 }
-bool TEST_CASE::SaveToSubmission()
+RESULT TEST_CASE::SaveToSubmission()
 {
     Utilities.MakeDir(WorkDir);
-    if (!Utilities.SaveFile(WorkDir + "/Result", Result) ||
-        !Utilities.SaveFile(WorkDir + "/Description", Description) ||
-        !Utilities.SaveFile(WorkDir + "/Time", Time) ||
-        !Utilities.SaveFile(WorkDir + "/TimeLimit", TimeLimit) ||
-        !Utilities.SaveFile(WorkDir + "/Memory", Memory) ||
-        !Utilities.SaveFile(WorkDir + "/MemoryLimit", MemoryLimit) ||
-        !Utilities.SaveFile(WorkDir + "/Score", Score) ||
-        !Utilities.SaveFile(WorkDir + "/Input", Input) ||
-        !Utilities.SaveFile(WorkDir + "/Answer", Answer) ||
-        !Utilities.SaveFile(WorkDir + "/IOFileName", IOFileName))
-    {
-        Logger.Error("Submission " + SubmissionID + " test group " + TestGroupID + " test case " + std::to_string(ID) + " save failed");
-        return false;
-    }
-    Logger.Debug("Submission " + SubmissionID + " test group " + TestGroupID + " test case " + std::to_string(ID) + " saved");
-    return true;
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Result", Result))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Description", Description))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Time", Time))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/TimeLimit", TimeLimit))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Memory", Memory))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/MemoryLimit", MemoryLimit))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Score", Score))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Input", Input))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Answer", Answer))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/IOFileName", IOFileName))
+    CREATE_RESULT(true, "Submission " + SubmissionID + " test group " + TestGroupID + " test case " + std::to_string(ID) + " saved");
 }
-void TEST_CASE::UpdateWorkDir()
+RESULT TEST_CASE::UpdateWorkDirFromSubmission()
 {
     WorkDir = Settings.GetSubmissionBaseFolder() + "/" + SubmissionID + "/" + TestGroupID + "/" + std::to_string(ID);
-    if (!Utilities.MakeDir(WorkDir))
-        Logger.Error("Can not remake work dir \"" + WorkDir + "\"");
-    else
-        Logger.SetLogFileName(WorkDir + "/Log.log");
+    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
+    CREATE_RESULT(true, "Updated work dir from submission")
 }
-void TEST_CASE::Judge()
+RESULT TEST_CASE::UpdateWorkDirFromProblem()
 {
-    if (!Utilities.MakeDir(WorkDir))
-    {
-        this->Result = JUDGE_RESULT::SYSTEM_ERROR;
-        this->Description = "Can not remake working directory";
-        goto Exit;
-    }
+    WorkDir = Settings.GetProblemBaseFolder() + "/" + ProblemID + "/TestGroups/" + TestGroupID + "/" + std::to_string(ID);
+    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
+    CREATE_RESULT(true, "Updated work dir from problem")
+}
+RESULT TEST_CASE::Judge()
+{
+    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
+    RETURN_IF_FAILED(Utilities.CopyFile(WorkDir + "/../../main", WorkDir + "/main"))
 
-    if (!Utilities.CopyFile(WorkDir + "/../../main", WorkDir + "/main"))
-    {
-        this->Result = JUDGE_RESULT::SYSTEM_ERROR;
-        this->Description = "Can not copy program file";
-        goto Exit;
-    }
-    Logger.Info("Copied program file \"" + WorkDir + "/../../main\" to \"" + WorkDir + "/main\"");
-
-    Logger.Info("Start judging test case " + std::to_string(ID) + " of test group " + TestGroupID + " of submission " + SubmissionID);
     Result = JUDGE_RESULT::JUDGING;
-    SaveToSubmission();
+    RETURN_IF_FAILED(SaveToSubmission())
     if (IOFileName == "")
         IOFileName = std::to_string(ID);
-    Run();
-    Logger.Info("");
-    Compare();
-    Score = (Result == JUDGE_RESULT::ACCEPTED ? Score : 0);
-    Logger.Info("");
-    Logger.Info("Score: " + std::to_string(Score));
-    Logger.Info("Judge result: " + GetJudgeResultColorString(Result));
-    Logger.Info("Judge description: \"" + Description + "\"");
-    Logger.Info("Time: " + std::to_string(Time) + "ms");
-    Logger.Info("Memory: " + std::to_string(Memory) + "b");
 
-Exit:
-    SaveToSubmission();
+    RESULT RunResult = Run();
+    if (Time > TimeLimit)
+    {
+        Result = JUDGE_RESULT::TIME_LIMIT_EXCEEDED;
+        DEBUG_HERE
+        CREATE_RESULT(false, "Time limit exceeded")
+    }
+    kill(PID, SIGKILL);
+    waitpid(PID, nullptr, 0);
+    if (!RunResult.Success && Result == JUDGE_RESULT::JUDGING)
+    {
+        Result = JUDGE_RESULT::SYSTEM_ERROR;
+        Description = RunResult.Message;
+        CREATE_RESULT(true, "Judged with system error from run")
+    }
+
+    RESULT CompareResult = Compare();
+    if (!CompareResult.Success && Result == JUDGE_RESULT::JUDGING)
+    {
+        Result = JUDGE_RESULT::SYSTEM_ERROR;
+        Description = CompareResult.Message;
+        CREATE_RESULT(true, "Judged with system error from compare")
+    }
+
+    Score = (Result == JUDGE_RESULT::ACCEPTED ? Score : 0);
+
+    CREATE_RESULT(true, "Judged")
 }

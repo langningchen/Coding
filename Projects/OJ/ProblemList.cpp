@@ -19,14 +19,14 @@ bool PROBLEM_LIST::GetProblemPointer(std::string ProblemID, std::set<PROBLEM>::i
 PROBLEM_LIST::PROBLEM_LIST() {}
 PROBLEM_LIST::~PROBLEM_LIST() {}
 
-bool PROBLEM_LIST::Load()
+RESULT PROBLEM_LIST::Load()
 {
     Logger.SetLogFileName(Settings.GetBaseFolder() + "/ProblemList.log");
     DIR *Dir = opendir(Settings.GetProblemBaseFolder().c_str());
     if (Dir == nullptr)
     {
         Logger.Error("Problems load failed");
-        return false;
+        CREATE_RESULT(false, "Problems load failed")
     }
     struct dirent *DirEntry;
     while ((DirEntry = readdir(Dir)) != nullptr)
@@ -37,63 +37,63 @@ bool PROBLEM_LIST::Load()
             if (ProblemID == "." || ProblemID == "..")
                 continue;
             PROBLEM Temp;
-            if (Temp.Load(ProblemID))
-                AddProblem(Temp);
+            RETURN_IF_FAILED(Temp.Load(ProblemID))
+            Problems.insert(Temp);
         }
     }
-    return true;
+    closedir(Dir);
+        CREATE_RESULT(true, "Problems loaded")
 }
-bool PROBLEM_LIST::GetProblem(std::string ProblemID, PROBLEM &Result)
+RESULT PROBLEM_LIST::Save()
+{
+    for (auto i : Problems)
+        RETURN_IF_FAILED(i.Save())
+        CREATE_RESULT(true, "Problems saved")
+}
+RESULT PROBLEM_LIST::GetProblem(std::string ProblemID, PROBLEM &Result)
 {
     std::set<PROBLEM>::iterator TempResult;
     if (!GetProblemPointer(ProblemID, TempResult))
     {
         Logger.Warning("Problem \"" + ProblemID + "\" not found");
-        return false;
+        CREATE_RESULT(false, "Problem \"" + ProblemID + "\" not found")
     }
     Result = *TempResult;
-    return true;
+        CREATE_RESULT(true, "Problem \"" + ProblemID + "\" found")
 }
-bool PROBLEM_LIST::AddProblem(PROBLEM Problem)
+RESULT PROBLEM_LIST::AddProblem(PROBLEM Problem)
 {
     std::set<PROBLEM>::iterator Temp;
     if (GetProblemPointer(Problem.ID, Temp))
     {
         Logger.Warning("Problem \"" + Problem.ID + "\" already exists");
-        return false;
+        CREATE_RESULT(false, "Problem \"" + Problem.ID + "\" already exists")
     }
-    if (!Problem.Save())
-        return false;
     Problems.insert(Problem);
-    Logger.Info("Problem \"" + Problem.ID + "\" added");
-    return true;
+        CREATE_RESULT(true, "Problem \"" + Problem.ID + "\" added")
 }
-bool PROBLEM_LIST::RemoveProblem(std::string ProblemID)
+RESULT PROBLEM_LIST::RemoveProblem(std::string ProblemID)
 {
     std::set<PROBLEM>::iterator Problem;
     if (!GetProblemPointer(ProblemID, Problem))
     {
         Logger.Warning("Problem \"" + ProblemID + "\" not found");
-        return false;
+        CREATE_RESULT(false, "Problem \"" + ProblemID + "\" not found")
     }
-    if (!Utilities.RemoveDir(Settings.GetProblemBaseFolder() + "/" + ProblemID))
-        return false;
     Problems.erase(Problem);
-    Logger.Info("Problem \"" + ProblemID + "\" removed");
-    return true;
+        CREATE_RESULT(true, "Problem \"" + ProblemID + "\" removed")
 }
-bool PROBLEM_LIST::UpdateProblem(PROBLEM Problem)
+RESULT PROBLEM_LIST::UpdateProblem(PROBLEM Problem)
 {
     std::set<PROBLEM>::iterator Temp;
     if (!GetProblemPointer(Problem.ID, Temp))
     {
         Logger.Warning("Problem \"" + Problem.ID + "\" not found");
-        return false;
+        CREATE_RESULT(false, "Problem \"" + Problem.ID + "\" not found")
     }
-    RemoveProblem(Problem.ID);
-    AddProblem(Problem);
-    Logger.Info("Problem \"" + Problem.ID + "\" updated");
-    return true;
+    Problems.erase(Temp);
+    Problems.insert(Problem);
+        CREATE_RESULT(true, "Problem \"" + Problem.ID + "\" updated")
 }
 
 PROBLEM_LIST ProblemList;

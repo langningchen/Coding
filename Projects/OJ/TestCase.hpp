@@ -1,10 +1,10 @@
 #ifndef TEST_CASE_HPP
 #define TEST_CASE_HPP
 
+#include "Result.hpp"
 #include "Settings.hpp"
 #include "JudgeResult.hpp"
 #include "Logger.hpp"
-#include <string>
 
 class TEST_CASE
 {
@@ -18,6 +18,7 @@ private:
     std::string StandardError;
     std::string IOFileName;
     std::string SubmissionID;
+    std::string ProblemID;
     std::string TestGroupID;
     std::string WorkDir;
     JUDGE_RESULT Result = JUDGE_RESULT::UNKNOWN_ERROR;
@@ -30,18 +31,18 @@ private:
     int SystemCallCount[Settings.SystemCallCount] = {0};
     LOGGER Logger;
 
-    bool RedirectIO();
-    bool SetupEnvrionment();
-    bool RemoveEnvrionment();
-    bool ChangeUser();
-    bool SetLimits();
-    void ChildProcess();
-    bool CheckSignal();
-    bool CheckMemory();
-    bool CheckSystemCall();
-    void ParentProcess();
-    void Run();
-    void Compare();
+    RESULT RedirectIO();
+    RESULT SetupEnvrionment();
+    RESULT RemoveEnvrionment();
+    RESULT ChangeUser();
+    RESULT SetLimits();
+    RESULT ChildProcess();
+    RESULT CheckSignal();
+    RESULT CheckMemory();
+    RESULT CheckSystemCall();
+    RESULT ParentProcess();
+    RESULT Run();
+    RESULT Compare();
 
     friend class TEST_GROUP;
     friend class WEB_DATA_PROCEED;
@@ -63,12 +64,13 @@ public:
     int GetMemory();
     int GetScore();
 
-    bool LoadFromSubmission(std::string SubmissionID, std::string TestGroupID, std::string ID);
-    bool LoadFromProblem(std::string ProblemID, std::string TestGroupID, std::string ID);
-    bool SaveToSubmission();
-    bool SaveToProblem(std::string ProblemID, std::string TestGroupID);
-    void UpdateWorkDir();
-    void Judge();
+    RESULT LoadFromSubmission(std::string SubmissionID, std::string TestGroupID, std::string ID);
+    RESULT LoadFromProblem(std::string ProblemID, std::string TestGroupID, std::string ID);
+    RESULT SaveToSubmission();
+    RESULT SaveToProblem(std::string ProblemID, std::string TestGroupID);
+    RESULT UpdateWorkDirFromSubmission();
+    RESULT UpdateWorkDirFromProblem();
+    RESULT Judge();
 };
 
 struct TEST_CASE_DATA

@@ -70,5 +70,5 @@ jobs:
         cd ../../../
     - name: ClockIn for Etiger
       run: ./Projects/OJTool/build/main Etiger "${{ secrets.ETIGER_USERNAME }}" "${{ secrets.ETIGER_PASSWORD }}"
-    # - name: ClockIn for Luogu
-    #   run: ./Projects/OJTool/build/main Luogu "${{ secrets.LUOGU_USERNAME }}" "${{ secrets.LUOGU_PASSWORD }}"
+    - name: ClockIn for Luogu
+      run: ./Projects/OJTool/build/main Luogu "${{ secrets.LUOGU_USERNAME }}" "${{ secrets.LUOGU_PASSWORD }}"

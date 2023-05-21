@@ -27,31 +27,31 @@ private:
     bool EnableO2 = false;
     LOGGER Logger;
 
-    void UpdateWorkDir();
+    RESULT UpdateWorkDir();
     void UpdateAllResults(JUDGE_RESULT Result);
     void CopyTestGroups();
-    bool RedirectIO();
-    bool SetupEnvrionment();
-    bool RemoveEnvrionment();
-    bool ChangeUser();
-    bool SetLimits();
-    void ChildProcess();
-    void ParentProcess();
-    bool CreateFiles();
-    void Compile();
-    void RunTestGroups();
+    RESULT RedirectIO();
+    RESULT SetupEnvrionment();
+    RESULT RemoveEnvrionment();
+    RESULT ChangeUser();
+    RESULT SetLimits();
+    RESULT ChildProcess();
+    RESULT ParentProcess();
+    RESULT CreateFiles();
+    RESULT Compile();
+    RESULT RunTestGroups();
 
     friend class WEB_DATA_PROCEED;
     friend class JUDGING_LIST;
 
 public:
     SUBMISSION();
-    SUBMISSION(std::string Source, std::string ProblemID);
     ~SUBMISSION();
 
-    bool Load(int ID);
-    bool Save();
-    void Judge();
+    RESULT Load(int ID);
+    RESULT Save();
+    RESULT Set(std::string Source, std::string ProblemID);
+    RESULT Judge();
 };
 
 #endif

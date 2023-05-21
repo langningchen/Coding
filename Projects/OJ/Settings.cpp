@@ -1,48 +1,41 @@
 #include "Settings.hpp"
 #include "Utilities.hpp"
+#include "Database.hpp"
 #include <unistd.h>
 #include <fstream>
 #include <vector>
 #include <sys/stat.h>
 
-SETTINGS::SETTINGS()
-{
-}
+SETTINGS::SETTINGS() {}
 SETTINGS::~SETTINGS() {}
-void SETTINGS::Save()
+RESULT SETTINGS::Save()
 {
     CheckSettings();
     std::string SystemCallsString = "";
     for (int i = 0; i < SystemCallCount; i++)
         SystemCallsString += SystemCalls[i].Name + " " + std::to_string(SystemCalls[i].AvailableCount) + "\n";
-    if (!Utilities.SaveFile(SettingBaseFolder + "/JudgeUser", JudgeUser) ||
-        !Utilities.SaveFile(SettingBaseFolder + "/Compiler", Compiler) ||
-        !Utilities.SaveFile(SettingBaseFolder + "/SocketPort", std::to_string(SocketPort)) ||
-        !Utilities.SaveFile(SettingBaseFolder + "/CompileTimeLimit", std::to_string(CompileTimeLimit)) ||
-        !Utilities.SaveFile(SettingBaseFolder + "/CompileOutputLimit", std::to_string(CompileOutputLimit)) ||
-        !Utilities.SaveFile(SettingBaseFolder + "/Email", Email) ||
-        !Utilities.SaveFile(SettingBaseFolder + "/EmailPassword", EmailPassword) ||
-        !Utilities.SaveFile(SettingBaseFolder + "/SystemCalls", SystemCallsString))
-        Logger.Error("Can not save settings");
-    else
-        Logger.Debug("Settings saved");
+    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/JudgeUser", JudgeUser))
+    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/Compiler", Compiler))
+    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/SocketPort", std::to_string(SocketPort)))
+    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/CompileTimeLimit", std::to_string(CompileTimeLimit)))
+    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/CompileOutputLimit", std::to_string(CompileOutputLimit)))
+    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/Email", Email))
+    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/EmailPassword", EmailPassword))
+    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/SystemCalls", SystemCallsString))
+    CREATE_RESULT(true, "Settings saved")
 }
-void SETTINGS::Load(std::string JudgeUser)
+RESULT SETTINGS::Load(std::string JudgeUser)
 {
     std::string SettingBaseFolder = "/home/" + JudgeUser + "/Settings";
     std::string SystemCallsString;
-    if (!Utilities.LoadFile(SettingBaseFolder + "/JudgeUser", JudgeUser) ||
-        !Utilities.LoadFile(SettingBaseFolder + "/Compiler", Compiler) ||
-        !Utilities.LoadFile(SettingBaseFolder + "/SocketPort", SocketPort) ||
-        !Utilities.LoadFile(SettingBaseFolder + "/CompileTimeLimit", CompileTimeLimit) ||
-        !Utilities.LoadFile(SettingBaseFolder + "/CompileOutputLimit", CompileOutputLimit) ||
-        !Utilities.LoadFile(SettingBaseFolder + "/Email", Email) ||
-        !Utilities.LoadFile(SettingBaseFolder + "/EmailPassword", EmailPassword) ||
-        !Utilities.LoadFile(SettingBaseFolder + "/SystemCalls", SystemCallsString))
-    {
-        Logger.Error("Can not load settings");
-        return;
-    }
+    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/JudgeUser", JudgeUser))
+    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/Compiler", Compiler))
+    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/SocketPort", SocketPort))
+    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/CompileTimeLimit", CompileTimeLimit))
+    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/CompileOutputLimit", CompileOutputLimit))
+    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/Email", Email))
+    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/EmailPassword", EmailPassword))
+    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/SystemCalls", SystemCallsString))
     std::vector<std::string> SystemCallsLines;
     for (size_t i = 0; i < SystemCallsString.size(); i++)
         if (SystemCallsString[i] == '\n')
@@ -59,7 +52,7 @@ void SETTINGS::Load(std::string JudgeUser)
         SystemCalls[i].AvailableCount = SystemCallAvailableCount;
     }
     CheckSettings();
-    Logger.Debug("Settings loaded");
+    CREATE_RESULT(true, "Settings loaded")
 }
 
 std::string SETTINGS::GetBaseFolder() { return BaseFolder; }
@@ -99,11 +92,26 @@ int SETTINGS::GetCompileOutputLimit() { return CompileOutputLimit; }
 std::string SETTINGS::GetEmail() { return Email; }
 std::string SETTINGS::GetEmailPassword() { return EmailPassword; }
 
+std::string SETTINGS::DATABASE_SETTINGS::GetHost() { return Host; }
+int SETTINGS::DATABASE_SETTINGS::GetPort() { return Port; }
+std::string SETTINGS::DATABASE_SETTINGS::GetUsername() { return Username; }
+std::string SETTINGS::DATABASE_SETTINGS::GetPassword() { return Password; }
+std::string SETTINGS::DATABASE_SETTINGS::GetDatabaseName() { return DatabaseName; }
+RESULT SETTINGS::DATABASE_SETTINGS::Set(std::string Host, int Port, std::string Username, std::string Password, std::string DatabaseName)
+{
+    this->Host = Host;
+    this->Port = Port;
+    this->Username = Username;
+    this->Password = Password;
+    this->DatabaseName = DatabaseName;
+    RETURN_IF_FAILED(Database.Connect())
+    CREATE_RESULT(true, "Database settings set")
+}
+
 void SETTINGS::SetJudgeUser(std::string JudgeUser)
 {
     this->JudgeUser = JudgeUser;
     CheckJudgeUser();
-    Logger.Info("JudgeUser is set to " + JudgeUser);
 }
 void SETTINGS::SetSystemCallAvailableCount(int SystemCall, int AvailableCount)
 {
@@ -112,14 +120,12 @@ void SETTINGS::SetSystemCallAvailableCount(int SystemCall, int AvailableCount)
     else
     {
         SystemCalls[SystemCall].AvailableCount = AvailableCount;
-        Logger.Info("Set system call " + std::to_string(SystemCall) + " available count to " + std::to_string(AvailableCount));
     }
 }
 void SETTINGS::SetCompiler(std::string Compiler)
 {
     this->Compiler = Compiler;
     CheckCompiler();
-    Logger.Info("Compiler is set to " + Compiler);
 }
 void SETTINGS::SetSocketPort(int SocketPort) { this->SocketPort = SocketPort; }
 void SETTINGS::SetCompileTimeLimit(int CompileTimeLimit) { this->CompileTimeLimit = CompileTimeLimit; }
@@ -143,6 +149,7 @@ void SETTINGS::CheckJudgeUser()
     }
 
     Logger.SetLogFileName(Settings.GetBaseFolder() + "/Settings.log");
+    DatabaseSettings.Logger.SetLogFileName(Settings.GetBaseFolder() + "/Settings.log");
 
     SubmissionBaseFolder = BaseFolder + "/Submissions";
     if (access(SubmissionBaseFolder.c_str(), F_OK) == -1)
@@ -214,9 +221,6 @@ void SETTINGS::GetJudgeUserIDByUserName()
             StartPosition = EndPosition;
             EndPosition = Line.find(":", StartPosition);
             JudgeUserGroupID = atoi(Line.substr(StartPosition, EndPosition - StartPosition).c_str());
-            Logger.Debug("Judge user \"" + JudgeUser + "\" is " +
-                         std::to_string(JudgeUserID) + " in user id, " +
-                         "\"" + std::to_string(JudgeUserGroupID) + "\" in group id");
             // GetJudgeUserGroupNameByGroupID();
             return;
         }
@@ -235,8 +239,7 @@ void SETTINGS::GetJudgeUserIDByUserName()
 //         if (Line.substr(SecondColonPosition, ThirdColonPosition - SecondColonPosition) == std::to_string(JudgeUserGroupID))
 //         {
 //             JudgeUserGroup = Line.substr(0, FirstColonPosition);
-//             Logger.Info("Judge user group " + std::to_string(JudgeUserGroupID) + " is \"" + JudgeUserGroup + "\" in group name");
-//             return;
+//             //             return;
 //         }
 //     }
 //     Logger.Fetal("Judge user group " + std::to_string(JudgeUserGroupID) + " does not exist");

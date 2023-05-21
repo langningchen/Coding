@@ -14,7 +14,7 @@ build/
 Debug/
 Release/
 **/*.tmp
-CPH/*.*
+CPH/
 Etiger/*.md
 Etiger/*.in
 Etiger/*.out

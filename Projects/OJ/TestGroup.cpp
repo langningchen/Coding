@@ -26,39 +26,25 @@ TEST_GROUP::TEST_GROUP(const TEST_GROUP &Other)
 }
 TEST_GROUP::~TEST_GROUP() {}
 
-int TEST_GROUP::GetID() { return ID; }
 int TEST_GROUP::GetScore() { return Score; }
 JUDGE_RESULT TEST_GROUP::GetResult() { return Result; }
-std::string TEST_GROUP::GetSubmissionID() { return SubmissionID; }
-std::vector<TEST_CASE> TEST_GROUP::GetTestCases() { return TestCases; }
-int TEST_GROUP::GetTestCasesPassed() { return TestCasesPassed; }
-std::string TEST_GROUP::GetIOFileName() { return IOFileName; }
-JUDGE_RESULT TEST_GROUP::GetJudgeResult() { return Result; }
 int TEST_GROUP::GetTime() { return Time; }
-int TEST_GROUP::GetTimeSum() { return TimeSum; }
 int TEST_GROUP::GetMemory() { return Memory; }
 
-bool TEST_GROUP::LoadFromSubmission(std::string SubmissionID, std::string ID)
+RESULT TEST_GROUP::LoadFromSubmission(std::string SubmissionID, std::string ID)
 {
     this->SubmissionID = SubmissionID;
     this->ID = atoi(ID.c_str());
-    UpdateWorkDir();
-    if (!Utilities.LoadFile(WorkDir + "/Score", Score) ||
-        !Utilities.LoadFile(WorkDir + "/Result", (int &)Result) ||
-        !Utilities.LoadFile(WorkDir + "/TestCasesPassed", TestCasesPassed) ||
-        !Utilities.LoadFile(WorkDir + "/Time", Time) ||
-        !Utilities.LoadFile(WorkDir + "/TimeSum", TimeSum) ||
-        !Utilities.LoadFile(WorkDir + "/Memory", Memory))
-    {
-        Logger.Warning("Submission " + SubmissionID + " test group " + ID + " load failed1");
-        return false;
-    }
+    UpdateWorkDirFromSubmission();
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Score", Score))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Result", (int &)Result))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/TestCasesPassed", TestCasesPassed))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Time", Time))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/TimeSum", TimeSum))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Memory", Memory))
     DIR *Dir = opendir(WorkDir.c_str());
     if (Dir == nullptr)
-    {
-        Logger.Warning("Submission " + SubmissionID + " test group " + ID + " load failed2");
-        return false;
-    }
+        CREATE_RESULT(false, "Submission " + SubmissionID + " test group " + ID + " load failed")
     struct dirent *DirEntry;
     while ((DirEntry = readdir(Dir)) != nullptr)
     {
@@ -68,27 +54,21 @@ bool TEST_GROUP::LoadFromSubmission(std::string SubmissionID, std::string ID)
             if (TestCaseID == "." || TestCaseID == ".." || (TestCaseID != "0" && atoi(TestCaseID.c_str()) == 0))
                 continue;
             TEST_CASE TestCase;
-            if (!TestCase.LoadFromSubmission(SubmissionID, ID, TestCaseID))
-            {
-                Logger.Warning("Submission " + SubmissionID + " test group " + ID + " load failed because of test case " + TestCaseID);
-                return false;
-            }
+            RETURN_IF_FAILED(TestCase.LoadFromSubmission(SubmissionID, ID, TestCaseID))
             TestCases.push_back(TestCase);
         }
     }
     closedir(Dir);
-    Logger.Debug("Submission " + SubmissionID + " test group " + ID + " loaded");
-    return true;
+    CREATE_RESULT(true, "Submission " + SubmissionID + " test group " + ID + " loaded")
 }
-bool TEST_GROUP::LoadFromProblem(std::string ProblemID, std::string ID)
+RESULT TEST_GROUP::LoadFromProblem(std::string ProblemID, std::string ID)
 {
-    std::string CurrentTestGroupBaseFolder = Settings.GetProblemBaseFolder() + "/" + ProblemID + "/TestGroups/" + ID;
-    DIR *Dir = opendir(CurrentTestGroupBaseFolder.c_str());
+    this->ProblemID = ProblemID;
+    this->ID = atoi(ID.c_str());
+    UpdateWorkDirFromProblem();
+    DIR *Dir = opendir(WorkDir.c_str());
     if (Dir == nullptr)
-    {
-        Logger.Error("Problem \"" + ProblemID + "\" test group " + ID + " load failed");
-        return false;
-    }
+        CREATE_RESULT(false, "Problem \"" + ProblemID + "\" test group " + ID + " load failed")
     struct dirent *DirEntry;
     while ((DirEntry = readdir(Dir)) != nullptr)
     {
@@ -98,71 +78,80 @@ bool TEST_GROUP::LoadFromProblem(std::string ProblemID, std::string ID)
             if (TestCaseID == "." || TestCaseID == ".." || (TestCaseID != "0" && atoi(TestCaseID.c_str()) == 0))
                 continue;
             TEST_CASE TestCase;
-            if (!TestCase.LoadFromProblem(ProblemID, ID, TestCaseID))
-            {
-                Logger.Warning("Problem \"" + ProblemID + "\" test group " + ID + " load failed because of test case " + TestCaseID);
-                return false;
-            }
+            RETURN_IF_FAILED(TestCase.LoadFromProblem(ProblemID, ID, TestCaseID))
             TestCases.push_back(TestCase);
         }
     }
     closedir(Dir);
-    Logger.Debug("Problem \"" + ProblemID + "\" test group " + ID + " loaded");
-    return true;
+    CREATE_RESULT(true, "Problem \"" + ProblemID + "\" test group " + ID + " loaded")
 }
-bool TEST_GROUP::SaveToSubmission()
+RESULT TEST_GROUP::SaveToSubmission()
 {
+    UpdateWorkDirFromSubmission();
     Utilities.MakeDir(WorkDir);
-    if (!Utilities.SaveFile(WorkDir + "/Score", Score) ||
-        !Utilities.SaveFile(WorkDir + "/Result", Result) ||
-        !Utilities.SaveFile(WorkDir + "/TestCasesPassed", TestCasesPassed) ||
-        !Utilities.SaveFile(WorkDir + "/Time", Time) ||
-        !Utilities.SaveFile(WorkDir + "/TimeSum", TimeSum) ||
-        !Utilities.SaveFile(WorkDir + "/Memory", Memory))
-    {
-        Logger.Error("Submission " + SubmissionID + " test group " + std::to_string(ID) + " save failed");
-        return false;
-    }
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Score", Score))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Result", Result))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/TestCasesPassed", TestCasesPassed))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Time", Time))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/TimeSum", TimeSum))
+    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Memory", Memory))
     for (auto i : TestCases)
-        if (!i.SaveToSubmission())
-            return false;
-    Logger.Debug("Submission " + SubmissionID + " test group " + std::to_string(ID) + " saved");
-    return true;
+        RETURN_IF_FAILED(i.SaveToSubmission())
+    CREATE_RESULT(true, "Submission " + SubmissionID + " test group " + std::to_string(ID) + " saved")
+    // if (!Utilities.SaveFile(WorkDir + "/Score", Score) ||
+    //     !Utilities.SaveFile(WorkDir + "/Result", Result) ||
+    //     !Utilities.SaveFile(WorkDir + "/TestCasesPassed", TestCasesPassed) ||
+    //     !Utilities.SaveFile(WorkDir + "/Time", Time) ||
+    //     !Utilities.SaveFile(WorkDir + "/TimeSum", TimeSum) ||
+    //     !Utilities.SaveFile(WorkDir + "/Memory", Memory))
+    // {
+    //     Logger.Error("Submission " + SubmissionID + " test group " + std::to_string(ID) + " save failed");
+    //     return false;
+    // }
+    // for (auto i : TestCases)
+    //     if (!i.SaveToSubmission())
+    //         return false;
+    //     // return true;
 }
-bool TEST_GROUP::SaveToProblem(std::string ProblemID)
+RESULT TEST_GROUP::SaveToProblem(std::string ProblemID)
 {
-    std::string CurrentTestGroupBaseFolder = Settings.GetProblemBaseFolder() + "/" + ProblemID + "/TestGroups/" + std::to_string(ID);
-    if (!Utilities.MakeDir(CurrentTestGroupBaseFolder))
-        return false;
+    this->ProblemID = ProblemID;
+    UpdateWorkDirFromProblem();
+    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
     for (auto i : TestCases)
-        if (!i.SaveToProblem(ProblemID, std::to_string(ID)))
-        {
-            Logger.Error("Problem \"" + ProblemID + "\" test group " + std::to_string(ID) + " test case " + std::to_string(i.ID) + " save failed");
-            return false;
-        }
-    Logger.Debug("Problem \"" + ProblemID + "\" test groups saved");
-    return true;
+        RETURN_IF_FAILED(i.SaveToProblem(ProblemID, std::to_string(ID)))
+    CREATE_RESULT(true, "Problem \"" + ProblemID + "\" test group " + std::to_string(ID) + " saved")
 }
 void TEST_GROUP::AddTestCase(std::string Input, std::string Answer, int TimeLimit, int MemoryLimit, int Score)
 {
     TEST_CASE TestCase(TestCases.size(), std::to_string(ID), Input, Answer, IOFileName, SubmissionID, TimeLimit, MemoryLimit, Score);
     TestCases.push_back(TestCase);
 }
-void TEST_GROUP::UpdateWorkDir()
+RESULT TEST_GROUP::UpdateWorkDirFromSubmission()
 {
     WorkDir = Settings.GetSubmissionBaseFolder() + "/" + SubmissionID + "/" + std::to_string(ID);
-    if (!Utilities.MakeDir(WorkDir))
-        Logger.Error("Can not remake work dir \"" + WorkDir + "\"");
-    else
-        Logger.SetLogFileName(WorkDir + "/Log.log");
-    Logger.Info("Test group " + std::to_string(ID) + " of submission " + SubmissionID + " working directory updated to \"" + WorkDir + "\"");
-
+    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
+    Logger.SetLogFileName(WorkDir + "/Log.log");
     for (size_t i = 0; i < TestCases.size(); i++)
     {
         TestCases[i].SubmissionID = SubmissionID;
         TestCases[i].TestGroupID = std::to_string(ID);
-        TestCases[i].UpdateWorkDir();
+        RETURN_IF_FAILED(TestCases[i].UpdateWorkDirFromSubmission())
     }
+    CREATE_RESULT(true, "Submission " + SubmissionID + " test group " + std::to_string(ID) + " working directory updated")
+}
+RESULT TEST_GROUP::UpdateWorkDirFromProblem()
+{
+    WorkDir = Settings.GetProblemBaseFolder() + "/" + ProblemID + "/TestGroups/" + std::to_string(ID);
+    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
+    Logger.SetLogFileName(WorkDir + "/Log.log");
+    for (size_t i = 0; i < TestCases.size(); i++)
+    {
+        TestCases[i].ProblemID = ProblemID;
+        TestCases[i].TestGroupID = std::to_string(ID);
+        TestCases[i].UpdateWorkDirFromProblem();
+    }
+    CREATE_RESULT(true, "Problem \"" + ProblemID + "\" test group " + std::to_string(ID) + " working directory updated")
 }
 void TEST_GROUP::UpdateIOFileName()
 {
@@ -179,28 +168,26 @@ void TEST_GROUP::UpdateAllResults(JUDGE_RESULT Result)
 void TEST_GROUP::RunTestCases()
 {
     std::mutex Mutex;
-    std::vector<std::thread> Threads;
+    // std::vector<std::thread> Threads;
     for (size_t i = 0; i < TestCases.size(); i++)
     {
-        Threads.push_back(std::thread(
-            [this, i, &Mutex]()
-            {
-                Logger.Info("Test case " + std::to_string(i + 1) + " started");
-                TestCases[i].Judge();
-                Mutex.lock();
-                if (TestCases[i].GetResult() == JUDGE_RESULT::ACCEPTED)
-                    TestCasesPassed++;
-                Score += TestCases[i].GetScore();
-                ResultCount[TestCases[i].GetResult()]++;
-                Logger.Info("Test case " + std::to_string(i + 1) + " judged  result: " + GetJudgeResultColorString(TestCases[i].GetResult()) + "  " + TestCases[i].GetDescription() + "  " + std::to_string(TestCases[i].GetTime()) + "ms  " + std::to_string(TestCases[i].GetMemory()) + "b");
-                Time = std::max(Time, TestCases[i].GetTime());
-                TimeSum += TestCases[i].GetTime();
-                Memory = std::max(Memory, TestCases[i].GetMemory());
-                Mutex.unlock();
-            }));
+        // Threads.push_back(std::thread(
+        // [this, i, &Mutex]()
+        // {
+        TestCases[i].Judge();
+        // Mutex.lock();
+        if (TestCases[i].GetResult() == JUDGE_RESULT::ACCEPTED)
+            TestCasesPassed++;
+        Score += TestCases[i].GetScore();
+        ResultCount[TestCases[i].GetResult()]++;
+        Time = std::max(Time, TestCases[i].GetTime());
+        TimeSum += TestCases[i].GetTime();
+        Memory = std::max(Memory, TestCases[i].GetMemory());
+        // Mutex.unlock();
+        // }));
     }
-    for (size_t i = 0; i < Threads.size(); i++)
-        Threads[i].join();
+    // for (size_t i = 0; i < Threads.size(); i++)
+    //     Threads[i].join();
 
     int MaxCount = 0;
     JUDGE_RESULT MaxResult = JUDGE_RESULT::UNKNOWN_ERROR;
@@ -220,32 +207,13 @@ void TEST_GROUP::RunTestCases()
             SecondMaxResult = (JUDGE_RESULT)i;
         }
     Result = (SecondMaxCount == 0 || MaxResult != JUDGE_RESULT::ACCEPTED) ? MaxResult : SecondMaxResult;
-    Logger.Debug("Max result: " + GetJudgeResultColorString(MaxResult) + "  " + std::to_string(MaxCount));
-    Logger.Debug("Second max result: " + GetJudgeResultColorString(SecondMaxResult) + "  " + std::to_string(SecondMaxCount));
 }
 
-void TEST_GROUP::Judge()
+RESULT TEST_GROUP::Judge()
 {
-    if (!Utilities.MakeDir(WorkDir))
-    {
-        for (size_t i = 0; i < TestCases.size(); i++)
-        {
-            UpdateAllResults(JUDGE_RESULT::SYSTEM_ERROR);
-            TestCases[i].Description = "Can not remake working directory";
-        }
-        goto Exit;
-    }
+    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
 
-    Logger.Info("Start judging test group " + std::to_string(ID) + " of submission " + SubmissionID);
     RunTestCases();
-    Logger.Info("");
-    Logger.Info("Pass count: " + std::to_string(TestCasesPassed));
-    Logger.Info("Score: " + std::to_string(Score));
-    Logger.Info("Judge result: " + GetJudgeResultColorString(Result));
-    Logger.Info("Time: " + std::to_string(Time) + "ms");
-    Logger.Info("Time sum: " + std::to_string(TimeSum) + "ms");
-    Logger.Info("Memory: " + std::to_string(Memory) + "b");
 
-Exit:
-    SaveToSubmission();
+    CREATE_RESULT(true, "Test group " + std::to_string(ID) + " of submission " + SubmissionID + " judged")
 }

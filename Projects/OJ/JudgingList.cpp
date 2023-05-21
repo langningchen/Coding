@@ -21,19 +21,20 @@ void JUDGING_LIST::Init()
         while (true)
         {
             while (JudgingList.empty())
-                sleep(1);
+                usleep(100000);
             SUBMISSION Submission;
-            if (!Submission.Load(JudgingList.front()))
-                Logger.Warning("Failed to load submission " + std::to_string(JudgingList.front()));
+            OUTPUT_IF_FAILED(Submission.Load(JudgingList.front()))
             JudgingList.pop();
-            Submission.Judge();
+            OUTPUT_IF_FAILED(Submission.Judge())
+            Logger.Info(Submission.WorkDir);
+            OUTPUT_IF_FAILED(Submission.Save())
         } });
 }
 
-int JUDGING_LIST::Add(SUBMISSION Submission)
+RESULT JUDGING_LIST::Add(SUBMISSION Submission, int &SubmissionID)
 {
     SubmissionAddMutex.lock();
-    int SubmissionID = 0;
+    SubmissionID = 0;
     DIR *SubmissionDir = opendir(Settings.GetSubmissionBaseFolder().c_str());
     struct dirent *SubmissionDirEntry;
     while ((SubmissionDirEntry = readdir(SubmissionDir)) != NULL)
@@ -43,12 +44,11 @@ int JUDGING_LIST::Add(SUBMISSION Submission)
     Submission.ID = SubmissionID;
     Submission.UpdateWorkDir();
     Submission.CopyTestGroups();
-    if (Submission.Save())
-        JudgingList.push(SubmissionID);
-    else
-        SubmissionID = 0;
+    Logger.Info(Submission.WorkDir);
+    RETURN_IF_FAILED_WITH_OPERATION(Submission.Save(), SubmissionAddMutex.unlock())
+    JudgingList.push(SubmissionID);
     SubmissionAddMutex.unlock();
-    return SubmissionID;
+    CREATE_RESULT(true, "Submission added to judging list")
 }
 
 JUDGING_LIST JudgingList;

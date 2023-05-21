@@ -10,17 +10,14 @@ HTTP_REQUEST::HTTP_REQUEST(std::string Data)
     size_t VerbStartPosition = 0;
     size_t VerbEndPosition = Data.find(" ", VerbStartPosition);
     Verb = Data.substr(VerbStartPosition, VerbEndPosition - VerbStartPosition);
-    Logger.Debug("Verb is \"" + Verb + "\"");
 
     size_t PathStartPosition = VerbEndPosition + 1;
     size_t PathEndPosition = Data.find(" ", PathStartPosition);
     Path = Data.substr(PathStartPosition, PathEndPosition - PathStartPosition);
-    Logger.Debug("Path is \"" + Path + "\"");
 
     size_t VersionStartPosition = PathEndPosition + 1;
     size_t VersionEndPosition = Data.find("\n", VersionStartPosition);
     Version = Data.substr(VersionStartPosition, VersionEndPosition - VersionStartPosition);
-    Logger.Debug("Version is \"" + Version + "\"");
 
     std::string Line;
     for (size_t i = PathEndPosition + 1; i < Data.length(); i++)
@@ -41,7 +38,6 @@ HTTP_REQUEST::HTTP_REQUEST(std::string Data)
             std::string Value = Line.substr(ValueStartPosition, ValueEndPosition - ValueStartPosition);
 
             Headers[Name] = Value;
-            Logger.Debug("The value of header \"" + Name + "\" is \"" + Value + "\"");
 
             Line = "";
         }

@@ -105,6 +105,22 @@ const SwitchPage = (Name, Data) => {
     history.pushState(Data, Name, PushedURL.toString());
     LoadPage(Name, Data);
 };
+const MemoryToString = (Memory) => {
+    if (Memory < 1024) {
+        return Memory + "B";
+    } else if (Memory < 1024 * 1024) {
+        return Number(Memory / 1024).toFixed(0) + "KB";
+    } else {
+        return Number(Memory / 1024 / 1024).toFixed(0) + "MB";
+    }
+};
+const TimeToString = (Time) => {
+    if (Time < 1000) {
+        return Time + "ms";
+    } else {
+        return Number(Time / 1000).toFixed(0) + "s";
+    }
+};
 const LoadPage = (Name, Data) => {
     $("#Content>div").attr("style", "display: none;");
     $("#" + Name).attr("style", "");
@@ -474,7 +490,7 @@ const LoadPage = (Name, Data) => {
                 });
             }
             var SubmissionTexts = ["Submit record", "ID", "Status", "Refresh result", "Judging", "Judged"];
-            var SubmissionResultShortTexts = ["UKE", "AC", "PE", "WA", "TE", "ME", "OLE", "RE", "RF", "CE", "SE", "WT", "FC", "CP", "CPD", "JG", "SK", "RJ"];
+            var SubmissionResultShortTexts = ["UKE", "AC", "PE", "WA", "TE", "ME", "OLE", "RE", "RF", "CE", "SE", "WT", "FC", "CP", "CPD", "JG", "JGD", "CMP", "SK", "RJ"];
             $(".TestGroup").on("click", (Event) => {
                 Event.currentTarget.classList.toggle("HidedTestGroup");
             });
@@ -495,22 +511,6 @@ const LoadPage = (Name, Data) => {
                     $("#SubmissionRefresh").text(SubmissionTexts[3]);
                     $("#SubmissionJudgeResult").html("");
                 }, (Response) => {
-                    const MemoryToString = (Memory) => {
-                        if (Memory < 1024) {
-                            return Memory + "B";
-                        } else if (Memory < 1024 * 1024) {
-                            return Number(Memory / 1024).toFixed(0) + "KB";
-                        } else {
-                            return Number(Memory / 1024 / 1024).toFixed(0) + "MB";
-                        }
-                    };
-                    const TimeToString = (Time) => {
-                        if (Time < 1000) {
-                            return Time + "ms";
-                        } else {
-                            return Number(Time / 1000).toFixed(0) + "s";
-                        }
-                    };
                     $("#SubmissionStatusIcon")[0].className = "weui-icon_msg weui-icon-success";
                     $("#SubmissionStatusInput").attr("value", SubmissionTexts[5]);
                     $("#SubmissionJudgeResult")[0].className = "TestGroups JudgeResult" + SubmissionResultShortTexts[Response.Result];
@@ -552,6 +552,71 @@ const LoadPage = (Name, Data) => {
             var RefreshInterval = setInterval(() => {
                 $("#SubmissionRefresh").click();
             }, 1000);
+        },
+        "Problem": () => {
+            if (Data["ProblemID"] == null) {
+                SwitchPage("Error", {
+                    "Message": "No problem id provide",
+                    "URL": location.href
+                });
+            }
+            RequestAPI("GetProblem", {
+                "ProblemID": Data["ProblemID"]
+            }, () => { }, (Response) => {
+                var MarkdownData = "# " + Response.ID + ". " + Response.Title + "\n" +
+                    "## Description\n" +
+                    Response.Description + "\n" +
+                    "## Input\n" +
+                    Response.Input + "\n" +
+                    "## Output\n" +
+                    Response.Output + "\n";
+                if (Response.Samples.length > 0) {
+                    MarkdownData += "## Samples\n";
+                    Response.Samples.map((Sample) => {
+                        MarkdownData += "### Sample " + (Response.Samples.indexOf(Sample) + 1) + "\n" +
+                            "#### Input\n" +
+                            Sample.Input + "\n" +
+                            "#### Output\n" +
+                            Sample.Output + "\n";
+                        if (Sample.Description != "") {
+                            MarkdownData += "#### Description\n" +
+                                Sample.Description + "\n";
+                        }
+                    });
+                }
+                if (Response.Range != "") {
+                    MarkdownData += "## Range\n" +
+                        Response.Range + "\n";
+                }
+                if (Response.Hint != "") {
+                    MarkdownData += "## Hint\n" +
+                        Response.Hint + "\n";
+                }
+                MarkdownData += "## Other\n" +
+                    "| Key | Value |\n" +
+                    "|:----|:------|\n";
+                var MaxTimeLimit = 0;
+                var MaxMemoryLimit = 0;
+                Response.TestGroups.map((TestGroup) => {
+                    TestGroup.TestCases.map((TestCase) => {
+                        MaxTimeLimit = Math.max(MaxTimeLimit, TestCase.TimeLimit);
+                        MaxMemoryLimit = Math.max(MaxMemoryLimit, TestCase.MemoryLimit);
+                    });
+                });
+                MarkdownData += "| Time Limit | " + TimeToString(MaxTimeLimit) + " |\n" +
+                    "| Memory Limit | " + MemoryToString(MaxMemoryLimit) + " |\n" +
+                    "| Input filename | `" + (Response.InputFilename == "" ? Response.InputFilename : "Standard input") + "` |\n" +
+                    "| Output filename | `" + (Response.OutputFilename == "" ? Response.OutputFilename : "Standard output") + "` |\n";
+                $("#ProblemData").html(marked.parse(MarkdownData));
+                renderMathInElement(document.body,
+                    {
+                        delimiters: [
+                            { left: "$$", right: "$$", display: true },
+                            { left: "$", right: "$", display: false }
+                        ]
+                    }
+                );
+            }, () => { }, () => { });
         }
     };
     if (LoadPageCallbacks[Name]) {
@@ -564,8 +629,8 @@ const LoadPage = (Name, Data) => {
     }
 }
 $(() => {
-    let PageName = new String(new URL(location.href).pathname).substr(1) || "Login";
-    let PageParams = Object();
+    var PageName = new String(new URL(location.href).pathname).substr(1) || "Login";
+    var PageParams = Object();
     new URL(location.href).searchParams.forEach((Value, Key) => {
         PageParams[Key] = Value;
     });

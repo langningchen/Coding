@@ -16,6 +16,62 @@ let QuestionSize = 0;
 let AddedSubmissionCount = 0;
 let ProgressBar = null;
 let SubmitRecord = null;
+
+const SecondsToString = (InputSeconds) => {
+    let Hours = Math.floor(InputSeconds / 3600);
+    let Minutes = Math.floor((InputSeconds % 3600) / 60);
+    let Seconds = InputSeconds % 60;
+    return (Hours < 10 ? "0" : "") + Hours + ":" +
+        (Minutes < 10 ? "0" : "") + Minutes + ":" +
+        (Seconds < 10 ? "0" : "") + Seconds;
+}
+const StringToSeconds = (InputString) => {
+    let SplittedString = InputString.split(":");
+    return parseInt(SplittedString[0]) * 60 * 60 +
+        parseInt(SplittedString[1]) * 60 +
+        parseInt(SplittedString[2]);
+}
+const SizeToStringSize = (Memory) => {
+    if (Memory < 1024) {
+        return Memory + "B";
+    } else if (Memory < 1024 * 1024) {
+        return (Memory / 1024).toFixed(2) + "KB";
+    } else if (Memory < 1024 * 1024 * 1024) {
+        return (Memory / 1024 / 1024).toFixed(2) + "MB";
+    } else {
+        return (Memory / 1024 / 1024 / 1024).toFixed(2) + "GB";
+    }
+};
+const TimeToStringTime = (Time) => {
+    if (Time < 1000) {
+        return Time + "ms";
+    } else if (Time < 1000 * 60) {
+        return (Time / 1000).toFixed(2) + "s";
+    } else if (Time < 1000 * 60 * 60) {
+        return (Time / 1000 / 60).toFixed(2) + "min";
+    } else {
+        return (Time / 1000 / 60 / 60).toFixed(2) + "h";
+    }
+};
+setInterval(() => {
+    let Temp = document.getElementsByClassName("UpdateByJS");
+    for (let i = 0; i < Temp.length; i++) {
+        let TimeStamp = parseInt(Temp[i].getAttribute("EndTime"));
+        TimeStamp = TimeStamp - new Date().getTime() - diff;
+        if (TimeStamp < 0) {
+            location.reload();
+        }
+        let CurrentDate = new Date(TimeStamp);
+        let Day = parseInt(TimeStamp / 1000 / 60 / 60 / 24);
+        let Hour = CurrentDate.getUTCHours();
+        let Minute = CurrentDate.getUTCMinutes();
+        let Second = CurrentDate.getUTCSeconds();
+        Temp[i].innerText = (Day != 0 ? Day + "天" : "") +
+            (Hour < 10 ? "0" : "") + Hour + "小时" +
+            (Minute < 10 ? "0" : "") + Minute + "分" +
+            (Second < 10 ? "0" : "") + Second + "秒";
+    }
+}, 200);
 (async () => {
     "use strict";
     GM_registerMenuCommand("重置数据", () => {
@@ -45,21 +101,13 @@ let SubmitRecord = null;
     }
     document.querySelector("#navbar > ul:nth-child(1) > li:nth-child(2) > a").innerText = "题库";
 
-    if (location.href.indexOf("/comparesource.php?") == -1) {
         document.body.innerHTML =
             String(document.body.innerHTML).replaceAll(
                 /\[<a href="([^"]*)">([^<]*)<\/a>\]/g,
                 "<button onclick=\"location.href='$1'\" class=\"UserScriptDefinedButton\">$2</button>");
         document.body.innerHTML = String(document.body.innerHTML).replaceAll("小明", "高老师");
         document.body.innerHTML = String(document.body.innerHTML).replaceAll("下海", "上海");
-        document.title = String(document.title).replaceAll("小明", "高老师");
-    } else {
-        let CheckboxLable = document.createElement("label");
-        document.querySelector("body > div.container > div > table:nth-child(2) > tbody > tr > td").appendChild(CheckboxLable);
-        CheckboxLable.innerText = "忽略空白";
-        CheckboxLable.setAttribute("for", "ignorews");
-        document.querySelector("body > div.container > div > table:nth-child(2) > tbody > tr > td").childNodes[1].remove();
-    }
+    document.title = String(document.title).replaceAll("小明", "高老师");
 
     let Style = document.createElement("style");
     document.body.appendChild(Style);
@@ -201,28 +249,6 @@ let SubmitRecord = null;
             }
         }
     } else if (location.pathname == "/status.php") {
-        const SizeToStringSize = (Memory) => {
-            if (Memory < 1024) {
-                return Memory + "B";
-            } else if (Memory < 1024 * 1024) {
-                return (Memory / 1024).toFixed(2) + "KB";
-            } else if (Memory < 1024 * 1024 * 1024) {
-                return (Memory / 1024 / 1024).toFixed(2) + "MB";
-            } else {
-                return (Memory / 1024 / 1024 / 1024).toFixed(2) + "GB";
-            }
-        };
-        const TimeToStringTime = (Time) => {
-            if (Time < 1000) {
-                return Time + "ms";
-            } else if (Time < 1000 * 60) {
-                return (Time / 1000).toFixed(2) + "s";
-            } else if (Time < 1000 * 60 * 60) {
-                return (Time / 1000 / 60).toFixed(2) + "min";
-            } else {
-                return (Time / 1000 / 60 / 60).toFixed(2) + "h";
-            }
-        };
         document.querySelector("#simform > input:nth-child(2)").style.display = "none";
         document.querySelector("#simform").innerHTML = document.querySelector("#simform").innerHTML.replaceAll("用户:", "");
         document.querySelector("#simform").innerHTML = document.querySelector("#simform").innerHTML.replaceAll(":", ": ");
@@ -290,11 +316,7 @@ let SubmitRecord = null;
                     CurrentRow.cells[5].innerHTML = "<div id=\"center\" class=\"red\">" + SizeToStringSize(ResponseData[1]) + "</div>";
                     CurrentRow.cells[6].innerHTML = "<div id=\"center\" class=\"red\">" + TimeToStringTime(ResponseData[2]) + "</div>";
                     let TempHTML = "<span class=\"" + judge_color[ResponseData[0]] + "\">";
-                    if (ResponseData[0] == 6 || ResponseData[0] == 10 || ResponseData[0] == 11) {
-                        TempHTML += "<a style=\"color: white\" href=\"" + (ResponseData[0] == 11 ? "ce" : "re") + "info.php?sid=" + SolutionID + "\">" + judge_result[ResponseData[0]] + "</a>";
-                    } else {
-                        TempHTML += judge_result[ResponseData[0]];
-                    }
+                    TempHTML += "<a style=\"color: white\" href=\"" + (ResponseData[0] == 11 ? "ce" : "re") + "info.php?sid=" + SolutionID + "\">" + judge_result[ResponseData[0]] + "</a>";
                     TempHTML += "</span>";
                     if (Points[SolutionID] != undefined) {
                         TempHTML += "<span class=\"btn btn-info\">" + Points[SolutionID] + "</span>";
@@ -379,26 +401,6 @@ let SubmitRecord = null;
                 Temp[i].childNodes[3].style.display = "none";
                 Temp[i].childNodes[4].innerHTML = "<a href=\"userinfo.php?user=" + Temp[i].childNodes[4].innerHTML + "\">" + Temp[i].childNodes[4].innerHTML + "</a>";
             }
-
-            setInterval(() => {
-                Temp = document.getElementsByClassName("UpdateByJS");
-                for (let i = 0; i < Temp.length; i++) {
-                    let TimeStamp = parseInt(Temp[i].getAttribute("EndTime"));
-                    TimeStamp = TimeStamp - new Date().getTime() - diff;
-                    if (TimeStamp < 0) {
-                        location.reload();
-                    }
-                    let CurrentDate = new Date(TimeStamp);
-                    let Day = parseInt(TimeStamp / 1000 / 60 / 60 / 24);
-                    let Hour = CurrentDate.getUTCHours();
-                    let Minute = CurrentDate.getUTCMinutes();
-                    let Second = CurrentDate.getUTCSeconds();
-                    Temp[i].innerText = (Day != 0 ? Day + "天" : "") +
-                        (Hour < 10 ? "0" : "") + Hour + "小时" +
-                        (Minute < 10 ? "0" : "") + Minute + "分" +
-                        (Second < 10 ? "0" : "") + Second + "秒";
-                }
-            }, 200);
         } else {
             document.querySelector("body > div > div > center > br:nth-child(2)").remove();
             document.querySelector("body > div > div > center > br:nth-child(2)").remove();
@@ -438,6 +440,11 @@ let SubmitRecord = null;
             }
 
             document.querySelector("#problemset > thead > tr > td:nth-child(1)").innerText = "状态";
+
+            let Temp = document.querySelector("#problemset").rows;
+            for (let i = 1; i < Temp.length; i++) {
+                Temp[i].children[2].children[0].target = "_blank";
+            }
 
             document.querySelector("#problemset").style.marginTop = "10px";
             let OpenAllDiv = document.createElement("div");
@@ -521,6 +528,182 @@ let SubmitRecord = null;
             Show.style.height = "100%";
             Show.style.border = "none";
         } else if (new URL(location.href).searchParams.get("ByUserScript") != null) {
+            const ShowMetal = () => {
+                let Table = document.getElementById("rank").rows;
+                let ParticipantsNumbers = Table.length - 1;
+                for (let Rank = 1; Rank < Table.length; Rank++) {
+                    let MetalCell = Table[Rank].cells[0];
+                    MetalCell.innerHTML = (Rank == 1 ? "Winner" : Rank);
+                    if (Rank <= ParticipantsNumbers * 0.05 + 1) {
+                        MetalCell.className = "badge btn-warning";
+                    } else if (Rank <= ParticipantsNumbers * 0.20 + 1) {
+                        MetalCell.className = "badge";
+                    } else if (Rank <= ParticipantsNumbers * 0.45 + 1) {
+                        MetalCell.className = "badge btn-danger";
+                    } else {
+                        MetalCell.className = "badge badge-info";
+                    }
+                }
+            }
+            const AddSubmission = () => {
+                ProgressBar.setAttribute("value", AddedSubmissionCount);
+                if (AddedSubmissionCount >= SubmitRecord.length) {
+                    return ShowMetal();
+                }
+                let Submission = SubmitRecord[AddedSubmissionCount];
+                let Table = $("#rank");
+                let Row = FindRow(Table, Submission.user_id);
+                if (Row == null) {
+                    Table.append(CreateRowCode(Table, Submission));
+                }
+                Row = FindRow(Table, Submission.user_id);
+                UpdateRow(Row, Submission);
+                AddedSubmissionCount++;
+                SortTable(Table[0].rows);
+                ShowMetal();
+                setTimeout(() => {
+                    AddSubmission()
+                }, 10);
+            }
+            const SetColor = (Cell, IsAC, ErrorTimes) => {
+                ErrorTimes *= 10
+                if (ErrorTimes > 255) {
+                    ErrorTimes = 255;
+                }
+                if (IsAC && ErrorTimes > 200) {
+                    ErrorTimes = 200;
+                }
+                let Temp = IsAC ? ErrorTimes : 255 - ErrorTimes;
+                if (IsAC) {
+                    Cell.style = "background-color: rgb(" + Temp + ",255," + Temp + ");";
+                } else {
+                    Cell.style = "background-color: rgb(255," + Temp + "," + Temp + ");";
+                }
+            }
+            const UpdateRow = (Row, Submission) => {
+                let Colum = parseInt(Submission.num) + 5;
+                if (Colum > Row.cells.length - 1) {
+                    return;
+                }
+                let OldValue = Row.cells[Colum].innerHTML;
+                if (!(OldValue.charAt(0) == "-" || OldValue == "")) {
+                    return;
+                }
+                let ErrorTimes = 0;
+                if (OldValue != "") {
+                    ErrorTimes = parseInt(OldValue);
+                }
+                ErrorTimes = -ErrorTimes;
+                if (parseInt(Submission.result) == 4) {
+                    Row.cells[4].innerHTML = SecondsToString(
+                        StringToSeconds(Row.cells[4].innerHTML) +
+                        parseInt(Submission.in_date) + ErrorTimes * 5 * 60);
+                    Row.cells[Colum].innerHTML = SecondsToString(parseInt(Submission.in_date));
+                    if (ErrorTimes != 0) {
+                        Row.cells[Colum].innerHTML += "(-" + ErrorTimes + ")";
+                    }
+                    SetColor(Row.cells[Colum], true, ErrorTimes);
+                    Row.cells[3].innerHTML = parseInt(Row.cells[3].innerHTML) + 1;
+                } else {
+                    ErrorTimes++;
+                    Row.cells[Colum].innerHTML = "-" + ErrorTimes;
+                    SetColor(Row.cells[Colum], false, ErrorTimes);
+                }
+            }
+            const SortTable = (rows) => {
+                for (let i = 1; i < rows.length; i++) {
+                    if (rows[i].childNodes[1].innerText == document.getElementById("profile").innerText) {
+                        rows[i].style = "background-color: yellow;";
+                    }
+                    for (let j = 1; j < i; j++) {
+                        if (FirstBiggerThanSecond(rows[i], rows[j])) {
+                            SwapNode(rows[i], rows[j]);
+                        }
+                    }
+                }
+            }
+            const SwapNode = (Node1, Node2) => {
+                let Parent = Node1.parentNode;
+                let Node1NextSibling = Node1.nextSibling;
+                let Node2NextSibling = Node2.nextSibling;
+                if (Node1NextSibling) Parent.insertBefore(Node2, Node1NextSibling);
+                else Parent.appendChild(Node2);
+                if (Node2NextSibling) Parent.insertBefore(Node1, Node2NextSibling);
+                else Parent.appendChild(Node1);
+            }
+            const FirstBiggerThanSecond = (Node1, Node2) => {
+                let Node1AC = parseInt(Node1.cells[3].innerHTML);
+                let Node2AC = parseInt(Node2.cells[3].innerHTML);
+                if (Node1AC != Node2AC) {
+                    return Node1AC > Node2AC;
+                }
+                return StringToSeconds(Node1.cells[4].innerHTML) < StringToSeconds(Node2.cells[4].innerHTML);
+            }
+            const CreateRowCode = (Table, Submission) => {
+                let IsAC = (Submission.result == 4);
+                let Output = "<tr>";
+                Output += "<td></td>";
+                Output += "<td><a href=\"userinfo.php?user=" + Submission.user_id + "\">" + Submission.user_id + "</a></td>";
+                Output += "<td>" + (Submission.nick.length > 10 ? String(Submission.nick).substring(0, 10) + "..." : Submission.nick) + "</td>";
+                Output += "<td>" + (IsAC ? "1" : "0") + "</td>";
+                Output += "<td>" + SecondsToString(IsAC ? Submission.in_date : 0) + "</td>";
+                let ProblemCount = Table[0].rows[0].cells.length - 5;
+                for (let i = 0; i < ProblemCount; i++) {
+                    if (i == Submission.num) {
+                        Output += "<td class=\"well " + (IsAC ? "green" : "red") + "\">" +
+                            (IsAC ? SecondsToString(Submission.in_date) : -1) +
+                            "</td>";
+                    } else {
+                        Output += "<td class=\"well\" style=\"background-color:#eeeeee\"></td>";
+                    }
+                }
+                Output += "</tr>";
+                return Output;
+            }
+            const FindRow = (Table, UID) => {
+                Table = Table[0].rows;
+                for (let i = 0; i < Table.length; i++) {
+                    if (Table[i].cells[1].innerText == UID) {
+                        return Table[i];
+                    }
+                }
+                return null;
+            }
+            const PlaySubmission = () => {
+                document.querySelector("#rank > tbody").innerHTML = "";
+                let Data = "";
+                Data += "<tr class=\"toprow\">";
+                Data += "<th width=\"10%\" class=\"header\">排名</th>";
+                Data += "<th width=\"10%\" class=\"header\">用户</th>";
+                Data += "<th width=\"15%\" class=\"header\">昵称</th>";
+                Data += "<th width=\"5%\" class=\"header\">AC数</th>";
+                Data += "<th width=\"10%\" class=\"header\">罚时</th>";
+                for (let i = 0; i < QuestionSize; i++) {
+                    Data += "<th width=\"" + (50 / QuestionSize) + "%\" class=\"header\">" +
+                        "<a href=\"problem.php?" + location.href.substr(location.href.indexOf("cid=")) + "&pid=" + i + "\">" + String.fromCharCode(65 + i) + "</a>" +
+                        "</th>";
+                }
+                Data += "</tr>";
+                document.querySelector("#rank > thead").innerHTML = Data;
+                ProgressBar.setAttribute("max", SubmitRecord.length);
+                AddedSubmissionCount = 0;
+                AddSubmission();
+            }
+            const ReloadRank = async () => {
+                document.getElementsByTagName("progress")[0].removeAttribute("max");
+                document.getElementsByTagName("progress")[0].removeAttribute("value");
+                let NewURL = new URL(location.href);
+                NewURL.pathname = "/contestrank2.php";
+                await fetch(NewURL.toString())
+                    .then(Response => Response.text())
+                    .then(Response => {
+                        let StartPosition = Response.indexOf("var solutions=");
+                        StartPosition += 14;
+                        let EndPosition = Response.indexOf("}];", StartPosition) + 2;
+                        SubmitRecord = JSON.parse(Response.substring(StartPosition, EndPosition));
+                        PlaySubmission();
+                    });
+            }
             document.getElementById("rank").style.width = "100%";
             document.querySelector("body > div.container > div > center").style.paddingBottom = "10px";
             document.querySelector("body > div.container > div > center > a").style.display = "none";
@@ -617,7 +800,7 @@ let SubmitRecord = null;
         let PassCheck = document.createElement("button");
         PassCheck.classList.add("UserScriptDefinedButton");
         PassCheck.style.marginTop = "10px";
-        PassCheck.innerText = "我没错！让我提交！";
+        PassCheck.innerText = "强制提交";
         PassCheck.onclick = () => {
             document.querySelector("#Submit").disabled = true;
             document.querySelector("#Submit").value = "正在提交...";
@@ -673,12 +856,17 @@ let SubmitRecord = null;
                 document.querySelector("#Submit").value = "提交";
                 return false;
             }
+            let TimeoutController = new AbortController();
+            setTimeout(() => {
+                TimeoutController.abort();
+            }, 3000);
             await fetch("https://gcc.godbolt.org/api/compiler/g131/compile", {
                 "headers": {
                     "accept": "application/json"
                 },
                 "body": Source,
-                "method": "POST"
+                "method": "POST",
+                "signal": TimeoutController.signal
             })
                 .then(Response => Response.json())
                 .then(Response => {
@@ -695,11 +883,18 @@ let SubmitRecord = null;
                         document.querySelector("#Submit").value = "提交";
                         return false;
                     }
+                }).catch((Error) => {
+                    let ErrorString = (Error.message == "The user aborted a request." ? "编译超时" : Error.message);
+                    ErrorElement.style.display = "block";
+                    ErrorMessage.style.color = "red";
+                    ErrorMessage.innerText = "预编译失败：" + ErrorString + "，请重试或者点击下方按钮强制提交";
+                    document.querySelector("#Submit").disabled = false;
+                    document.querySelector("#Submit").value = "提交";
+                    return false;
                 });
             if (ErrorElement.style.display == "none") {
                 PassCheck.click();
             }
-            return true;
         };
     } else if (location.pathname == "/modifypage.php") {
         document.querySelector("body > div.container > div > form > center > table > tbody > tr:nth-child(1) > td").innerText = "修改账号";
@@ -796,30 +991,48 @@ let SubmitRecord = null;
             }
         }
     } else if (location.pathname == "/comparesource.php") {
-        document.querySelector("body > div.container > div").innerHTML = "";
-        let LeftCodeText = document.createElement("span");
-        document.querySelector("body > div.container > div").appendChild(LeftCodeText);
-        LeftCodeText.innerText = "左侧代码的运行编号：";
-        let LeftCode = document.createElement("input");
-        document.querySelector("body > div.container > div").appendChild(LeftCode);
-        LeftCode.classList.add("form-control");
-        LeftCode.style.width = "40%";
-        LeftCode.style.marginBottom = "5px";
-        let RightCodeText = document.createElement("span");
-        document.querySelector("body > div.container > div").appendChild(RightCodeText);
-        RightCodeText.innerText = "右侧代码的运行编号：";
-        let RightCode = document.createElement("input");
-        document.querySelector("body > div.container > div").appendChild(RightCode);
-        RightCode.classList.add("form-control");
-        RightCode.style.width = "40%";
-        RightCode.style.marginBottom = "5px";
-        let CompareButton = document.createElement("button");
-        document.querySelector("body > div.container > div").appendChild(CompareButton);
-        CompareButton.innerText = "比较";
-        CompareButton.classList.add("UserScriptDefinedButton");
-        CompareButton.onclick = () => {
-            location.href = "/comparesource.php?left=" + LeftCode.value + "&right=" + RightCode.value;
-        };
+        if (window.location.search == "") {
+            document.querySelector("body > div.container > div").innerHTML = "";
+            let LeftCodeText = document.createElement("span");
+            document.querySelector("body > div.container > div").appendChild(LeftCodeText);
+            LeftCodeText.innerText = "左侧代码的运行编号：";
+            let LeftCode = document.createElement("input");
+            document.querySelector("body > div.container > div").appendChild(LeftCode);
+            LeftCode.classList.add("form-control");
+            LeftCode.style.width = "40%";
+            LeftCode.style.marginBottom = "5px";
+            let RightCodeText = document.createElement("span");
+            document.querySelector("body > div.container > div").appendChild(RightCodeText);
+            RightCodeText.innerText = "右侧代码的运行编号：";
+            let RightCode = document.createElement("input");
+            document.querySelector("body > div.container > div").appendChild(RightCode);
+            RightCode.classList.add("form-control");
+            RightCode.style.width = "40%";
+            RightCode.style.marginBottom = "5px";
+            let CompareButton = document.createElement("button");
+            document.querySelector("body > div.container > div").appendChild(CompareButton);
+            CompareButton.innerText = "比较";
+            CompareButton.classList.add("UserScriptDefinedButton");
+            CompareButton.onclick = () => {
+                location.href = "/comparesource.php?left=" + LeftCode.value + "&right=" + RightCode.value;
+            };
+        }
+        else {
+            let CheckboxLabel = document.createElement("label");
+            document.querySelector("body > div.container > div > table:nth-child(2) > tbody > tr > td").appendChild(CheckboxLabel);
+            CheckboxLabel.innerText = "忽略空白";
+            CheckboxLabel.setAttribute("for", "ignorews");
+            debugger;
+            document.querySelector("body > div.container > div > table:nth-child(2) > tbody > tr > td").childNodes[1].remove();
+            document.querySelector("body > div.container > div > table:nth-child(4) > tbody > tr").children[0].children[1].innerText = "保存代码";
+            document.querySelector("body > div.container > div > table:nth-child(4) > tbody > tr").children[0].children[1].download = new URLSearchParams(window.location.search).get("left") + ".cpp";
+            document.querySelector("body > div.container > div > table:nth-child(4) > tbody > tr").children[1].children[1].innerText = "保存代码";
+            document.querySelector("body > div.container > div > table:nth-child(4) > tbody > tr").children[1].children[1].download = new URLSearchParams(window.location.search).get("right") + ".cpp";
+            setInterval(() => {
+                document.querySelector("body > div.container > div > table:nth-child(4) > tbody > tr").children[0].children[0].innerText = "左侧代码" + new URLSearchParams(window.location.search).get("left");
+                document.querySelector("body > div.container > div > table:nth-child(4) > tbody > tr").children[1].children[0].innerText = "右侧代码" + new URLSearchParams(window.location.search).get("right");
+            }, 500);
+        }
     } else if (location.pathname == "/loginpage.php") {
         let ErrorText = document.createElement("div");
         ErrorText.style.color = "red";
@@ -875,6 +1088,7 @@ let SubmitRecord = null;
             LoginButton.click();
         }
     } else if (location.pathname == "/contest_video.php") {
+        document.getElementById("J_prismPlayer0").innerHTML = "";
         let ScriptData = document.querySelector("body > div > div > center > script").innerHTML;
         eval(ScriptData);
         ScriptData = ScriptData.substr(ScriptData.indexOf("{"));
@@ -928,6 +1142,30 @@ let SubmitRecord = null;
             });
     } else if (location.pathname == "/login.php") {
         location.href = "/loginpage.php";
+    } else if (location.pathname == "/reinfo.php") {
+        for (let i = 0; i < document.querySelector("#results > div").children.length; i++) {
+            let CurrentElement = document.querySelector("#results > div").children[i].children[0].children[0].children[0];
+            let Temp = CurrentElement.innerText.substr(0, CurrentElement.innerText.length - 2).split("/");
+            CurrentElement.innerText = TimeToStringTime(Temp[0]) + "/" + SizeToStringSize(Temp[1]);
+        }
+    } else if (location.pathname == "/showsource.php") {
+        const GetSource = async (SubmissionID) => {
+            return await fetch("/showsource.php?id=" + SubmissionID)
+                .then(Response => { return Response.text(); })
+                .then(Response => {
+                    let Code = Response;
+                    Code = Code.substr(Code.indexOf("<pre"));
+                    Code = Code.substr(0, Code.indexOf("</pre>"));
+                    Code = Code.substr(Code.indexOf(">") + 1);
+                    Code = Code.substr(0, Code.lastIndexOf("/*"));
+                    Code = Code.replaceAll("&lt;", "<");
+                    Code = Code.replaceAll("&gt;", ">");
+                    Code = Code.replaceAll("&amp;", "&");
+                    Code = Code.replaceAll("&quot;", "\"");
+                    Code = Code.replaceAll("&nbsp;", " ");
+                    return Code;
+                });
+        };
     }
 
 
@@ -982,12 +1220,12 @@ let SubmitRecord = null;
         }
         else {
             if (document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(3) > a > span").innerText != "个人中心") {
-            document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(3) > a > span").innerText = "个人中心";
-            document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(4)").style.display = "none";
-            document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(5)").style.display = "none";
-            document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(6)").style.display = "none";
-            document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul").innerHTML = String(document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul").innerHTML).replaceAll("&nbsp;", "");
-        }
+                document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(3) > a > span").innerText = "个人中心";
+                document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(4)").style.display = "none";
+                document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(5)").style.display = "none";
+                document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul > li:nth-child(6)").style.display = "none";
+                document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul").innerHTML = String(document.querySelector("#navbar > ul.nav.navbar-nav.navbar-right > li > ul").innerHTML).replaceAll("&nbsp;", "");
+            }
         }
     }, 100);
 
@@ -997,205 +1235,32 @@ let SubmitRecord = null;
     }
 })();
 
-const ShowMetal = () => {
-    let Table = document.getElementById("rank").rows;
-    let ParticipantsNumbers = Table.length - 1;
-    for (let Rank = 1; Rank < Table.length; Rank++) {
-        let MetalCell = Table[Rank].cells[0];
-        MetalCell.innerHTML = (Rank == 1 ? "Winner" : Rank);
-        if (Rank <= ParticipantsNumbers * 0.05 + 1) {
-            MetalCell.className = "badge btn-warning";
-        } else if (Rank <= ParticipantsNumbers * 0.20 + 1) {
-            MetalCell.className = "badge";
-        } else if (Rank <= ParticipantsNumbers * 0.45 + 1) {
-            MetalCell.className = "badge btn-danger";
-        } else {
-            MetalCell.className = "badge badge-info";
-        }
-    }
-}
-
-const AddSubmission = () => {
-    ProgressBar.setAttribute("value", AddedSubmissionCount);
-    if (AddedSubmissionCount >= SubmitRecord.length) {
-        return ShowMetal();
-    }
-    let Submission = SubmitRecord[AddedSubmissionCount];
-    let Table = $("#rank");
-    let Row = FindRow(Table, Submission.user_id);
-    if (Row == null) {
-        Table.append(CreateRowCode(Table, Submission));
-    }
-    Row = FindRow(Table, Submission.user_id);
-    UpdateRow(Row, Submission);
-    AddedSubmissionCount++;
-    SortTable(Table[0].rows);
-    ShowMetal();
-    setTimeout(() => {
-        AddSubmission()
-    }, 10);
-}
-
-const SecondsToString = (InputSeconds) => {
-    let Hours = Math.floor(InputSeconds / 3600);
-    let Minutes = Math.floor((InputSeconds % 3600) / 60);
-    let Seconds = InputSeconds % 60;
-    return (Hours < 10 ? "0" : "") + Hours + ":" +
-        (Minutes < 10 ? "0" : "") + Minutes + ":" +
-        (Seconds < 10 ? "0" : "") + Seconds;
-}
-
-const StringToSeconds = (InputString) => {
-    let SplittedString = InputString.split(":");
-    return parseInt(SplittedString[0]) * 60 * 60 +
-        parseInt(SplittedString[1]) * 60 +
-        parseInt(SplittedString[2]);
-}
-
-const SetColor = (Cell, IsAC, ErrorTimes) => {
-    ErrorTimes *= 10
-    if (ErrorTimes > 255) {
-        ErrorTimes = 255;
-    }
-    if (IsAC && ErrorTimes > 200) {
-        ErrorTimes = 200;
-    }
-    let Temp = IsAC ? ErrorTimes : 255 - ErrorTimes;
-    if (IsAC) {
-        Cell.style = "background-color: rgb(" + Temp + ",255," + Temp + ");";
-    } else {
-        Cell.style = "background-color: rgb(255," + Temp + "," + Temp + ");";
-    }
-}
-
-const UpdateRow = (Row, Submission) => {
-    let Colum = parseInt(Submission.num) + 5;
-    if (Colum > Row.cells.length - 1) {
-        return;
-    }
-    let OldValue = Row.cells[Colum].innerHTML;
-    if (!(OldValue.charAt(0) == "-" || OldValue == "")) {
-        return;
-    }
-    let ErrorTimes = 0;
-    if (OldValue != "") {
-        ErrorTimes = parseInt(OldValue);
-    }
-    ErrorTimes = -ErrorTimes;
-    if (parseInt(Submission.result) == 4) {
-        Row.cells[4].innerHTML = SecondsToString(
-            StringToSeconds(Row.cells[4].innerHTML) +
-            parseInt(Submission.in_date) + ErrorTimes * 5 * 60);
-        Row.cells[Colum].innerHTML = SecondsToString(parseInt(Submission.in_date));
-        if (ErrorTimes != 0) {
-            Row.cells[Colum].innerHTML += "(-" + ErrorTimes + ")";
-        }
-        SetColor(Row.cells[Colum], true, ErrorTimes);
-        Row.cells[3].innerHTML = parseInt(Row.cells[3].innerHTML) + 1;
-    } else {
-        ErrorTimes++;
-        Row.cells[Colum].innerHTML = "-" + ErrorTimes;
-        SetColor(Row.cells[Colum], false, ErrorTimes);
-    }
-}
-
-const SortTable = (rows) => {
-    for (let i = 1; i < rows.length; i++) {
-        if (rows[i].childNodes[1].innerText == document.getElementById("profile").innerText) {
-            rows[i].style = "background-color: yellow;";
-        }
-        for (let j = 1; j < i; j++) {
-            if (FirstBiggerThanSecond(rows[i], rows[j])) {
-                SwapNode(rows[i], rows[j]);
-            }
-        }
-    }
-}
-
-const SwapNode = (Node1, Node2) => {
-    let Parent = Node1.parentNode;
-    let Node1NextSibling = Node1.nextSibling;
-    let Node2NextSibling = Node2.nextSibling;
-    if (Node1NextSibling) Parent.insertBefore(Node2, Node1NextSibling);
-    else Parent.appendChild(Node2);
-    if (Node2NextSibling) Parent.insertBefore(Node1, Node2NextSibling);
-    else Parent.appendChild(Node1);
-}
-
-const FirstBiggerThanSecond = (Node1, Node2) => {
-    let Node1AC = parseInt(Node1.cells[3].innerHTML);
-    let Node2AC = parseInt(Node2.cells[3].innerHTML);
-    if (Node1AC != Node2AC) {
-        return Node1AC > Node2AC;
-    }
-    return StringToSeconds(Node1.cells[4].innerHTML) < StringToSeconds(Node2.cells[4].innerHTML);
-}
-
-const CreateRowCode = (Table, Submission) => {
-    let IsAC = (Submission.result == 4);
-    let Output = "<tr>";
-    Output += "<td></td>";
-    Output += "<td><a href=\"userinfo.php?user=" + Submission.user_id + "\">" + Submission.user_id + "</a></td>";
-    Output += "<td>" + (Submission.nick.length > 10 ? String(Submission.nick).substring(0, 10) + "..." : Submission.nick) + "</td>";
-    Output += "<td>" + (IsAC ? "1" : "0") + "</td>";
-    Output += "<td>" + SecondsToString(IsAC ? Submission.in_date : 0) + "</td>";
-    let ProblemCount = Table[0].rows[0].cells.length - 5;
-    for (let i = 0; i < ProblemCount; i++) {
-        if (i == Submission.num) {
-            Output += "<td class=\"well " + (IsAC ? "green" : "red") + "\">" +
-                (IsAC ? SecondsToString(Submission.in_date) : -1) +
-                "</td>";
-        } else {
-            Output += "<td class=\"well\" style=\"background-color:#eeeeee\"></td>";
-        }
-    }
-    Output += "</tr>";
-    return Output;
-}
-
-const FindRow = (Table, UID) => {
-    Table = Table[0].rows;
-    for (let i = 0; i < Table.length; i++) {
-        if (Table[i].cells[1].innerText == UID) {
-            return Table[i];
-        }
-    }
-    return null;
-}
-
-const PlaySubmission = () => {
-    document.querySelector("#rank > tbody").innerHTML = "";
-    let Data = "";
-    Data += "<tr class=\"toprow\">";
-    Data += "<th width=\"10%\" class=\"header\">排名</th>";
-    Data += "<th width=\"10%\" class=\"header\">用户</th>";
-    Data += "<th width=\"15%\" class=\"header\">昵称</th>";
-    Data += "<th width=\"5%\" class=\"header\">AC数</th>";
-    Data += "<th width=\"10%\" class=\"header\">罚时</th>";
-    for (let i = 0; i < QuestionSize; i++) {
-        Data += "<th width=\"" + (50 / QuestionSize) + "%\" class=\"header\">" +
-            "<a href=\"problem.php?" + location.href.substr(location.href.indexOf("cid=")) + "&pid=" + i + "\">" + String.fromCharCode(65 + i) + "</a>" +
-            "</th>";
-    }
-    Data += "</tr>";
-    document.querySelector("#rank > thead").innerHTML = Data;
-    ProgressBar.setAttribute("max", SubmitRecord.length);
-    AddedSubmissionCount = 0;
-    AddSubmission();
-}
-
-const ReloadRank = async () => {
-    document.getElementsByTagName("progress")[0].removeAttribute("max");
-    document.getElementsByTagName("progress")[0].removeAttribute("value");
-    let NewURL = new URL(location.href);
-    NewURL.pathname = "/contestrank2.php";
-    await fetch(NewURL.toString())
-        .then(Response => Response.text())
-        .then(Response => {
-            let StartPosition = Response.indexOf("var solutions=");
-            StartPosition += 14;
-            let EndPosition = Response.indexOf(";", StartPosition);
-            SubmitRecord = JSON.parse(Response.substring(StartPosition, EndPosition));
-            PlaySubmission();
-        });
-}
+/*
+A 在需要登录的界面自动跳转到登陆界面
+A 比赛ACM排名，并且能下载ACM排名
+A 比较代码
+F 将网站中所有“小明”关键字替换为“高老师”，所有“下海”替换为“上海”
+F 美化界面
+  F 将网站中所有以方括号包装的链接替换为按钮
+  D 重新排版，增加动画，隐藏无用内容
+  F 题目前对错的Y和N替换为勾和叉
+  A 增加彩色文字
+  F 改变选择框样式
+  F 统一使用中文，翻译了部分英文
+  A 状态界面内存与耗时添加单位
+  F 修复表格排序失败
+F 题目界面测试样例有时复制无效
+A 提交代码前对代码进行检测
+  A 是否使用了文件输入输出（如果需要使用）
+  A 是否有编译错误
+  A 源代码是否为空
+  A 主函数是否返回整形（养成好习惯）
+F 状态页面结果自动刷新每次只能刷新一个
+A 比赛列表、比赛排名界面自动刷新
+A 比赛列表等界面的时间自动倒计时
+A 比赛题目界面一键打开所有题目
+F 代码提交界面自动选择O2优化
+F 导出AC代码使用zip文件格式，每一道题目一个文件
+A 自动保存用户名与密码，免去每次手动输入密码的繁琐
+A 回放视频增加下载功能
+ */

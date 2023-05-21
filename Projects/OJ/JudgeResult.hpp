@@ -21,6 +21,8 @@ enum JUDGE_RESULT
     COMPILING,
     COMPILED,
     JUDGING,
+    JUDGED,
+    COMPARING,
     SKIPPED,
     REJECTED
 };

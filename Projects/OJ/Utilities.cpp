@@ -17,7 +17,7 @@ std::string UTILITIES::StringReplaceAll(std::string Data, std::string Search, st
     }
     return Data;
 }
-// bool UTILITIES::MakeDir(std::string Dir)
+// RESULT UTILITIES::MakeDir(std::string Dir)
 // {
 //     if (access(Dir.c_str(), F_OK) != -1)
 //     {
@@ -34,23 +34,17 @@ std::string UTILITIES::StringReplaceAll(std::string Data, std::string Search, st
 //     }
 //     return true;
 // }
-bool UTILITIES::MakeDir(std::string Dir)
+RESULT UTILITIES::MakeDir(std::string Dir)
 {
-    if (access(Dir.c_str(), F_OK) == -1 && mkdir(Dir.c_str(), 0755) == -1)
-    {
-        Logger.Error("Can not create working directory " + Dir);
-        return false;
-    }
-    return true;
+    if (access(Dir.c_str(), F_OK) == -1)
+        CREATE_RESULT_IF_FALSE(mkdir(Dir.c_str(), 0755) == 0, "Can not create working directory " + Dir)
+    CREATE_RESULT(true, "Created working directory " + Dir)
 }
-bool UTILITIES::RemoveDir(std::string Dir)
+RESULT UTILITIES::RemoveDir(std::string Dir)
 {
     DIR *DirPtr = opendir(Dir.c_str());
     if (DirPtr == nullptr)
-    {
-        Logger.Error("Can not open directory " + Dir);
-        return false;
-    }
+        CREATE_RESULT(false, "Can not open directory " + Dir)
     struct dirent *Entry = readdir(DirPtr);
     while (Entry != nullptr)
     {
@@ -63,34 +57,24 @@ bool UTILITIES::RemoveDir(std::string Dir)
         {
             if (remove((Dir + "/" + Entry->d_name).c_str()) != 0)
                 Logger.Error("Can not remove file " + Dir + "/" + Entry->d_name);
-            else
-                Logger.Debug("Removed file \"" + Dir + "/" + Entry->d_name + "\"");
         }
         Entry = readdir(DirPtr);
     }
     closedir(DirPtr);
     if (rmdir(Dir.c_str()) != 0)
-    {
-        Logger.Error("Can not remove directory \"" + Dir + "\" after removing all files");
-        return false;
-    }
-    Logger.Debug("Removed directory \"" + Dir + "\"");
-    return true;
+        CREATE_RESULT(false, "Can not remove directory " + Dir)
+    CREATE_RESULT(true, "Removed directory " + Dir)
 }
-bool UTILITIES::CopyFile(std::string Source, std::string Destination)
+RESULT UTILITIES::CopyFile(std::string Source, std::string Destination)
 {
     FILE *SourceFile = fopen(Source.c_str(), "rb");
     if (SourceFile == nullptr)
-    {
-        Logger.Error("Can not open source file " + Source);
-        return false;
-    }
+        CREATE_RESULT(false, "Can not open source file " + Source)
     FILE *DestinationFile = fopen(Destination.c_str(), "wb");
     if (DestinationFile == nullptr)
     {
-        Logger.Error("Can not open destination file " + Destination);
         fclose(SourceFile);
-        return false;
+        CREATE_RESULT(false, "Can not open destination file " + Destination)
     }
     char Buffer[1024];
     size_t ReadSize = fread(Buffer, 1, 1024, SourceFile);
@@ -98,10 +82,9 @@ bool UTILITIES::CopyFile(std::string Source, std::string Destination)
     {
         if (fwrite(Buffer, 1, ReadSize, DestinationFile) != ReadSize)
         {
-            Logger.Error("Can not write to destination file " + Destination);
             fclose(SourceFile);
             fclose(DestinationFile);
-            return false;
+            CREATE_RESULT(false, "Can not write to destination file " + Destination)
         }
         ReadSize = fread(Buffer, 1, 1024, SourceFile);
     }
@@ -110,27 +93,17 @@ bool UTILITIES::CopyFile(std::string Source, std::string Destination)
 
     struct stat FileStatus;
     if (lstat(Source.c_str(), &FileStatus) == -1)
-    {
-        Logger.Error("Can not get source file \"" + Source + "\" attributions");
-        return false;
-    }
+        CREATE_RESULT(false, "Can not get source file \"" + Source + "\" attributions")
     if (chmod(Destination.c_str(), FileStatus.st_mode) == -1)
-    {
-        Logger.Error("Can not set destination file \"" + Destination + "\" attributions");
-        return false;
-    }
+        CREATE_RESULT(false, "Can not set destination file \"" + Destination + "\" attributions")
 
-    Logger.Debug("Copied file \"" + Source + "\" to \"" + Destination + "\"");
-    return true;
+    CREATE_RESULT(true, "Copied file \"" + Source + "\" to \"" + Destination + "\"")
 }
-bool UTILITIES::CopyDir(std::string Source, std::string Destination)
+RESULT UTILITIES::CopyDir(std::string Source, std::string Destination)
 {
     DIR *DirPtr = opendir(Source.c_str());
     if (DirPtr == nullptr)
-    {
-        Logger.Error("Can not open directory " + Source);
-        return false;
-    }
+        CREATE_RESULT(false, "Can not open directory " + Source)
     struct dirent *Entry = readdir(DirPtr);
     while (Entry != nullptr)
     {
@@ -141,86 +114,66 @@ bool UTILITIES::CopyDir(std::string Source, std::string Destination)
                 struct stat FileStatus;
                 if (lstat((Source + "/" + Entry->d_name).c_str(), &FileStatus) == -1)
                 {
-                    Logger.Error("Can not get directory " + Source + "/" + Entry->d_name + " attributions");
                     closedir(DirPtr);
-                    return false;
+                    CREATE_RESULT(false, "Can not get directory " + Source + "/" + Entry->d_name + " attributions")
                 }
                 if (mkdir((Destination + "/" + Entry->d_name).c_str(), FileStatus.st_mode) == -1)
                 {
-                    Logger.Error("Can not create directory " + Destination + "/" + Entry->d_name);
                     closedir(DirPtr);
-                    return false;
+                    CREATE_RESULT(false, "Can not create directory " + Destination + "/" + Entry->d_name)
                 }
-                if (!CopyDir(Source + "/" + Entry->d_name, Destination + "/" + Entry->d_name))
-                {
-                    closedir(DirPtr);
-                    return false;
-                }
+                RETURN_IF_FAILED(CopyDir(Source + "/" + Entry->d_name, Destination + "/" + Entry->d_name))
             }
         }
-        else if (!CopyFile(Source + "/" + Entry->d_name, Destination + "/" + Entry->d_name))
-        {
-            closedir(DirPtr);
-            return false;
-        }
+        else
+            RETURN_IF_FAILED_WITH_OPERATION(CopyFile(Source + "/" + Entry->d_name, Destination + "/" + Entry->d_name), closedir(DirPtr))
         Entry = readdir(DirPtr);
     }
     closedir(DirPtr);
-
-    Logger.Debug("Copied directory \"" + Source + "\" to \"" + Destination + "\"");
-    return true;
+    CREATE_RESULT(true, "Copied directory \"" + Source + "\" to \"" + Destination + "\"")
 }
-bool UTILITIES::LoadFile(std::string FileName, std::string &Output)
+RESULT UTILITIES::LoadFile(std::string FileName, std::string &Output)
 {
     FILE *File = fopen(FileName.c_str(), "rb");
     if (File == nullptr)
-    {
-        Logger.Error("Can not open file " + FileName);
-        return false;
-    }
+        CREATE_RESULT(false, "Can not open file " + FileName)
     fseek(File, 0, SEEK_END);
     size_t Size = ftell(File);
     rewind(File);
     char *Buffer = new char[Size + 1];
     if (fread(Buffer, 1, Size, File) != Size)
     {
-        Logger.Error("Can not read file " + FileName);
         fclose(File);
         delete[] Buffer;
-        return false;
+        CREATE_RESULT(false, "Can not read file " + FileName)
     }
     Buffer[Size] = '\0';
     Output = Buffer;
     delete[] Buffer;
     fclose(File);
-    return true;
+    CREATE_RESULT(true, "Loaded file " + FileName)
 }
-bool UTILITIES::LoadFile(std::string FileName, int &Output)
+RESULT UTILITIES::LoadFile(std::string FileName, int &Output)
 {
     std::string Temp;
-    if (!LoadFile(FileName, Temp))
-        return false;
+    RETURN_IF_FAILED(LoadFile(FileName, Temp))
     Output = atoi(Temp.c_str());
-    return true;
+    CREATE_RESULT(true, "Loaded file " + FileName)
 }
-bool UTILITIES::SaveFile(std::string FileName, std::string Data)
+RESULT UTILITIES::SaveFile(std::string FileName, std::string Data)
 {
     FILE *File = fopen(FileName.c_str(), "wb");
     if (File == nullptr)
-    {
-        Logger.Error("Can not open file " + FileName);
-        return false;
-    }
+        CREATE_RESULT(false, "Can not open file " + FileName)
     if (fwrite(Data.c_str(), 1, Data.size(), File) != Data.size())
     {
-        Logger.Error("Can not write to file " + FileName);
         fclose(File);
-        return false;
+        CREATE_RESULT(false, "Can not write to file " + FileName)
     }
     fclose(File);
-    return true;
+    CREATE_RESULT(true, "Saved file " + FileName)
 }
-bool UTILITIES::SaveFile(std::string FileName, int Data)
+RESULT UTILITIES::SaveFile(std::string FileName, int Data)
 {
     return SaveFile(FileName, std::to_string(Data));
 }
@@ -252,16 +205,13 @@ size_t UTILITIES::UploadFunction(char *ptr, size_t size, size_t nmemb, void *use
     Upload->erase(0, len);
     return len;
 }
-bool UTILITIES::SendEmail(std::string To, std::string Subject, std::string Body)
+RESULT UTILITIES::SendEmail(std::string To, std::string Subject, std::string Body)
 {
     std::string From = Settings.GetEmail();
     std::string Password = Settings.GetEmailPassword();
     CURL *Curl = curl_easy_init();
     if (Curl == nullptr)
-    {
-        Logger.Error("Can not initialize CURL");
-        return false;
-    }
+        CREATE_RESULT(false, "Can not initialize CURL")
     struct curl_slist *Recipients = nullptr;
     Recipients = curl_slist_append(Recipients, To.c_str());
     curl_easy_setopt(Curl, CURLOPT_URL, "smtp://smtp-mail.outlook.com:587");
@@ -277,15 +227,13 @@ bool UTILITIES::SendEmail(std::string To, std::string Subject, std::string Body)
     CURLcode Result = curl_easy_perform(Curl);
     if (Result != CURLE_OK)
     {
-        Logger.Error("Can not send email: " + std::string(curl_easy_strerror(Result)));
         curl_slist_free_all(Recipients);
         curl_easy_cleanup(Curl);
-        return false;
+        CREATE_RESULT(false, "Can not send email: " + std::string(curl_easy_strerror(Result)))
     }
     curl_slist_free_all(Recipients);
     curl_easy_cleanup(Curl);
-    Logger.Debug("Sent email to " + To);
-    return true;
+    CREATE_RESULT(true, "Sent email to " + To)
 }
 
 UTILITIES Utilities;

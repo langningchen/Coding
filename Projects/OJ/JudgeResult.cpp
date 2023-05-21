@@ -37,6 +37,10 @@ std::string GetJudgeResultString(JUDGE_RESULT JudgeResult)
         return "Compiled";
     case JUDGING:
         return "Judging";
+    case JUDGED:
+        return "Judged";
+    case COMPARING:
+        return "Comparing";
     case SKIPPED:
         return "Skipped";
     case REJECTED:

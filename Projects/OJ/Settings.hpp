@@ -1,8 +1,8 @@
 #ifndef SETTINGS_HPP
 #define SETTINGS_HPP
 
-#include <string>
 #include "Logger.hpp"
+#include "Result.hpp"
 
 class SETTINGS
 {
@@ -395,6 +395,32 @@ private:
     std::string Email;
     std::string EmailPassword;
 
+    class DATABASE_SETTINGS
+    {
+    private:
+        std::string Host = "localhost";
+        int Port = 3306;
+        std::string Username = "root";
+        std::string Password = "";
+        std::string DatabaseName = "OJ";
+        LOGGER Logger;
+
+        friend class SETTINGS;
+
+    public:
+        RESULT Check();
+        RESULT Save();
+        RESULT Load();
+
+        std::string GetHost();
+        int GetPort();
+        std::string GetUsername();
+        std::string GetPassword();
+        std::string GetDatabaseName();
+
+        RESULT Set(std::string Host, int Port, std::string Username, std::string Password, std::string DatabaseName);
+    };
+
     LOGGER Logger;
 
     void CheckJudgeUser();
@@ -407,8 +433,8 @@ private:
 public:
     SETTINGS();
     ~SETTINGS();
-    void Save();
-    void Load(std::string JudgeUser);
+    RESULT Save();
+    RESULT Load(std::string JudgeUser);
 
     std::string GetBaseFolder();
     std::string GetSubmissionBaseFolder();
@@ -440,6 +466,8 @@ public:
     void SetEmailPassword(std::string EmailPassword);
 
     void CheckSettings();
+
+    DATABASE_SETTINGS DatabaseSettings;
 };
 
 extern SETTINGS Settings;

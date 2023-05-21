@@ -5,10 +5,6 @@
 			"path": "."
 		},
 		{
-			"name": "OJTool",
-			"path": "Projects/OJTool"
-		},
-		{
 			"name": "OJ",
 			"path": "Projects/OJ"
 		}
@@ -17,9 +13,7 @@
 		"terminal.integrated.defaultProfile.linux": "fish",
 		"C_Cpp.default.includePath": [
 			"${fileDirname}",
-			"${workspaceFolder}/Lib",
-			"~/Qt5.14.2/5.14.2/gcc_64/include/**",
-			"/home/langningc2009/Coding/Lib"
+			"${workspaceFolder}/Lib"
 		],
 		"files.associations": {
 			"iostream": "cpp",

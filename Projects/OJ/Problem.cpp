@@ -13,122 +13,42 @@ using namespace std::literals::string_literals;
 PROBLEM::PROBLEM() {}
 PROBLEM::~PROBLEM() {}
 
-std::string PROBLEM::GetID() { return ID; }
-std::string PROBLEM::GetMD()
-{
-    auto FixLeadingAndTrailingSpaces = [](std::string Data) -> std::string
-    {
-        while (Data[0] == ' ' || Data[0] == '\t' || Data[0] == '\r' || Data[0] == '\n')
-            Data.erase(Data.begin());
-        while (Data[Data.size() - 1] == ' ' || Data[Data.size() - 1] == '\t' || Data[Data.size() - 1] == '\r' || Data[Data.size() - 1] == '\n')
-            Data.erase(Data.end() - 1);
-        return Data;
-    };
-    std::string OutputString = "# " + ID + " " + Title + "\n" +
-                               "\n" +
-                               "## Description\n" +
-                               "\n" +
-                               FixLeadingAndTrailingSpaces(Description) + "\n" +
-                               "\n" +
-                               "## Input\n" +
-                               "\n" +
-                               FixLeadingAndTrailingSpaces(Input) + "\n" +
-                               "\n" +
-                               "## Output\n" +
-                               "\n" +
-                               FixLeadingAndTrailingSpaces(Output) + "\n" +
-                               "\n" +
-                               "## Samples\n" +
-                               "\n";
-    int SampleCount = 0;
-    for (auto Sample : Samples)
-    {
-        SampleCount++;
-        OutputString += "### Sample " + std::to_string(SampleCount) + "\n" +
-                        "\n" +
-                        "#### Input\n" +
-                        "\n" +
-                        "```\n" +
-                        FixLeadingAndTrailingSpaces(Sample.GetInput()) + "\n" +
-                        "```\n" +
-                        "\n" +
-                        "#### Output\n" +
-                        "\n" +
-                        "```\n" +
-                        FixLeadingAndTrailingSpaces(Sample.GetOutput()) + "\n" +
-                        "```\n" +
-                        "\n";
-        if (Sample.GetDescription() != "")
-            OutputString += "#### Description\n" +
-                            FixLeadingAndTrailingSpaces(Sample.GetDescription()) + "\n" +
-                            "\n";
-    }
-    if (Range != "")
-        OutputString += "## Range\n"s +
-                        "\n" +
-                        FixLeadingAndTrailingSpaces(Range) + "\n" +
-                        "\n";
-    if (Hint != "")
-        OutputString += "## Hint\n"s +
-                        "\n" +
-                        FixLeadingAndTrailingSpaces(Hint) + "\n" +
-                        "\n";
-    return OutputString;
-}
-std::vector<TEST_GROUP> PROBLEM::GetTestGroups()
-{
-    return TestGroups;
-}
-
-bool PROBLEM::Load(std::string ID)
+RESULT PROBLEM::Load(std::string ID)
 {
     this->ID = ID;
     UpdateWorkDir();
-    if (!Utilities.LoadFile(WorkDir + "/Title", Title) ||
-        !Utilities.LoadFile(WorkDir + "/Description", Description) ||
-        !Utilities.LoadFile(WorkDir + "/Input", Input) ||
-        !Utilities.LoadFile(WorkDir + "/Output", Output) ||
-        !Utilities.LoadFile(WorkDir + "/Range", Range) ||
-        !Utilities.LoadFile(WorkDir + "/Hint", Hint) ||
-        !LoadSamples(ID) ||
-        !LoadTestGroups(ID))
-    {
-        Logger.Error("Problem \"" + ID + "\" load failed");
-        return false;
-    }
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Title", Title))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Description", Description))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Input", Input))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Output", Output))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Range", Range))
+    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Hint", Hint))
+    RETURN_IF_FAILED(LoadSamples(ID))
+    RETURN_IF_FAILED(LoadTestGroups(ID))
 
     this->ID = ID;
-    UpdateWorkDir();
-    Logger.Debug("Problem \"" + ID + "\" loaded");
-    return true;
+    RETURN_IF_FAILED(UpdateWorkDir())
+
+    CREATE_RESULT(true, "Problem \"" + ID + "\" loaded")
 }
-bool PROBLEM::Save()
-{
-    if (!Utilities.MakeDir(WorkDir.c_str()))
-        return false;
-    if (!Utilities.SaveFile(WorkDir + "/Title", Title) ||
-        !Utilities.SaveFile(WorkDir + "/Description", Description) ||
-        !Utilities.SaveFile(WorkDir + "/Input", Input) ||
-        !Utilities.SaveFile(WorkDir + "/Output", Output) ||
-        !Utilities.SaveFile(WorkDir + "/Range", Range) ||
-        !Utilities.SaveFile(WorkDir + "/Hint", Hint) ||
-        !SaveSamples() ||
-        !SaveTestGroups())
-    {
-        Logger.Error("Problem \"" + ID + "\" save failed");
-        return false;
-    }
-    Logger.Debug("Problem \"" + ID + "\" saved");
-    return true;
-}
-bool PROBLEM::LoadSamples(std::string ID)
+RESULT PROBLEM::Save(){
+    RETURN_IF_FAILED(UpdateWorkDir())
+        RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Title", Title))
+            RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Description", Description))
+                RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Input", Input))
+                    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Output", Output))
+                        RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Range", Range))
+                            RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Hint", Hint))
+                                RETURN_IF_FAILED(SaveSamples())
+                                    RETURN_IF_FAILED(SaveTestGroups())
+                                        CREATE_RESULT(true, "Problem \"" + ID + "\" saved")} RESULT PROBLEM::LoadSamples(std::string ID)
 {
     std::string CurrentSampleBaseFolder = Settings.GetProblemBaseFolder() + "/" + ID + "/Samples";
     DIR *Dir = opendir(CurrentSampleBaseFolder.c_str());
     if (Dir == nullptr)
     {
         Logger.Error("Problem \"" + ID + "\" samples load failed");
-        return false;
+        CREATE_RESULT(false, "Problem \"" + ID + "\" samples load failed")
     }
     struct dirent *DirEntry;
     while ((DirEntry = readdir(Dir)) != nullptr)
@@ -139,29 +59,24 @@ bool PROBLEM::LoadSamples(std::string ID)
             if (SampleID == "." || SampleID == ".." || (SampleID != "0" && atoi(SampleID.c_str()) == 0))
                 continue;
             SAMPLE Sample;
-            if (!Utilities.LoadFile(CurrentSampleBaseFolder + "/" + SampleID + "/Input", Sample.Input) ||
-                !Utilities.LoadFile(CurrentSampleBaseFolder + "/" + SampleID + "/Output", Sample.Output) ||
-                !Utilities.LoadFile(CurrentSampleBaseFolder + "/" + SampleID + "/Description", Sample.Description))
-            {
-                Logger.Error("Problem \"" + ID + "\" sample \"" + SampleID + "\" load failed");
-                return false;
-            }
+            RETURN_IF_FAILED(Utilities.LoadFile(CurrentSampleBaseFolder + "/" + SampleID + "/Input", Sample.Input))
+            RETURN_IF_FAILED(Utilities.LoadFile(CurrentSampleBaseFolder + "/" + SampleID + "/Output", Sample.Output))
+            RETURN_IF_FAILED(Utilities.LoadFile(CurrentSampleBaseFolder + "/" + SampleID + "/Description", Sample.Description))
+            Samples.push_back(Sample);
         }
     }
     closedir(Dir);
-    Logger.Debug("Problem \"" + ID + "\" samples loaded");
-    return true;
+    CREATE_RESULT(true, "Problem \"" + ID + "\" samples loaded")
 }
-bool PROBLEM::SaveSamples()
+RESULT PROBLEM::SaveSamples()
 {
     std::string CurrentSampleBaseFolder = Settings.GetProblemBaseFolder() + "/" + ID + "/Samples";
-    if (!Utilities.MakeDir(CurrentSampleBaseFolder))
-        return false;
+    RETURN_IF_FAILED(Utilities.MakeDir(CurrentSampleBaseFolder))
     DIR *Dir = opendir(CurrentSampleBaseFolder.c_str());
     if (Dir == nullptr)
     {
         Logger.Error("Problem \"" + ID + "\" samples save failed");
-        return false;
+        CREATE_RESULT(false, "Problem \"" + ID + "\" samples save failed")
     }
     struct dirent *DirEntry;
     while ((DirEntry = readdir(Dir)) != nullptr)
@@ -172,28 +87,23 @@ bool PROBLEM::SaveSamples()
             if (SampleID == "." || SampleID == ".." || (SampleID != "0" && atoi(SampleID.c_str()) == 0))
                 continue;
             SAMPLE Sample;
-            if (!Utilities.SaveFile(CurrentSampleBaseFolder + "/" + SampleID + "/Input", Sample.Input) ||
-                !Utilities.SaveFile(CurrentSampleBaseFolder + "/" + SampleID + "/Output", Sample.Output) ||
-                !Utilities.SaveFile(CurrentSampleBaseFolder + "/" + SampleID + "/Description", Sample.Description))
-            {
-                Logger.Warning("Problem \"" + ID + "\" sample \"" + SampleID + "\" load failed");
-                return false;
-            }
-            Logger.Debug("Problem \"" + ID + "\" sample \"" + SampleID + "\" loaded");
+            RETURN_IF_FAILED(Utilities.LoadFile(CurrentSampleBaseFolder + "/" + SampleID + "/Input", Sample.Input))
+            RETURN_IF_FAILED(Utilities.LoadFile(CurrentSampleBaseFolder + "/" + SampleID + "/Output", Sample.Output))
+            RETURN_IF_FAILED(Utilities.LoadFile(CurrentSampleBaseFolder + "/" + SampleID + "/Description", Sample.Description))
+            Samples.push_back(Sample);
         }
     }
     closedir(Dir);
-    Logger.Debug("Problem \"" + ID + "\" samples saved");
-    return true;
+    CREATE_RESULT(true, "Problem \"" + ID + "\" samples saved")
 }
-bool PROBLEM::LoadTestGroups(std::string ID)
+RESULT PROBLEM::LoadTestGroups(std::string ID)
 {
     std::string CurrentTestGroupBaseFolder = Settings.GetProblemBaseFolder() + "/" + ID + "/TestGroups";
     DIR *Dir = opendir(CurrentTestGroupBaseFolder.c_str());
     if (Dir == nullptr)
     {
         Logger.Warning("Problem \"" + ID + "\" test groups load failed");
-        return false;
+        CREATE_RESULT(false, "Problem \"" + ID + "\" test groups load failed")
     }
     struct dirent *DirEntry;
     while ((DirEntry = readdir(Dir)) != nullptr)
@@ -204,61 +114,44 @@ bool PROBLEM::LoadTestGroups(std::string ID)
             if (TestGroupID == "." || TestGroupID == ".." || (TestGroupID != "0" && atoi(TestGroupID.c_str()) == 0))
                 continue;
             TEST_GROUP TestGroup;
-            if (!TestGroup.LoadFromProblem(ID, TestGroupID))
-                return false;
+            RETURN_IF_FAILED(TestGroup.LoadFromProblem(ID, TestGroupID))
             TestGroups.push_back(TestGroup);
         }
     }
     closedir(Dir);
-    Logger.Debug("Problem \"" + ID + "\" test groups loaded");
-    return true;
+    CREATE_RESULT(true, "Problem \"" + ID + "\" test groups loaded")
 }
-bool PROBLEM::SaveTestGroups()
+RESULT PROBLEM::SaveTestGroups()
 {
     std::string CurrentTestGroupBaseFolder = Settings.GetProblemBaseFolder() + "/" + ID + "/TestGroups";
-    if (!Utilities.MakeDir(CurrentTestGroupBaseFolder))
-        return false;
     for (auto i : TestGroups)
-    {
-        if (!i.SaveToProblem(ID))
-        {
-            Logger.Warning("Problem \"" + ID + "\" test group " + std::to_string(i.ID) + " save failed");
-            return false;
-        }
-    }
-    Logger.Debug("Problem \"" + ID + "\" test groups saved");
-    return true;
+        RETURN_IF_FAILED(i.SaveToProblem(ID))
+    CREATE_RESULT(true, "Problem \"" + ID + "\" test groups saved")
 }
-void PROBLEM::Update(std::string ID, std::string Title, std::string Description, std::string Input, std::string Output, std::vector<SAMPLE> Samples, std::string Range, std::string Hint, std::string IOFileName)
+void PROBLEM::Update(std::string ID, std::string Title, std::string Description, std::string Input, std::string Output, std::vector<SAMPLE> Samples, std::string Range, std::string Hint)
 {
-    this->ID = ID;
-    this->Title = Title;
-    this->Description = Description;
-    this->Input = Input;
-    this->Output = Output;
-    this->Samples = Samples;
-    this->Range = Range;
-    this->Hint = Hint;
-    this->IOFileName = IOFileName;
-    UpdateWorkDir();
+        this->ID = ID;
+        this->Title = Title;
+        this->Description = Description;
+        this->Input = Input;
+        this->Output = Output;
+        this->Samples = Samples;
+        this->Range = Range;
+        this->Hint = Hint;
+        UpdateWorkDir();
 }
-void PROBLEM::UpdateWorkDir()
+RESULT PROBLEM::UpdateWorkDir()
 {
-    WorkDir = Settings.GetProblemBaseFolder() + "/" + ID;
-    Utilities.MakeDir(WorkDir);
-    Logger.SetLogFileName(WorkDir + "/Log.log");
-    Logger.Info("Problem \"" + ID + "\" work dir updated");
+        WorkDir = Settings.GetProblemBaseFolder() + "/" + ID;
+        RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
+        Logger.SetLogFileName(WorkDir + "/Log.log");
+        CREATE_RESULT(true, "Problem \"" + ID + "\" work dir updated");
 }
 void PROBLEM::SetTestGroups(std::vector<TEST_GROUP> TestGroups)
 {
-    for (size_t i = 0; i < TestGroups.size(); i++)
-    {
+        for (size_t i = 0; i < TestGroups.size(); i++)
         TestGroups[i].ID = i;
-        TestGroups[i].IOFileName = IOFileName;
-        TestGroups[i].UpdateIOFileName();
-    }
-    this->TestGroups = TestGroups;
-    Logger.Info("Problem \"" + ID + "\" test groups updated");
+        this->TestGroups = TestGroups;
 }
 
 bool PROBLEM::operator<(const PROBLEM &Compare) const

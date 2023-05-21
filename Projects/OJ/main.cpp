@@ -6,6 +6,7 @@
 #include "unistd.h"
 #include "HTTPRequest.hpp"
 #include "Utilities.hpp"
+#include "Database.hpp"
 
 LOGGER Logger;
 
@@ -14,7 +15,7 @@ void AddProblem()
     PROBLEM TestProblem;
     std::vector<SAMPLE> SampleList;
     SampleList.push_back(SAMPLE("1 2", "3", ""));
-    TestProblem.Update("1000", "Add", "Add two numbers", "two numbers", "one number", SampleList, "1<=a,b<=1000", "", "Add");
+    TestProblem.Update("1000", "Add", "Add two numbers", "two numbers", "one number", SampleList, "1<=a,b<=1000", "");
     std::vector<TEST_GROUP> TestGroups;
     TEST_GROUP TestGroup1;
     TestGroup1.AddTestCase("1 2", "3", 1000, 1024 * 1024 * 1024, 100);
@@ -64,12 +65,12 @@ void AddProblem()
     // TestGroup7.AddTestCase("1 2", "3", 1000, 1, 100);
     // TestGroups.push_back(TestGroup7);
     TestProblem.SetTestGroups(TestGroups);
-    Logger.Debug(TestProblem.GetTestGroups()[0].GetTestCases()[0].GetInput());
     ProblemList.AddProblem(TestProblem);
 }
 void Test1()
 {
-    SUBMISSION(R"(#include <bits/stdc++.h>
+    SUBMISSION s;
+    s.Set(R"(#include <bits/stdc++.h>
 // #include </etc/passwd>
 using namespace std;
 void HackUser()
@@ -111,12 +112,15 @@ int main()
     Normal();
     return 0;
 })",
-               "1000")
-        .Judge();
+          "1000");
+    s.Judge();
 }
 
 int main()
 {
+    OUTPUT_IF_FAILED(Database.Init())
+    return 0;
+
     // Settings.CheckSettings();
     // PROBLEM Problem;
     // Problem.Load("1000");
@@ -127,9 +131,10 @@ int main()
 
     Settings.Load("Judger");
     Settings.CheckSettings();
-    ProblemList.Load();
+    OUTPUT_IF_FAILED(ProblemList.Load())
     JudgingList.Init();
     Utilities.Init();
+    Database.Init();
 
     new SOCKET(
         [](std::string RequestHTTPData) -> std::string

@@ -2,10 +2,13 @@
 #define UTILITIES_HPP
 
 #include "Logger.hpp"
-#include <string>
+#include "Result.hpp"
 
-#define DEBUG_HERE \
-    Logger.Debug(std::string(__FILE__) + ":" + std::to_string(__LINE__) + " " + std::string(__func__));
+#define DEBUG_HERE                                                                                                    \
+    {                                                                                                                 \
+        Logger.Info(std::string(__FILE__) + ":" + std::to_string(__LINE__) + " " + std::string(__PRETTY_FUNCTION__)); \
+        std::cout << __FILE__ << ":" << __LINE__ << " " << __PRETTY_FUNCTION__ << std::endl;                          \
+    }
 
 class UTILITIES
 {
@@ -16,17 +19,17 @@ private:
 public:
     void Init();
     std::string StringReplaceAll(std::string Data, std::string Search, std::string Replace);
-    // bool MakeDir(std::string Dir);
-    bool MakeDir(std::string Dir);
-    bool RemoveDir(std::string Dir);
-    bool CopyFile(std::string Source, std::string Destination);
-    bool CopyDir(std::string Source, std::string Destination);
-    bool LoadFile(std::string FileName, std::string &Output);
-    bool LoadFile(std::string FileName, int &Output);
-    bool SaveFile(std::string FileName, std::string Data);
-    bool SaveFile(std::string FileName, int Data);
+    // RESULT MakeDir(std::string Dir);
+    RESULT MakeDir(std::string Dir);
+    RESULT RemoveDir(std::string Dir);
+    RESULT CopyFile(std::string Source, std::string Destination);
+    RESULT CopyDir(std::string Source, std::string Destination);
+    RESULT LoadFile(std::string FileName, std::string &Output);
+    RESULT LoadFile(std::string FileName, int &Output);
+    RESULT SaveFile(std::string FileName, std::string Data);
+    RESULT SaveFile(std::string FileName, int Data);
     std::string RemoveSpaces(std::string Input);
-    bool SendEmail(std::string To, std::string Subject, std::string Body);
+    RESULT SendEmail(std::string To, std::string Subject, std::string Body);
 };
 
 extern UTILITIES Utilities;

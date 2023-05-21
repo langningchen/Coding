@@ -16,7 +16,7 @@ public:
     ~JUDGING_LIST();
 
     void Init();
-    int Add(SUBMISSION Submission);
+    RESULT Add(SUBMISSION Submission, int &SubmissionID);
 };
 
 extern JUDGING_LIST JudgingList;
