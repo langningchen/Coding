@@ -9,14 +9,10 @@ class JUDGING_LIST
 {
 private:
     std::queue<int> JudgingList;
-    LOGGER Logger;
 
 public:
-    JUDGING_LIST();
-    ~JUDGING_LIST();
-
     void Init();
-    RESULT Add(SUBMISSION Submission, int &SubmissionID);
+    RESULT Add(SUBMISSION &Submission);
 };
 
 extern JUDGING_LIST JudgingList;

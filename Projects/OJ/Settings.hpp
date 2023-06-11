@@ -12,12 +12,7 @@ public:
 private:
     std::string JudgeUser = "Judger";
     std::string BaseFolder;
-    std::string SubmissionBaseFolder;
-    std::string ProblemBaseFolder;
-    std::string UserBaseFolder;
-    std::string VerifyCodeBaseFolder;
     std::string SettingBaseFolder;
-    std::string TokenBaseFolder;
     int JudgeUserID;
     // std::string JudgeUserGroup = "judge";
     int JudgeUserGroupID;
@@ -388,6 +383,8 @@ private:
         {0, "process_mrelease"}         // 448
     };
     std::string Compiler = "/bin/g++";
+    std::string RunDir;
+
     int SocketPort = 80;
     int CompileTimeLimit = 60 * 1000;
     int CompileOutputLimit = 128 * 1024 * 1024;
@@ -400,18 +397,13 @@ private:
     private:
         std::string Host = "localhost";
         int Port = 3306;
-        std::string Username = "root";
-        std::string Password = "";
+        std::string Username = "langningc2009";
+        std::string Password = "1!2@3#qQwWeE";
         std::string DatabaseName = "OJ";
-        LOGGER Logger;
 
         friend class SETTINGS;
 
     public:
-        RESULT Check();
-        RESULT Save();
-        RESULT Load();
-
         std::string GetHost();
         int GetPort();
         std::string GetUsername();
@@ -421,8 +413,6 @@ private:
         RESULT Set(std::string Host, int Port, std::string Username, std::string Password, std::string DatabaseName);
     };
 
-    LOGGER Logger;
-
     void CheckJudgeUser();
     void GetJudgeUserIDByUserName();
     // void GetJudgeUserGroupNameByGroupID();
@@ -431,25 +421,19 @@ private:
     friend class WEB_DATA_PROCEED;
 
 public:
-    SETTINGS();
-    ~SETTINGS();
     RESULT Save();
     RESULT Load(std::string JudgeUser);
 
     std::string GetBaseFolder();
-    std::string GetSubmissionBaseFolder();
-    std::string GetProblemBaseFolder();
-    std::string GetUserBaseFolder();
     std::string GetJudgeUser();
-    std::string GetVerifyCodeBaseFolder();
     std::string GetSettingsBaseFolder();
-    std::string GetTokenBaseFolder();
     int GetJudgeUserID();
     // std::string GetJudgeUserGroup();
     int GetJudgeUserGroupID();
     bool IsBannedSystemCall(int SystemCall, int CallCount);
     std::string GetSystemCallName(int SystemCall);
     std::string GetCompiler();
+    std::string GetRunDir();
     int GetSocketPort();
     int GetCompileTimeLimit();
     int GetCompileOutputLimit();

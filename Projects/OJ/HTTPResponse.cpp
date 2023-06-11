@@ -6,14 +6,12 @@
 
 HTTP_RESPONSE::HTTP_RESPONSE()
 {
-    Logger.SetLogFileName(Settings.GetBaseFolder() + "/HTTPResponse.log");
 
     std::stringstream Temp;
     std::time_t now_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     Temp << std::put_time(std::localtime(&now_time_t), "%a, %d %b %Y %H:%M:%S %z");
     Headers["Date"] = Temp.str();
 }
-HTTP_RESPONSE::~HTTP_RESPONSE() {}
 
 void HTTP_RESPONSE::SetVersion(std::string Version) { this->Version = Version; }
 void HTTP_RESPONSE::SetCode(unsigned short Code)

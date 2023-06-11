@@ -8,31 +8,33 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
 add_executable(main
     Database.cpp
-    Result.cpp
+    EmailVerifyCodes.cpp
     HTTPRequest.cpp
     HTTPResponse.cpp
     JudgeResult.cpp
+    JudgingList.cpp
     Logger.cpp
     Problem.cpp
-    ProblemList.cpp
-    Sample.cpp
+    Problems.cpp
+    Regexes.cpp
+    Result.cpp
     Settings.cpp
     Socket.cpp
     Submission.cpp
+    Submissions.cpp
     TestCase.cpp
     TestGroup.cpp
+    Tokens.cpp
+    Users.cpp
     Utilities.cpp
     WebDataProceed.cpp
-    JudgingList.cpp
-    Mutexes.cpp
+    TestGroupData.cpp
     main.cpp)
 
-find_library(LIBTHREAD pthread REQUIRED)
-find_library(LIBCURL curl REQUIRED)
 set(LIBS
-    ${LIBTHREAD}
-    ${LIBCURL}
+    pthread
+    curl
+    mysqlcppconn
 )
 target_link_libraries(main PRIVATE ${LIBS})
-target_link_libraries(main PRIVATE mysqlcppconn)
 target_include_directories(main PRIVATE "/usr/include/mysql")

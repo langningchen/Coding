@@ -2982,7 +2982,7 @@ void watch_solution(pid_t pidApp, char *infile, int &ACflg, int spj,
 	int first = true;
 	int tick = 0;
 	long outFileSize = get_file_size(outfile);
-	while (1)
+	while (true)
 	{
 		tick++;
 		// check the usage

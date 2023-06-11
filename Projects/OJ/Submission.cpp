@@ -1,7 +1,8 @@
 #include "Settings.hpp"
-#include "ProblemList.hpp"
 #include "Submission.hpp"
 #include "Utilities.hpp"
+#include "Problems.hpp"
+#include "Submissions.hpp"
 #include <fstream>
 #include <algorithm>
 #include <math.h>
@@ -9,6 +10,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <thread>
 #include <sys/wait.h>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -16,37 +18,12 @@
 #include <sys/ptrace.h>
 #include <sys/resource.h>
 
-SUBMISSION::SUBMISSION() {}
-SUBMISSION::~SUBMISSION() {}
-
-RESULT SUBMISSION::UpdateWorkDir()
-{
-    WorkDir = Settings.GetSubmissionBaseFolder() + "/" + std::to_string(ID);
-    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
-    CREATE_RESULT(true, "Update work dir success")
-}
-void SUBMISSION::UpdateAllResults(JUDGE_RESULT Result)
+RESULT SUBMISSION::UpdateAllResults(JUDGE_RESULT Result)
 {
     this->Result = Result;
     for (size_t i = 0; i < TestGroups.size(); i++)
-        TestGroups[i].UpdateAllResults(Result);
-    Save();
-}
-void SUBMISSION::CopyTestGroups()
-{
-    TestGroups = Problem.TestGroups;
-    for (size_t i = 0; i < TestGroups.size(); i++)
-    {
-        TestGroups[i].ID = i;
-        TestGroups[i].SubmissionID = std::to_string(ID);
-        TestGroups[i].UpdateWorkDirFromSubmission();
-        TestGroups[i].UpdateIOFileName();
-    }
-    if (TestGroups.size() == 0)
-    {
-        UpdateAllResults(JUDGE_RESULT::REJECTED);
-        Description = "No test groups";
-    }
+        RETURN_IF_FAILED(TestGroups[i].UpdateAllResults(Result));
+    CREATE_RESULT(true, "Update all results success")
 }
 RESULT SUBMISSION::RedirectIO()
 {
@@ -107,11 +84,10 @@ RESULT SUBMISSION::SetupEnvrionment()
             CREATE_RESULT(false, "Can not create symlink for the new root")
     }
 
-    RETURN_IF_FAILED(Utilities.CopyDir("/etc/alternatives", "./etc/alternatives"))
+    RETURN_IF_FAILED(UTILITIES::CopyDir("/etc/alternatives", "./etc/alternatives"))
 
     if (chroot(WorkDir.c_str()) != 0)
         CREATE_RESULT(false, "Can not change root dir")
-    Logger.SetLogFileName("Log.log");
 
     CREATE_RESULT(true, "Environment setted")
 }
@@ -144,7 +120,7 @@ RESULT SUBMISSION::RemoveEnvrionment()
         "tmp",
         "usr"};
     for (int i = 0; i < 6; i++)
-        RETURN_IF_FAILED(Utilities.RemoveDir(DirsToRemove[i].c_str()))
+        RETURN_IF_FAILED(UTILITIES::RemoveDir(DirsToRemove[i].c_str()))
 
     CREATE_RESULT(true, "Environment removed")
 }
@@ -228,13 +204,13 @@ RESULT SUBMISSION::ChildProcess()
 }
 RESULT SUBMISSION::ParentProcess()
 {
-    while (1)
+    while (true)
     {
         int Status;
         struct rusage Usage;
-        if (wait4(PID, &Status, 0, &Usage) == -1)
+        if (wait4(ProcessID, &Status, 0, &Usage) == -1)
         {
-            ptrace(PTRACE_KILL, PID, nullptr, nullptr);
+            ptrace(PTRACE_KILL, ProcessID, nullptr, nullptr);
             CREATE_RESULT(false, "Can not wait for child process")
         }
         if (WIFEXITED(Status) || WIFSIGNALED(Status) || WIFSTOPPED(Status))
@@ -281,7 +257,7 @@ RESULT SUBMISSION::Compile()
     }
     else
     {
-        this->PID = PID;
+        this->ProcessID = PID;
         RETURN_IF_FAILED(ParentProcess())
         RETURN_IF_FAILED(RemoveEnvrionment())
 
@@ -310,7 +286,7 @@ RESULT SUBMISSION::Compile()
             CREATE_RESULT(false, "Compiler output log file is empty but compile failed")
         UpdateAllResults(JUDGE_RESULT::COMPILATION_ERROR);
         Description = CompileResult;
-        CREATE_RESULT(false, "Submission compile failed")
+        CREATE_RESULT(true, "Submission compile failed")
     }
 
     CREATE_RESULT(false, "Should't go here");
@@ -318,15 +294,18 @@ RESULT SUBMISSION::Compile()
 RESULT SUBMISSION::RunTestGroups()
 {
     if (Result != JUDGE_RESULT::COMPILED)
-        CREATE_RESULT(false, "Submission is not compiled")
+        CREATE_RESULT(true, "Submission is not compiled")
+    if (Problem.IOFilename == "")
+        Problem.IOFilename = std::to_string(SID);
+    UpdateAllResults(JUDGE_RESULT::JUDGING);
     for (size_t i = 0; i < TestGroups.size(); i++)
     {
         RETURN_IF_FAILED(TestGroups[i].Judge())
-        Score += TestGroups[i].GetScore();
-        ResultCount[TestGroups[i].GetResult()]++;
-        Time = std::max(Time, TestGroups[i].GetTime());
-        TimeSum += TestGroups[i].GetTime();
-        Memory = std::max(Memory, TestGroups[i].GetMemory());
+        Score += TestGroups[i].Score;
+        ResultCount[TestGroups[i].Result]++;
+        Time = std::max(Time, TestGroups[i].Time);
+        TimeSum += TestGroups[i].TimeSum;
+        Memory = std::max(Memory, TestGroups[i].Memory);
     }
 
     int MaxCount = 0;
@@ -350,95 +329,60 @@ RESULT SUBMISSION::RunTestGroups()
 
     CREATE_RESULT(true, "Submission run test groups")
 }
-RESULT SUBMISSION::Load(int ID)
+
+RESULT SUBMISSION::Set(std::string Code, std::string PID)
 {
-    this->ID = ID;
-    RETURN_IF_FAILED(UpdateWorkDir())
-
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Result", (int &)Result))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Description", Description))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/ProblemID", ProblemID))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Source", Source))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Time", Time))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/TimeSum", TimeSum))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Memory", Memory))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Score", Score))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/EnableO2", (int &)EnableO2))
-    RETURN_IF_FAILED(Problem.Load(ProblemID))
-
-    DIR *Dir = opendir(WorkDir.c_str());
-    if (Dir == nullptr)
-        CREATE_RESULT(false, "Can not open submission directory")
-
-    struct dirent *DirEntry;
-    while ((DirEntry = readdir(Dir)) != nullptr)
-    {
-        if (DirEntry->d_type == DT_DIR)
-        {
-            std::string TestGroupID = DirEntry->d_name;
-            if (TestGroupID == "." || TestGroupID == ".." || (TestGroupID != "0" && atoi(TestGroupID.c_str()) == 0))
-                continue;
-            TEST_GROUP TestGroup;
-            RETURN_IF_FAILED(TestGroup.LoadFromSubmission(std::to_string(ID), TestGroupID))
-            TestGroups.push_back(TestGroup);
-        }
-    }
-    closedir(Dir);
-    if (TestGroups.size() == 0)
-        CopyTestGroups();
-
-    CREATE_RESULT(true, "Submission loaded")
-}
-RESULT SUBMISSION::Save()
-{
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Result", Result))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Description", Description))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/ProblemID", ProblemID))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Source", Source))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Time", Time))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/TimeSum", TimeSum))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Memory", Memory))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Score", Score))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/EnableO2", EnableO2))
-    for (auto i : TestGroups)
-        RETURN_IF_FAILED(i.SaveToSubmission())
-    CREATE_RESULT(true, "Submission saved")
-}
-
-RESULT SUBMISSION::Set(std::string Source, std::string ProblemID)
-{
-    Logger.SetLogFileName(Settings.GetBaseFolder() + "/Submission.log");
     UpdateAllResults(JUDGE_RESULT::WAITING);
-    this->Source = Source;
-    this->ProblemID = ProblemID;
-    Score = 0;
-    TestGroupsPassed = 0;
-    RETURN_IF_FAILED(ProblemList.GetProblem(ProblemID, this->Problem))
-    if (Source.length() > 1024 * 1024)
+    this->Code = Code;
+    this->PID = PID;
+    if (Code.length() > 1024 * 1024)
         CREATE_RESULT(false, "Source code is too long")
     CREATE_RESULT(true, "Set submission successfully")
 }
 
 RESULT SUBMISSION::Judge()
 {
-    std::ofstream SourceFile;
     if (Result != JUDGE_RESULT::WAITING)
         CREATE_RESULT(false, "Submission has been judged")
+
+    bool UpdateDatabaseSignal = true;
+    std::thread UpdateDatabase(
+        [this, &UpdateDatabaseSignal]()
+        {
+            while (UpdateDatabaseSignal)
+            {
+                SUBMISSIONS::UpdateSubmission(this);
+                sleep(1);
+            }
+        });
+
     UpdateAllResults(JUDGE_RESULT::FETCHED);
 
-    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
+    WorkDir = Settings.GetRunDir() + "/" + std::to_string(SID);
+    RETURN_IF_FAILED(UTILITIES::MakeDir(WorkDir))
 
-    SourceFile = std::ofstream(WorkDir + "/main.cpp");
+    std::ofstream SourceFile = std::ofstream(WorkDir + "/main.cpp");
     if (!SourceFile.is_open())
-        CREATE_RESULT(false, "Can not open source file")
-    SourceFile << Source;
+        CREATE_RESULT(false, "Can not open source file to write")
+    SourceFile << Code;
     SourceFile.close();
 
     RESULT CompileResult = Compile();
     if (!CompileResult.Success)
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
+        UpdateAllResults(JUDGE_RESULT::SYSTEM_ERROR);
 
-    RunTestGroups();
+    RESULT RunTestGroupsResult = RunTestGroups();
+    if (!RunTestGroupsResult.Success)
+    {
+        UpdateAllResults(JUDGE_RESULT::SYSTEM_ERROR);
+        Description = RunTestGroupsResult.Message;
+        RETURN_IF_FAILED(RunTestGroupsResult)
+    }
+
+    UpdateDatabaseSignal = false;
+    UpdateDatabase.join();
+    RETURN_IF_FAILED(UTILITIES::RemoveDir(WorkDir));
+    SUBMISSIONS::UpdateSubmission(this);
 
     CREATE_RESULT(true, "Judge submission successfully")
 }

@@ -5,31 +5,28 @@
 #include "Settings.hpp"
 #include "JudgeResult.hpp"
 #include "Logger.hpp"
+#include "Problem.hpp"
 
 class TEST_CASE
 {
 private:
-    int ID = 0;
-    pid_t PID = 0;
-    std::string Input;
+    int TCID = 0;
+    pid_t ProcessID = 0;
     std::string Output;
-    std::string Answer;
     std::string StandardOutput;
     std::string StandardError;
-    std::string IOFileName;
-    std::string SubmissionID;
-    std::string ProblemID;
-    std::string TestGroupID;
+    int SID = 0;
+    std::string PID;
+    int TGID = 0;
     std::string WorkDir;
-    JUDGE_RESULT Result = JUDGE_RESULT::UNKNOWN_ERROR;
+    JUDGE_RESULT Result = JUDGE_RESULT::WAITING;
     std::string Description;
     int Time = 0;
-    int TimeLimit = 0;
     int Memory = 0;
-    int MemoryLimit = 0;
     int Score = 0;
     int SystemCallCount[Settings.SystemCallCount] = {0};
-    LOGGER Logger;
+    PROBLEM *Problem;
+    TEST_CASE_DATA *UnjudgedTestCase;
 
     RESULT RedirectIO();
     RESULT SetupEnvrionment();
@@ -46,42 +43,21 @@ private:
 
     friend class TEST_GROUP;
     friend class WEB_DATA_PROCEED;
+    friend class PROBLEMS;
+    friend class SUBMISSIONS;
+    friend class SUBMISSION;
 
 public:
-    TEST_CASE();
-    TEST_CASE(const TEST_CASE &Copy);
-    TEST_CASE(int ID, std::string TestGroupID,
-              std::string Input, std::string Answer,
-              std::string IOFileName, std::string SubmissionID,
-              int TimeLimit, int MemoryLimit, int Score);
-    ~TEST_CASE();
-
-    JUDGE_RESULT GetResult();
-    std::string GetDescription();
-    std::string GetInput();
-    std::string GetAnswer();
-    int GetTime();
-    int GetMemory();
-    int GetScore();
-
-    RESULT LoadFromSubmission(std::string SubmissionID, std::string TestGroupID, std::string ID);
-    RESULT LoadFromProblem(std::string ProblemID, std::string TestGroupID, std::string ID);
-    RESULT SaveToSubmission();
-    RESULT SaveToProblem(std::string ProblemID, std::string TestGroupID);
-    RESULT UpdateWorkDirFromSubmission();
-    RESULT UpdateWorkDirFromProblem();
     RESULT Judge();
-};
 
-struct TEST_CASE_DATA
-{
-    JUDGE_RESULT Result = JUDGE_RESULT::UNKNOWN_ERROR;
-    char Description[256] = {0};
-    int Time = 0;
-    int TimeLimit = 0;
-    int Memory = 0;
-    int MemoryLimit = 0;
-    int Score = 0;
+    RESULT SetOutput(std::string Output);
+    RESULT SetStandardOutput(std::string StandardOutput);
+    RESULT SetStandardError(std::string StandardError);
+    RESULT SetResult(JUDGE_RESULT Result);
+    RESULT SetDescription(std::string Description);
+    RESULT SetTime(int Time);
+    RESULT SetMemory(int Memory);
+    RESULT SetScore(int Score);
 };
 
 #endif

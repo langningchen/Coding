@@ -2,21 +2,21 @@
 #define SUBMISSION_HPP
 
 #include "TestGroup.hpp"
-#include "Problem.hpp"
 #include "Logger.hpp"
+#include "Problem.hpp"
 #include <vector>
 
 class SUBMISSION
 {
 private:
-    int ID = 0;
-    int PID = 0;
+    int SID = 0;
+    int UID = 0;
+    int ProcessID = 0;
     int Score = 0;
     int TestGroupsPassed = 0;
     std::string WorkDir;
-    std::string Source;
-    std::string ProblemID;
-    PROBLEM Problem;
+    std::string Code;
+    std::string PID;
     JUDGE_RESULT Result = JUDGE_RESULT::UNKNOWN_ERROR;
     std::string Description;
     std::vector<TEST_GROUP> TestGroups;
@@ -25,11 +25,10 @@ private:
     int TimeSum = 0;
     int Memory = 0;
     bool EnableO2 = false;
-    LOGGER Logger;
+    time_t CreateTime;
+    PROBLEM Problem;
 
-    RESULT UpdateWorkDir();
-    void UpdateAllResults(JUDGE_RESULT Result);
-    void CopyTestGroups();
+    RESULT UpdateAllResults(JUDGE_RESULT Result);
     RESULT RedirectIO();
     RESULT SetupEnvrionment();
     RESULT RemoveEnvrionment();
@@ -43,14 +42,10 @@ private:
 
     friend class WEB_DATA_PROCEED;
     friend class JUDGING_LIST;
+    friend class SUBMISSIONS;
 
 public:
-    SUBMISSION();
-    ~SUBMISSION();
-
-    RESULT Load(int ID);
-    RESULT Save();
-    RESULT Set(std::string Source, std::string ProblemID);
+    RESULT Set(std::string Code, std::string PID);
     RESULT Judge();
 };
 

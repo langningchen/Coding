@@ -161,9 +161,9 @@
     transition: 0.5s;
 }
 
-.TestCase:hover>.TestCaseNumber,
-.TestCase:hover>.TestCaseResult,
-.TestCase:hover>.TestCaseLimit {
+.TestCase.WithDescription:hover>.TestCaseNumber,
+.TestCase.WithDescription:hover>.TestCaseResult,
+.TestCase.WithDescription:hover>.TestCaseLimit {
     opacity: 0;
 }
 
@@ -188,7 +188,7 @@
     white-space: break-spaces;
 }
 
-.TestCase:hover>.TestCaseDescription {
+.TestCase.WithDescription:hover>.TestCaseDescription {
     opacity: 1;
 }
 

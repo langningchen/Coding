@@ -4,9 +4,7 @@
 #include <unistd.h>
 
 LOGGER::LOGGER() { SetLogFileName("Log.log"); }
-LOGGER::LOGGER(const LOGGER &Other) { SetLogFileName(Other.LogFileName); }
 LOGGER::~LOGGER() { fclose(LogFile); }
-void LOGGER::operator=(const LOGGER &Other) { SetLogFileName(Other.LogFileName); }
 
 void LOGGER::SetLogFileName(std::string LogFileName)
 {
@@ -20,8 +18,6 @@ void LOGGER::SetLogFileName(std::string LogFileName)
     else
         this->LogFileName = LogFileName;
 }
-
-std::string LOGGER::GetLogFileName() { return LogFileName; }
 
 void LOGGER::Output(std::string Type, std::string Style, std::string Data)
 {
@@ -61,3 +57,5 @@ void LOGGER::Fetal(std::string Data)
     Output("F", "1;4;5;31", Data);
     exit(1);
 }
+
+LOGGER Logger;

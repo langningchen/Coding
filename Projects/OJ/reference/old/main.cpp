@@ -49,7 +49,7 @@ public:
     };
     int Score = 0;
     string SourceCode = "";
-    string IOFileName = "";
+    string IOFilename = "";
     string JudgeFolderName = "";
     string StanderInputFileName = "Answer.in";
     string UserOutputFileName = "Answer.out";
@@ -158,10 +158,10 @@ void JUDGE::Init()
         SE;
     if (fclose(SourceOutputFilePointer) != 0)
         SE;
-    if (IOFileName != "")
+    if (IOFilename != "")
     {
-        StanderInputFileName = IOFileName + ".in";
-        UserOutputFileName = IOFileName + ".out";
+        StanderInputFileName = IOFilename + ".in";
+        UserOutputFileName = IOFilename + ".out";
     }
     Status = 1;
 }
@@ -359,13 +359,13 @@ int main()
         else if (a == 4)
             return 1;
         else if (a == 5)
-            while (1);
+            while (true);
         else if (a == 6)
             throw("ERR");
         return 0;
     })";
 
-    JudgeStatus.IOFileName = "output";
+    JudgeStatus.IOFilename = "output";
     JUDGE::TEST_POINT Temp;
     Temp.TimeLimit = 1 * CLOCKS_PER_SEC;
     Temp.StanderInput = Temp.StanderOutput = "1";

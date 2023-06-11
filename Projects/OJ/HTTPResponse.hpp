@@ -77,11 +77,9 @@ private:
         {"Server", "OJ-Server"},
         {"Content-Type", "text/html; charset=utf-8"}};
     std::string Body;
-    LOGGER Logger;
 
 public:
     HTTP_RESPONSE();
-    ~HTTP_RESPONSE();
 
     void SetVersion(std::string Version);
     void SetCode(unsigned short Code);

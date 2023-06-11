@@ -26,7 +26,7 @@ void SOCKET::SubThread(int Socket, sockaddr_in ClientAddress, SOCKET::CALL_BACK 
         if (Length == 0)
             break;
         RequestHTTPData += std::string(Buffer, Length);
-                if (Length < 1024)
+        if (Length < 1024)
             break;
     }
 
@@ -40,15 +40,14 @@ void SOCKET::SubThread(int Socket, sockaddr_in ClientAddress, SOCKET::CALL_BACK 
             Logger.Error("Can not send to socket " + ClientName);
             break;
         }
-            }
+    }
 
     if (close(Socket) == -1)
         Logger.Error("Can not close socket " + ClientName);
-    }
+}
 
 SOCKET::SOCKET(CALL_BACK CallBack)
 {
-    Logger.SetLogFileName(Settings.GetBaseFolder() + "/Socket.log");
     signal(SIGPIPE, SIG_IGN);
 
     Port = Settings.GetSocketPort();
@@ -75,7 +74,7 @@ SOCKET::SOCKET(CALL_BACK CallBack)
         int ClientSocket = accept(ListenSocket, (struct sockaddr *)&ClientAddress, &ClientAddressLength);
         if (ClientSocket == -1)
             Logger.Error("Can not accept");
-                // new std::thread(SubThread, ClientSocket, ClientAddress, CallBack);
+        // new std::thread(SubThread, ClientSocket, ClientAddress, CallBack);
         new std::thread(
             [this, ClientSocket, ClientAddress, CallBack]
             {

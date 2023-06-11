@@ -6,36 +6,34 @@
 #include <vector>
 #include <sys/stat.h>
 
-SETTINGS::SETTINGS() {}
-SETTINGS::~SETTINGS() {}
 RESULT SETTINGS::Save()
 {
     CheckSettings();
     std::string SystemCallsString = "";
     for (int i = 0; i < SystemCallCount; i++)
         SystemCallsString += SystemCalls[i].Name + " " + std::to_string(SystemCalls[i].AvailableCount) + "\n";
-    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/JudgeUser", JudgeUser))
-    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/Compiler", Compiler))
-    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/SocketPort", std::to_string(SocketPort)))
-    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/CompileTimeLimit", std::to_string(CompileTimeLimit)))
-    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/CompileOutputLimit", std::to_string(CompileOutputLimit)))
-    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/Email", Email))
-    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/EmailPassword", EmailPassword))
-    RETURN_IF_FAILED(Utilities.SaveFile(SettingBaseFolder + "/SystemCalls", SystemCallsString))
+    RETURN_IF_FAILED(UTILITIES::SaveFile(SettingBaseFolder + "/JudgeUser", JudgeUser))
+    RETURN_IF_FAILED(UTILITIES::SaveFile(SettingBaseFolder + "/Compiler", Compiler))
+    RETURN_IF_FAILED(UTILITIES::SaveFile(SettingBaseFolder + "/SocketPort", std::to_string(SocketPort)))
+    RETURN_IF_FAILED(UTILITIES::SaveFile(SettingBaseFolder + "/CompileTimeLimit", std::to_string(CompileTimeLimit)))
+    RETURN_IF_FAILED(UTILITIES::SaveFile(SettingBaseFolder + "/CompileOutputLimit", std::to_string(CompileOutputLimit)))
+    RETURN_IF_FAILED(UTILITIES::SaveFile(SettingBaseFolder + "/Email", Email))
+    RETURN_IF_FAILED(UTILITIES::SaveFile(SettingBaseFolder + "/EmailPassword", EmailPassword))
+    RETURN_IF_FAILED(UTILITIES::SaveFile(SettingBaseFolder + "/SystemCalls", SystemCallsString))
     CREATE_RESULT(true, "Settings saved")
 }
 RESULT SETTINGS::Load(std::string JudgeUser)
 {
     std::string SettingBaseFolder = "/home/" + JudgeUser + "/Settings";
     std::string SystemCallsString;
-    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/JudgeUser", JudgeUser))
-    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/Compiler", Compiler))
-    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/SocketPort", SocketPort))
-    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/CompileTimeLimit", CompileTimeLimit))
-    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/CompileOutputLimit", CompileOutputLimit))
-    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/Email", Email))
-    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/EmailPassword", EmailPassword))
-    RETURN_IF_FAILED(Utilities.LoadFile(SettingBaseFolder + "/SystemCalls", SystemCallsString))
+    RETURN_IF_FAILED(UTILITIES::LoadFile(SettingBaseFolder + "/JudgeUser", JudgeUser))
+    RETURN_IF_FAILED(UTILITIES::LoadFile(SettingBaseFolder + "/Compiler", Compiler))
+    RETURN_IF_FAILED(UTILITIES::LoadFile(SettingBaseFolder + "/SocketPort", SocketPort))
+    RETURN_IF_FAILED(UTILITIES::LoadFile(SettingBaseFolder + "/CompileTimeLimit", CompileTimeLimit))
+    RETURN_IF_FAILED(UTILITIES::LoadFile(SettingBaseFolder + "/CompileOutputLimit", CompileOutputLimit))
+    RETURN_IF_FAILED(UTILITIES::LoadFile(SettingBaseFolder + "/Email", Email))
+    RETURN_IF_FAILED(UTILITIES::LoadFile(SettingBaseFolder + "/EmailPassword", EmailPassword))
+    RETURN_IF_FAILED(UTILITIES::LoadFile(SettingBaseFolder + "/SystemCalls", SystemCallsString))
     std::vector<std::string> SystemCallsLines;
     for (size_t i = 0; i < SystemCallsString.size(); i++)
         if (SystemCallsString[i] == '\n')
@@ -56,12 +54,7 @@ RESULT SETTINGS::Load(std::string JudgeUser)
 }
 
 std::string SETTINGS::GetBaseFolder() { return BaseFolder; }
-std::string SETTINGS::GetSubmissionBaseFolder() { return SubmissionBaseFolder; }
-std::string SETTINGS::GetProblemBaseFolder() { return ProblemBaseFolder; }
-std::string SETTINGS::GetUserBaseFolder() { return UserBaseFolder; }
-std::string SETTINGS::GetVerifyCodeBaseFolder() { return VerifyCodeBaseFolder; }
 std::string SETTINGS::GetSettingsBaseFolder() { return SettingBaseFolder; }
-std::string SETTINGS::GetTokenBaseFolder() { return TokenBaseFolder; }
 std::string SETTINGS::GetJudgeUser() { return JudgeUser; }
 int SETTINGS::GetJudgeUserID() { return JudgeUserID; }
 // std::string SETTINGS::GetJudgeUserGroup() { return JudgeUserGroup; }
@@ -86,6 +79,7 @@ std::string SETTINGS::GetSystemCallName(int SystemCall)
     return SystemCalls[SystemCall].Name;
 }
 std::string SETTINGS::GetCompiler() { return Compiler; }
+std::string SETTINGS::GetRunDir() { return RunDir; }
 int SETTINGS::GetSocketPort() { return SocketPort; }
 int SETTINGS::GetCompileTimeLimit() { return CompileTimeLimit; }
 int SETTINGS::GetCompileOutputLimit() { return CompileOutputLimit; }
@@ -104,7 +98,7 @@ RESULT SETTINGS::DATABASE_SETTINGS::Set(std::string Host, int Port, std::string 
     this->Username = Username;
     this->Password = Password;
     this->DatabaseName = DatabaseName;
-    RETURN_IF_FAILED(Database.Connect())
+    RETURN_IF_FALSE(DATABASE::CreateConnection() == nullptr, "Database settings are not valid")
     CREATE_RESULT(true, "Database settings set")
 }
 
@@ -148,36 +142,6 @@ void SETTINGS::CheckJudgeUser()
             Logger.Fetal("Can not change base folder owner");
     }
 
-    Logger.SetLogFileName(Settings.GetBaseFolder() + "/Settings.log");
-    DatabaseSettings.Logger.SetLogFileName(Settings.GetBaseFolder() + "/Settings.log");
-
-    SubmissionBaseFolder = BaseFolder + "/Submissions";
-    if (access(SubmissionBaseFolder.c_str(), F_OK) == -1)
-    {
-        if (mkdir(SubmissionBaseFolder.c_str(), 0755) == -1)
-            Logger.Fetal("Can not create judge base folder");
-        if (chown(SubmissionBaseFolder.c_str(), JudgeUserID, JudgeUserGroupID) == -1)
-            Logger.Fetal("Can not change judge base folder owner");
-    }
-
-    ProblemBaseFolder = BaseFolder + "/Problems";
-    if (access(ProblemBaseFolder.c_str(), F_OK) == -1)
-    {
-        if (mkdir(ProblemBaseFolder.c_str(), 0755) == -1)
-            Logger.Fetal("Can not create problem base folder");
-        if (chown(ProblemBaseFolder.c_str(), JudgeUserID, JudgeUserGroupID) == -1)
-            Logger.Fetal("Can not change problem base folder owner");
-    }
-
-    VerifyCodeBaseFolder = BaseFolder + "/VerifyCodes";
-    if (access(VerifyCodeBaseFolder.c_str(), F_OK) == -1)
-    {
-        if (mkdir(VerifyCodeBaseFolder.c_str(), 0755) == -1)
-            Logger.Fetal("Can not create verify code base folder");
-        if (chown(VerifyCodeBaseFolder.c_str(), JudgeUserID, JudgeUserGroupID) == -1)
-            Logger.Fetal("Can not change verify code base folder owner");
-    }
-
     SettingBaseFolder = BaseFolder + "/Settings";
     if (access(SettingBaseFolder.c_str(), F_OK) == -1)
     {
@@ -187,22 +151,13 @@ void SETTINGS::CheckJudgeUser()
             Logger.Fetal("Can not change setting base folder owner");
     }
 
-    TokenBaseFolder = BaseFolder + "/Token";
-    if (access(TokenBaseFolder.c_str(), F_OK) == -1)
+    RunDir = BaseFolder + "/Run";
+    if (access(RunDir.c_str(), F_OK) == -1)
     {
-        if (mkdir(TokenBaseFolder.c_str(), 0755) == -1)
-            Logger.Fetal("Can not create token base folder");
-        if (chown(TokenBaseFolder.c_str(), JudgeUserID, JudgeUserGroupID) == -1)
-            Logger.Fetal("Can not change token base folder owner");
-    }
-
-    UserBaseFolder = BaseFolder + "/Users";
-    if (access(UserBaseFolder.c_str(), F_OK) == -1)
-    {
-        if (mkdir(UserBaseFolder.c_str(), 0755) == -1)
-            Logger.Fetal("Can not create user base folder");
-        if (chown(UserBaseFolder.c_str(), JudgeUserID, JudgeUserGroupID) == -1)
-            Logger.Fetal("Can not change user base folder owner");
+        if (mkdir(RunDir.c_str(), 0755) == -1)
+            Logger.Fetal("Can not create run folder");
+        if (chown(RunDir.c_str(), JudgeUserID, JudgeUserGroupID) == -1)
+            Logger.Fetal("Can not change run folder owner");
     }
 }
 void SETTINGS::GetJudgeUserIDByUserName()
@@ -246,7 +201,7 @@ void SETTINGS::GetJudgeUserIDByUserName()
 // }
 void SETTINGS::CheckCompiler()
 {
-    if (access(SubmissionBaseFolder.c_str(), X_OK) != 0)
+    if (access(Compiler.c_str(), X_OK) != 0)
         Logger.Fetal("Compiler does not exist");
 }
 

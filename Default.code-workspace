@@ -117,7 +117,8 @@
 			"semaphore": "cpp",
 			"span": "cpp",
 			"stop_token": "cpp",
-			"syncstream": "cpp"
+			"syncstream": "cpp",
+			"slist": "cpp"
 		},
 		"highlight.regex.regexes": [
 			{
@@ -196,7 +197,23 @@
 		],
 		"python.formatting.provider": "autopep8",
 		"python.analysis.typeCheckingMode": "basic",
-		"material-icon-theme.opacity": 1
+		"material-icon-theme.opacity": 1,
+		"sqltools.connections": [
+			{
+				"mysqlOptions": {
+					"authProtocol": "xprotocol"
+				},
+				"previewLimit": 50,
+				"server": "localhost",
+				"port": 3306,
+				"driver": "MySQL",
+				"name": "MySQL",
+				"database": "OJ",
+				"username": "langningc2009",
+				"password": "1!2@3#qQwWeE"
+			}
+		],
+		"cph.general.onceMaintainerMessage": false
 	},
 	"launch": {
 		"version": "0.2.0",

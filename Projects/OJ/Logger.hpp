@@ -17,13 +17,9 @@ private:
 
 public:
     LOGGER();
-    LOGGER(const LOGGER &Other);
     ~LOGGER();
-    void operator=(const LOGGER &Other);
 
     void SetLogFileName(std::string LogFileName);
-
-    std::string GetLogFileName();
 
     void Debug(std::string Data);
     void Info(std::string Data);
@@ -31,5 +27,7 @@ public:
     void Error(std::string Data);
     void Fetal(std::string Data);
 };
+
+extern LOGGER Logger;
 
 #endif

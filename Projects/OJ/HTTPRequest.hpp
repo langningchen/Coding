@@ -5,6 +5,8 @@
 #include <string>
 #include <map>
 
+class WEB_DATA_PROCEED;
+
 class HTTP_REQUEST
 {
 private:
@@ -13,17 +15,11 @@ private:
     std::string Path;
     std::map<std::string, std::string> Headers;
     std::string Body;
-    LOGGER Logger;
+
+    friend class WEB_DATA_PROCEED;
 
 public:
     HTTP_REQUEST(std::string Data);
-    ~HTTP_REQUEST();
-
-    std::string GetVersion();
-    std::string GetVerb();
-    std::string GetPath();
-    std::string GetHeader(std::string Name);
-    std::string GetBody();
 };
 
 #endif

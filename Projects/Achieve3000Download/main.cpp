@@ -225,9 +225,9 @@ int main()
         TRIGGER_ERROR("Call chrome.exe to open file failed");
     }
     char DeleteOrNot;
-    cout << "Delete tho html file(y=Yes other=No)? ";
+    cout << "Delete the html file(n=No other=Yes)? ";
     cin >> DeleteOrNot;
-    if ((DeleteOrNot == 'y' || DeleteOrNot == 'Y') &&
+    if ((DeleteOrNot != 'n' && DeleteOrNot != 'N') &&
         (remove(string("/mnt/c/Users/Public/" + FileName + ".html").c_str())) == -1)
     {
         TRIGGER_ERROR("Delete failed");

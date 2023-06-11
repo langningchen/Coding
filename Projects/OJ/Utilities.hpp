@@ -14,24 +14,21 @@ class UTILITIES
 {
 private:
     static size_t UploadFunction(char *ptr, size_t size, size_t nmemb, void *userp);
-    LOGGER Logger;
 
 public:
-    void Init();
-    std::string StringReplaceAll(std::string Data, std::string Search, std::string Replace);
+    static std::string StringReplaceAll(std::string Data, std::string Search, std::string Replace);
     // RESULT MakeDir(std::string Dir);
-    RESULT MakeDir(std::string Dir);
-    RESULT RemoveDir(std::string Dir);
-    RESULT CopyFile(std::string Source, std::string Destination);
-    RESULT CopyDir(std::string Source, std::string Destination);
-    RESULT LoadFile(std::string FileName, std::string &Output);
-    RESULT LoadFile(std::string FileName, int &Output);
-    RESULT SaveFile(std::string FileName, std::string Data);
-    RESULT SaveFile(std::string FileName, int Data);
-    std::string RemoveSpaces(std::string Input);
-    RESULT SendEmail(std::string To, std::string Subject, std::string Body);
+    static RESULT MakeDir(std::string Dir);
+    static RESULT RemoveDir(std::string Dir);
+    static RESULT CopyFile(std::string Source, std::string Destination);
+    static RESULT CopyDir(std::string Source, std::string Destination);
+    static RESULT LoadFile(std::string FileName, std::string &Output);
+    static RESULT LoadFile(std::string FileName, int &Output);
+    static RESULT SaveFile(std::string FileName, std::string Data);
+    static RESULT SaveFile(std::string FileName, int Data);
+    static std::string RemoveSpaces(std::string Input);
+    static RESULT SendEmail(std::string To, std::string Subject, std::string Body);
+    static time_t StringToTime(std::string String);
 };
-
-extern UTILITIES Utilities;
 
 #endif

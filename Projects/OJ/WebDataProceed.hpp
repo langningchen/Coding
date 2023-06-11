@@ -14,16 +14,16 @@ private:
     configor::json Login(std::string Username, std::string Password);
     configor::json CheckUsernameAvailable(std::string Username);
     configor::json SendVerifyCode(std::string EmailAddress);
-    configor::json Register(std::string Username, std::string Password, std::string Nickname, std::string EmailAddress, std::string VerifyCode);
+    configor::json Register(std::string Username, std::string Password, std::string EmailAddress, std::string VerifyCode);
     configor::json CheckTokenAvailable(std::string Token);
-    configor::json GetSubmission(int SubmissionID);
-    configor::json Submit(std::string ProblemID, bool EnableO2, std::string Code);
-    configor::json GetProblem(std::string ProblemID);
+    configor::json GetSubmission(int SID);
+    configor::json Submit(std::string PID, bool EnableO2, std::string Code);
+    configor::json GetProblem(std::string PID);
 
-    LOGGER Logger;
+    void TestAddProblem();
+    void TestSubmit();
 
 public:
-    WEB_DATA_PROCEED();
     HTTP_RESPONSE Proceed(HTTP_REQUEST HTTPRequest);
 };
 

@@ -9,46 +9,34 @@ var Regexes = {
 const GetToken = () => {
     var Token = localStorage.getItem("Token");
     if (Token != null) {
-        RequestAPI("CheckTokenAvailable", {
-            "Token": localStorage.getItem("Token")
-        }, () => {}, () => {}, () => {
+        RequestAPI("CheckTokenAvailable", { "Token": localStorage.getItem("Token") }, () => { }, () => { }, () => {
             localStorage.removeItem("Token");
             Token = null;
-        }, () => {
-            Token = null;
-        }, false);
+        }, () => { Token = null; }, false);
     }
     return Token;
 };
 const ShowError = (AlertText) => {
     $("#ErrorAlert").text(AlertText);
     $("#ErrorAlert").fadeIn(100);
-    setTimeout(() => {
-        $("#ErrorAlert").fadeOut(100);
-    }, 2000);
+    setTimeout(() => { $("#ErrorAlert").fadeOut(100); }, 2000);
 };
 const ShowSuccess = (SuccessText) => {
     $("#SuccessAlert").fadeIn(100);
     $("#SuccessAlert>.weui-toast>.weui-toast__content").text(SuccessText);
-    setTimeout(() => {
-        $("#SuccessAlert").fadeOut(100);
-    }, 2000);
+    setTimeout(() => { $("#SuccessAlert").fadeOut(100); }, 2000);
 };
 const ShowLoading = (LoadingText) => {
     $("#LoadingAlert").fadeIn(100);
     $("#LoadingAlert>.weui-toast>.weui-toast__content").text(LoadingText);
 };
-const HideLoading = () => {
-    $("#LoadingAlert").fadeOut(100);
-};
+const HideLoading = () => { $("#LoadingAlert").fadeOut(100); };
 const ShowHalfScreenDialog = (Title, Content) => {
     $("#HalfScreenDialog>.weui-half-screen-dialog>.weui-half-screen-dialog__hd>.weui-half-screen-dialog__hd__main>.weui-half-screen-dialog__title").text(Title);
     $("#HalfScreenDialog>.weui-half-screen-dialog>.weui-half-screen-dialog__bd").html(Content);
     $("#HalfScreenDialog").fadeIn(100);
 };
-$("#HalfScreenDialogCloseButton").click(() => {
-    $("#HalfScreenDialog").fadeOut(100);
-});
+$("#HalfScreenDialogCloseButton").click(() => { $("#HalfScreenDialog").fadeOut(100); });
 const EnableButton = (Element) => {
     Element.removeClass("weui-btn_disabled");
     Element.removeAttr("disabled");
@@ -76,9 +64,7 @@ const RequestAPI = (Action, Data, CallBack, SuccessCallback, FailCallback, Error
             CallBack();
             if (XHR.status == 200) {
                 var Response = JSON.parse(XHR.responseText);
-                if (Response["Success"]) {
-                    SuccessCallback(Response["Data"]);
-                } else {
+                if (Response["Success"]) { SuccessCallback(Response["Data"]); } else {
                     ShowError(Response["Message"]);
                     FailCallback();
                 }
@@ -98,28 +84,16 @@ const SwitchPage = (Name, Data) => {
     PushedURL.pathname = "/" + Name;
     PushedURL.search = "";
     if (Data) {
-        for (const [Key, Value] of Object.entries(Data)) {
-            PushedURL.searchParams.append(Key, Value);
-        }
+        for (const [Key, Value] of Object.entries(Data)) { PushedURL.searchParams.append(Key, Value); }
     }
     history.pushState(Data, Name, PushedURL.toString());
     LoadPage(Name, Data);
 };
 const MemoryToString = (Memory) => {
-    if (Memory < 1024) {
-        return Memory + "B";
-    } else if (Memory < 1024 * 1024) {
-        return Number(Memory / 1024).toFixed(0) + "KB";
-    } else {
-        return Number(Memory / 1024 / 1024).toFixed(0) + "MB";
-    }
+    if (Memory < 1024) { return Memory + "B"; } else if (Memory < 1024 * 1024) { return Number(Memory / 1024).toFixed(0) + "KB"; } else { return Number(Memory / 1024 / 1024).toFixed(0) + "MB"; }
 };
 const TimeToString = (Time) => {
-    if (Time < 1000) {
-        return Time + "ms";
-    } else {
-        return Number(Time / 1000).toFixed(0) + "s";
-    }
+    if (Time < 1000) { return Time + "ms"; } else { return Number(Time / 1000).toFixed(0) + "s"; }
 };
 const LoadPage = (Name, Data) => {
     $("#Content>div").attr("style", "display: none;");
@@ -138,7 +112,8 @@ const LoadPage = (Name, Data) => {
             $("#ErrorDescription").text(Data["Message"]);
             $("#ErrorTips").text(Data["URL"]);
             $("#ErrorButton").text(ErrorTexts[1]);
-            $("#ErrorButton").on("click", () => {
+            $("#ErrorButton").off("click").on("click", (Event) => {
+                if (Event.currentTarget.classList.contains("weui-btn_disabled")) { return; }
                 location.href = new URL(location.href).origin;
             });
         },
@@ -157,28 +132,20 @@ const LoadPage = (Name, Data) => {
             $("#LoginPasswordInput").attr("placeholder", LoginTexts[4]);
             $("#LoginGoToRegister").text(LoginTexts[5]);
             $("#LoginSubmit").text(LoginTexts[6]);
-            $("#LoginForm").on("keydown", (Event) => {
-                if (Event.keyCode == 13) {
-                    $("#LoginSubmit").click();
-                }
+            $("#LoginForm").off("keydown").on("keydown", (Event) => {
+                if (Event.keyCode == 13) { $("#LoginSubmit").click(); }
             });
-            $("#LoginUsernameInput").on("input", () => {
-                $("#LoginUsernameLabel").removeClass("weui-cell_warn");
+            $("#LoginUsernameInput").off("input").on("input", () => { $("#LoginUsernameLabel").removeClass("weui-cell_warn"); });
+            $("#LoginPasswordInput").off("input").on("input", () => { $("#LoginPasswordLabel").removeClass("weui-cell_warn"); });
+            $(".LoginInputs").off("input").on("input", () => {
+                if ($("#LoginUsernameInput").val() && $("#LoginPasswordInput").val()) { EnableButton($("#LoginSubmit")); } else { DisableButton($("#LoginSubmit")); }
             });
-            $("#LoginPasswordInput").on("input", () => {
-                $("#LoginPasswordLabel").removeClass("weui-cell_warn");
-            });
-            $(".LoginInputs").on("input", () => {
-                if ($("#LoginUsernameInput").val() && $("#LoginPasswordInput").val()) {
-                    EnableButton($("#LoginSubmit"));
-                } else {
-                    DisableButton($("#LoginSubmit"));
-                }
-            });
-            $("#LoginGoToRegister").on("click", () => {
+            $("#LoginGoToRegister").off("click").on("click", (Event) => {
+                if (Event.currentTarget.classList.contains("weui-btn_disabled")) { return; }
                 SwitchPage("Register", null);
             });
-            $("#LoginSubmit").on("click", () => {
+            $("#LoginSubmit").off("click").on("click", (Event) => {
+                if (Event.currentTarget.classList.contains("weui-btn_disabled")) { return; }
                 var Username = $("#LoginUsernameInput").val();
                 var Password = $("#LoginPasswordInput").val();
                 if (Regexes["Username"].test(Username) == false) {
@@ -190,33 +157,20 @@ const LoadPage = (Name, Data) => {
                 } else {
                     ShowLoading(LoginTexts[9]);
                     RequestAPI("Login", {
-                            "Username": Username,
-                            "Password": Password
-                        }, () => {
-                            HideLoading();
-                        }, (Response) => {
-                            localStorage.setItem("Token", Response["Token"]);
-                            ShowSuccess(LoginTexts[10]);
-                            setTimeout(() => {
-                                SwitchPage("Home", null);
-                            }, 1000);
-                        }, () => {
-                            $("#PasswordLabel").addClass("weui-cell_warn");
-                        }, () => {},
+                        "Username": Username,
+                        "Password": Password
+                    }, () => { HideLoading(); }, (Response) => {
+                        localStorage.setItem("Token", Response["Token"]);
+                        ShowSuccess(LoginTexts[10]);
+                        setTimeout(() => { SwitchPage("Home", null); }, 1000);
+                    }, () => { $("#PasswordLabel").addClass("weui-cell_warn"); }, () => { },
                         false);
                 }
             });
-            localStorage.getItem("Token") && RequestAPI("CheckTokenAvailable", {
-                    "Token": localStorage.getItem("Token")
-                }, () => {}, (Response) => {
-                    ShowSuccess(LoginTexts[10]);
-                    setTimeout(() => {
-                        SwitchPage("Home", null);
-                    }, 1000);
-                }, () => {
-                    localStorage.removeItem("Token");
-                }, () => {},
-                false);
+            localStorage.getItem("Token") && RequestAPI("CheckTokenAvailable", { "Token": localStorage.getItem("Token") }, () => { }, (Response) => {
+                ShowSuccess(LoginTexts[10]);
+                setTimeout(() => { SwitchPage("Home", null); }, 1000);
+            }, () => { localStorage.removeItem("Token"); }, () => { }, false);
         },
         "Register": () => {
             var RegisterTexts = ["Register",
@@ -248,43 +202,33 @@ const LoadPage = (Name, Data) => {
             $("#RegisterGoToLogin").text(RegisterTexts[12]);
             $("#RegisterShowTips").text(RegisterTexts[13]);
             $("#RegisterSubmit").text(RegisterTexts[14]);
-            $("#RegisterForm").on("keydown", (Event) => {
-                if (Event.keyCode == 13) {
-                    $("#RegisterSubmit").click();
-                }
+            $("#RegisterForm").off("keydown").on("keydown", (Event) => {
+                if (Event.keyCode == 13) { $("#RegisterSubmit").click(); }
             });
-            $("#RegisterUsernameInput").on("input", () => {
-                $("#RegisterUsernameLabel").removeClass("weui-cell_warn");
-            });
-            $("#RegisterUsernameInput").on("blur", () => {
+            $("#RegisterUsernameInput").off("input").on("input", () => { $("#RegisterUsernameLabel").removeClass("weui-cell_warn"); });
+            $("#RegisterUsernameInput").off("blur").on("blur", () => {
                 var Username = $("#RegisterUsernameInput").val();
                 if (Regexes["Username"].test(Username) == false) {
                     ShowError(RegisterTexts[15]);
                     $("#RegisterUsernameLabel").addClass("weui-cell_warn");
                 } else {
-                    RequestAPI("CheckUsernameAvailable", {
-                            "Username": Username
-                        }, () => {}, () => {}, (Response) => {
-                            ShowError(Response);
-                            $("#RegisterUsernameLabel").addClass("weui-cell_warn");
-                        }, () => {},
+                    RequestAPI("CheckUsernameAvailable", { "Username": Username }, () => { }, () => { }, (Response) => {
+                        ShowError(Response);
+                        $("#RegisterUsernameLabel").addClass("weui-cell_warn");
+                    }, () => { },
                         false);
                 }
             });
-            $("#RegisterPasswordInput").on("input", () => {
-                $("#RegisterPasswordLabel").removeClass("weui-cell_warn");
-            });
-            $("#RegisterPasswordInput").on("blur", () => {
+            $("#RegisterPasswordInput").off("input").on("input", () => { $("#RegisterPasswordLabel").removeClass("weui-cell_warn"); });
+            $("#RegisterPasswordInput").off("blur").on("blur", () => {
                 var Password = $("#RegisterPasswordInput").val();
                 if (Password.length < 8 || Password.length > 32 || Regexes["Password"].test(Password) == true) {
                     ShowError(RegisterTexts[16]);
                     $("#RegisterPasswordLabel").addClass("weui-cell_warn");
                 }
             });
-            $("#RegisterPasswordInputAgain").on("input", () => {
-                $("#RegisterPasswordLabelAgain").removeClass("weui-cell_warn");
-            });
-            $("#RegisterPasswordInputAgain").on("blur", () => {
+            $("#RegisterPasswordInputAgain").off("input").on("input", () => { $("#RegisterPasswordLabelAgain").removeClass("weui-cell_warn"); });
+            $("#RegisterPasswordInputAgain").off("blur").on("blur", () => {
                 var Password = $("#RegisterPasswordInput").val();
                 var PasswordAgain = $("#RegisterPasswordInputAgain").val();
                 if (Password != PasswordAgain) {
@@ -292,73 +236,59 @@ const LoadPage = (Name, Data) => {
                     $("#RegisterPasswordLabelAgain").addClass("weui-cell_warn");
                 }
             });
-            $("#RegisterNicknameInput").on("input", () => {
-                $("#RegisterNicknameLabel").removeClass("weui-cell_warn");
-            });
-            $("#RegisterNicknameInput").on("blur", () => {
+            $("#RegisterNicknameInput").off("input").on("input", () => { $("#RegisterNicknameLabel").removeClass("weui-cell_warn"); });
+            $("#RegisterNicknameInput").off("blur").on("blur", () => {
                 var Nickname = $("#RegisterNicknameInput").val();
                 if (Regexes["Nickname"].test(Nickname) == false) {
                     ShowError(RegisterTexts[27]);
                     $("#RegisterNicknameLabel").addClass("weui-cell_warn");
                 }
             });
-            $("#RegisterEmailAddressInput").on("input", () => {
-                $("#RegisterEmailAddressLabel").removeClass("weui-cell_warn");
-            });
-            $("#RegisterEmailAddressInput").on("blur", () => {
+            $("#RegisterEmailAddressInput").off("input").on("input", () => { $("#RegisterEmailAddressLabel").removeClass("weui-cell_warn"); });
+            $("#RegisterEmailAddressInput").off("blur").on("blur", () => {
                 var EmailAddress = $("#RegisterEmailAddressInput").val();
                 if (Regexes["EmailAddress"].test(EmailAddress) == false) {
                     ShowError(RegisterTexts[18]);
                     $("#RegisterEmailAddressLabel").addClass("weui-cell_warn");
                 }
             });
-            $("#RegisterVerifyCodeInput").on("input", () => {
-                $("#RegisterVerifyCodeLabel").removeClass("weui-cell_warn");
-            });
-            $("#RegisterVerifyCodeInput").on("blur", () => {
+            $("#RegisterVerifyCodeInput").off("input").on("input", () => { $("#RegisterVerifyCodeLabel").removeClass("weui-cell_warn"); });
+            $("#RegisterVerifyCodeInput").off("blur").on("blur", () => {
                 var VerifyCode = $("#RegisterVerifyCodeInput").val();
                 if (Regexes["VerifyCode"].test(VerifyCode) == false) {
                     ShowError(RegisterTexts[19]);
                     $("#RegisterVerifyCodeLabel").addClass("weui-cell_warn");
                 }
             });
-            $("#RegisterVerifyCodeButton").on("click", () => {
+            $("#RegisterVerifyCodeButton").off("click").on("click", (Event) => {
+                if (Event.currentTarget.classList.contains("weui-btn_disabled")) { return; }
                 var EmailAddress = $("#RegisterEmailAddressInput").val();
                 if (Regexes["EmailAddress"].test(EmailAddress) == false) {
                     ShowError(RegisterTexts[18]);
                     $("#RegisterEmailAddressLabel").addClass("weui-cell_warn");
                 } else {
                     ShowLoading(RegisterTexts[20]);
-                    RequestAPI("SendVerifyCode", {
-                            "EmailAddress": EmailAddress
-                        }, () => {
-                            HideLoading();
-                        }, (Response) => {
-                            ShowSuccess(RegisterTexts[21]);
-                        }, () => {
-                            $("#RegisterEmailAddressLabel").addClass("weui-cell_warn");
-                        }, () => {},
+                    RequestAPI("SendVerifyCode", { "EmailAddress": EmailAddress }, () => { HideLoading(); }, (Response) => { ShowSuccess(RegisterTexts[21]); }, () => { $("#RegisterEmailAddressLabel").addClass("weui-cell_warn"); }, () => { },
                         false);
                 }
             });
-            $(".RegisterInputs").on("input", () => {
+            $(".RegisterInputs").off("input").on("input", () => {
                 if ($("#RegisterUsernameInput").val() &&
                     $("#RegisterPasswordInput").val() &&
                     $("#RegisterPasswordInputAgain").val() &&
                     $("#RegisterEmailAddressInput").val() &&
-                    $("#RegisterVerifyCodeInput").val()) {
-                    EnableButton($("#RegisterSubmit"));
-                } else {
-                    DisableButton($("#RegisterSubmit"));
-                }
+                    $("#RegisterVerifyCodeInput").val()) { EnableButton($("#RegisterSubmit")); } else { DisableButton($("#RegisterSubmit")); }
             });
-            $("#RegisterShowTips").on("click", () => {
+            $("#RegisterShowTips").off("click").on("click", (Event) => {
+                if (Event.currentTarget.classList.contains("weui-btn_disabled")) { return; }
                 ShowHalfScreenDialog(RegisterTexts[13], RegisterTexts[24]);
             });
-            $("#RegisterGoToLogin").on("click", () => {
+            $("#RegisterGoToLogin").off("click").on("click", (Event) => {
+                if (Event.currentTarget.classList.contains("weui-btn_disabled")) { return; }
                 SwitchPage("Login", null);
             });
-            $("#RegisterSubmit").on("click", () => {
+            $("#RegisterSubmit").off("click").on("click", (Event) => {
+                if (Event.currentTarget.classList.contains("weui-btn_disabled")) { return; }
                 var Username = $("#RegisterUsernameInput").val();
                 var Password = $("#RegisterPasswordInput").val();
                 var PasswordAgain = $("#RegisterPasswordInputAgain").val();
@@ -383,28 +313,22 @@ const LoadPage = (Name, Data) => {
                 } else {
                     ShowLoading(RegisterTexts[22]);
                     RequestAPI("Register", {
-                            "Username": Username,
-                            "Password": Password,
-                            "Nickname": Nickname,
-                            "EmailAddress": EmailAddress,
-                            "VerifyCode": VerifyCode
-                        }, () => {
-                            HideLoading();
-                        }, (Response) => {
-                            ShowSuccess(RegisterTexts[23]);
-                            localStorage.setItem("Token", Response["Token"]);
-                            setTimeout(() => {
-                                SwitchPage("Login", null);
-                            }, 1000);
-                        }, () => {
-                            $("#RegisterVerifyCodeLabel").addClass("weui-cell_warn");
-                        }, () => {},
+                        "Username": Username,
+                        "Password": Password,
+                        "Nickname": Nickname,
+                        "EmailAddress": EmailAddress,
+                        "VerifyCode": VerifyCode
+                    }, () => { HideLoading(); }, (Response) => {
+                        ShowSuccess(RegisterTexts[23]);
+                        localStorage.setItem("Token", Response["Token"]);
+                        setTimeout(() => { SwitchPage("Login", null); }, 1000);
+                    }, () => { $("#RegisterVerifyCodeLabel").addClass("weui-cell_warn"); }, () => { },
                         false);
                 }
             });
         },
         "Submit": () => {
-            Data["ProblemID"] && $("#SubmitProblemIDInput").attr("value", Data["ProblemID"]);
+            Data["PID"] && $("#SubmitProblemIDInput").attr("value", Data["PID"]);
             var SubmitTexts = ["Submit",
                 "Source code",
                 "Problem ID", "Please input the problem ID here",
@@ -430,60 +354,47 @@ const LoadPage = (Name, Data) => {
                 lineWrapping: true,
                 foldGutter: true,
                 gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-                extraKeys: {
-                    "Ctrl-Space": "autocomplete"
-                }
+                extraKeys: { "Ctrl-Space": "autocomplete" }
             });
-            $("#SubmitCodeUploader").on("change", (Event) => {
+            $("#SubmitCodeUploader").off("change").on("change", (Event) => {
                 ShowLoading(SubmitTexts[7]);
                 var UploadFileReader = new FileReader();
-                UploadFileReader.onload = function(event) {
+                UploadFileReader.onload = function (event) {
                     HideLoading();
                     Editor.setValue(event.target.result);
                 };
                 UploadFileReader.readAsText(Event.target.files[0]);
                 console.log(Event.target.files[0]);
             });
-            Editor.on("change", () => {
-                $(".SubmitInputs").trigger("input");
-            });
-            $(".SubmitInputs").on("input", () => {
+            Editor.on("change", () => { $(".SubmitInputs").trigger("input"); });
+            $(".SubmitInputs").off("input").on("input", () => {
                 if ($("#SubmitProblemIDInput").val() &&
-                    Editor.getValue()) {
-                    EnableButton($("#SubmitSubmit"));
-                } else {
-                    DisableButton($("#SubmitSubmit"));
-                }
+                    Editor.getValue()) { EnableButton($("#SubmitSubmit")); } else { DisableButton($("#SubmitSubmit")); }
             });
-            $("#SubmitSubmit").on("click", () => {
-                var ProblemID = $("#SubmitProblemIDInput").val();
+            $("#SubmitSubmit").off("click").on("click", (Event) => {
+                if (Event.currentTarget.classList.contains("weui-btn_disabled")) { return; }
+                var PID = $("#SubmitProblemIDInput").val();
                 var EnableO2 = $("#SubmitEnableO2Input").val() == "on";
                 console.log(EnableO2);
                 var Code = Editor.getValue();
-                if (ProblemID == "") {
+                if (PID == "") {
                     ShowError(SubmitTexts[9]);
                     $("#SubmitProblemIDLabel").addClass("weui-cell_warn");
-                } else if (Code == "") {
-                    ShowError(SubmitTexts[10]);
-                } else {
+                } else if (Code == "") { ShowError(SubmitTexts[10]); } else {
                     ShowLoading(SubmitTexts[11]);
                     RequestAPI("Submit", {
-                        "ProblemID": ProblemID,
+                        "PID": PID,
                         "EnableO2": EnableO2,
                         "Code": Code
-                    }, () => {
-                        HideLoading();
-                    }, (Response) => {
+                    }, () => { HideLoading(); }, (Response) => {
                         ShowSuccess(SubmitTexts[12]);
-                        SwitchPage("Submission", {
-                            "SubmissionID": Response["SubmissionID"]
-                        });
-                    }, () => {}, () => {});
+                        SwitchPage("Submission", { "SID": Response["SID"] });
+                    }, () => { }, () => { });
                 }
             });
         },
         "Submission": () => {
-            if (Data["SubmissionID"] == null) {
+            if (Data["SID"] == null) {
                 SwitchPage("Error", {
                     "Message": "No submission id provide",
                     "URL": location.href
@@ -491,36 +402,30 @@ const LoadPage = (Name, Data) => {
             }
             var SubmissionTexts = ["Submit record", "ID", "Status", "Refresh result", "Judging", "Judged"];
             var SubmissionResultShortTexts = ["UKE", "AC", "PE", "WA", "TE", "ME", "OLE", "RE", "RF", "CE", "SE", "WT", "FC", "CP", "CPD", "JG", "JGD", "CMP", "SK", "RJ"];
-            $(".TestGroup").on("click", (Event) => {
-                Event.currentTarget.classList.toggle("HidedTestGroup");
-            });
+            $(".TestGroup").off("click").on("click", (Event) => { Event.currentTarget.classList.toggle("HidedTestGroup"); });
             document.title = SubmissionTexts[0];
             $("#SubmissionTitle").text(SubmissionTexts[0]);
             $("#SubmissionIDLabel>.weui-cell__hd>.weui-label").text(SubmissionTexts[1]);
-            $("#SubmissionIDInput").attr("value", Data["SubmissionID"]);
+            $("#SubmissionIDInput").attr("value", Data["SID"]);
             $("#SubmissionStatusLabel>.weui-cell__hd>.weui-label").text(SubmissionTexts[2]);
             $("#SubmissionStatusInput").attr("value", SubmissionTexts[4]);
             $("#SubmissionRefresh").text(SubmissionTexts[3]);
-            $("#SubmissionRefresh").on("click", () => {
+            $("#SubmissionRefresh").off("click").on("click", (Event) => {
+                if (Event.currentTarget.classList.contains("weui-btn_disabled")) { return; }
                 $("#SubmissionRefresh")[0].classList.add("weui-btn_loading");
                 $("#SubmissionRefresh").html("<i class=\"weui-mask-loading\"></i>" + SubmissionTexts[3]);
-                RequestAPI("GetSubmission", {
-                    "SubmissionID": Number(Data["SubmissionID"])
-                }, () => {
+                RequestAPI("GetSubmission", { "SID": Number(Data["SID"]) }, () => {
                     $("#SubmissionRefresh")[0].classList.remove("weui-btn_loading");
                     $("#SubmissionRefresh").text(SubmissionTexts[3]);
                     $("#SubmissionJudgeResult").html("");
                 }, (Response) => {
                     $("#SubmissionStatusIcon")[0].className = "weui-icon_msg weui-icon-success";
-                    $("#SubmissionStatusInput").attr("value", SubmissionTexts[5]);
                     $("#SubmissionJudgeResult")[0].className = "TestGroups JudgeResult" + SubmissionResultShortTexts[Response.Result];
                     $("#SubmissionJudgeResult").append($("<div class=\"TestGroupsResult\">" + SubmissionResultShortTexts[Response.Result] + "</div>"));
                     $("#SubmissionJudgeResult").append($("<div class=\"TestGroupsLimit\">" + Response.Score + "pts</div>"));
                     $("#SubmissionJudgeResult").append($("<div class=\"TestGroupsLimit\">" + TimeToString(Response.TimeSum) + "</div>"));
                     $("#SubmissionJudgeResult").append($("<div class=\"TestGroupsLimit\">" + MemoryToString(Response.Memory) + "</div>"));
-                    Response.TestGroups.sort((a, b) => {
-                        return (a.Index > b.Index ? 1 : -1);
-                    });
+                    Response.TestGroups.sort((a, b) => { return (a.TGID > b.TGID ? 1 : -1); });
                     var TestCaseCounter = 1;
                     Response.TestGroups.map((TestGroup) => {
                         var TestGroupElement = $("<div class=\"TestGroup JudgeResult" + SubmissionResultShortTexts[TestGroup.Result] + "\">");
@@ -528,11 +433,9 @@ const LoadPage = (Name, Data) => {
                         TestGroupElement.append($("<div class=\"TestGroupLimit\">" + TestGroup.Score + "pts</div>"));
                         TestGroupElement.append($("<div class=\"TestGroupLimit\">" + TimeToString(TestGroup.TimeSum) + "</div>"));
                         TestGroupElement.append($("<br>"));
-                        TestGroup.TestCases.sort((a, b) => {
-                            return (a.Index > b.Index ? 1 : -1);
-                        });
+                        TestGroup.TestCases.sort((a, b) => { return (a.TCID > b.TCID ? 1 : -1); });
                         TestGroup.TestCases.map((TestCase) => {
-                            var TestCaseElement = $("<div class=\"TestCase JudgeResult" + SubmissionResultShortTexts[TestCase.Result] + "\">");
+                            var TestCaseElement = $("<div class=\"TestCase JudgeResult" + SubmissionResultShortTexts[TestCase.Result] + (TestCase.Description == "" ? "" : " WithDescription") + "\">");
                             TestCaseElement.append($("<div class=\"TestCaseNumber\">" + TestCaseCounter + "</div>"));
                             TestCaseElement.append($("<div class=\"TestCaseResult\">" + SubmissionResultShortTexts[TestCase.Result] + "</div>"));
                             TestCaseElement.append($("<div class=\"TestCaseLimit\"><span>" + TimeToString(TestCase.Time) + "</span><span>" + TimeToString(TestCase.TimeLimit) + "</span></div>"));
@@ -545,25 +448,22 @@ const LoadPage = (Name, Data) => {
                     });
                     $("#SubmissionJudgeResult").append($("<div class=\"TestGroupsDescription\"><pre>" + Response.Description + "</pre></div>"));
                     if (Response.Result <= 10) {
+                        $("#SubmissionStatusInput").attr("value", SubmissionTexts[5]);
                         clearInterval(RefreshInterval);
                     }
-                }, () => {}, () => {});
+                }, () => { clearInterval(RefreshInterval); }, () => { clearInterval(RefreshInterval); });
             });
-            var RefreshInterval = setInterval(() => {
-                $("#SubmissionRefresh").click();
-            }, 1000);
+            var RefreshInterval = setInterval(() => { $("#SubmissionRefresh").click(); }, 1000);
         },
         "Problem": () => {
-            if (Data["ProblemID"] == null) {
+            if (Data["PID"] == null) {
                 SwitchPage("Error", {
                     "Message": "No problem id provide",
                     "URL": location.href
                 });
             }
-            RequestAPI("GetProblem", {
-                "ProblemID": Data["ProblemID"]
-            }, () => { }, (Response) => {
-                var MarkdownData = "# " + Response.ID + ". " + Response.Title + "\n" +
+            RequestAPI("GetProblem", { "PID": Data["PID"] }, () => { }, (Response) => {
+                var MarkdownData = "# " + Response.PID + ". " + Response.Title + "\n" +
                     "## Description\n" +
                     Response.Description + "\n" +
                     "## Input\n" +
@@ -619,9 +519,7 @@ const LoadPage = (Name, Data) => {
             }, () => { }, () => { });
         }
     };
-    if (LoadPageCallbacks[Name]) {
-        LoadPageCallbacks[Name]();
-    } else {
+    if (LoadPageCallbacks[Name]) { LoadPageCallbacks[Name](); } else {
         SwitchPage("Error", {
             "Message": "Not found",
             "URL": location.href
@@ -631,11 +529,7 @@ const LoadPage = (Name, Data) => {
 $(() => {
     var PageName = new String(new URL(location.href).pathname).substr(1) || "Login";
     var PageParams = Object();
-    new URL(location.href).searchParams.forEach((Value, Key) => {
-        PageParams[Key] = Value;
-    });
+    new URL(location.href).searchParams.forEach((Value, Key) => { PageParams[Key] = Value; });
     LoadPage(PageName, PageParams);
-    window.onselectstart = () => {
-        return false;
-    };
+    window.onselectstart = () => { return false; };
 });

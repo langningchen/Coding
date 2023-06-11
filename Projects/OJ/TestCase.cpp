@@ -2,6 +2,7 @@
 #include "Logger.hpp"
 #include "Settings.hpp"
 #include "TestCase.hpp"
+#include "Submissions.hpp"
 #include <map>
 #include <fstream>
 #include <math.h>
@@ -15,64 +16,14 @@
 #include <sys/ptrace.h>
 #include <sys/resource.h>
 
-TEST_CASE::TEST_CASE() {}
-TEST_CASE::TEST_CASE(const TEST_CASE &Other)
-{
-    ID = Other.ID;
-    PID = Other.PID;
-    Input = Other.Input;
-    Output = Other.Output;
-    Answer = Other.Answer;
-    StandardOutput = Other.StandardOutput;
-    StandardError = Other.StandardError;
-    IOFileName = Other.IOFileName;
-    SubmissionID = Other.SubmissionID;
-    TestGroupID = Other.TestGroupID;
-    WorkDir = Other.WorkDir;
-    Result = Other.Result;
-    Description = Other.Description;
-    Time = Other.Time;
-    TimeLimit = Other.TimeLimit;
-    Memory = Other.Memory;
-    MemoryLimit = Other.MemoryLimit;
-    Score = Other.Score;
-    for (int i = 0; i < Settings.SystemCallCount; i++)
-        SystemCallCount[i] = Other.SystemCallCount[i];
-    Logger = Other.Logger;
-}
-
-TEST_CASE::TEST_CASE(int ID, std::string TestGroupID, std::string Input, std::string Answer, std::string IOFileName, std::string SubmissionID, int TimeLimit, int MemoryLimit, int Score)
-{
-    TEST_CASE();
-    this->ID = ID;
-    this->Input = Input;
-    this->Answer = Answer;
-    this->IOFileName = IOFileName;
-    this->SubmissionID = SubmissionID;
-    this->Result = JUDGE_RESULT::UNKNOWN_ERROR;
-    this->TimeLimit = TimeLimit;
-    this->MemoryLimit = MemoryLimit;
-    this->Score = Score;
-    UpdateWorkDirFromSubmission();
-}
-TEST_CASE::~TEST_CASE() {}
-
-JUDGE_RESULT TEST_CASE::GetResult() { return Result; }
-std::string TEST_CASE::GetDescription() { return Description; }
-std::string TEST_CASE::GetInput() { return Input; }
-std::string TEST_CASE::GetAnswer() { return Answer; }
-int TEST_CASE::GetTime() { return Time; }
-int TEST_CASE::GetMemory() { return Memory; }
-int TEST_CASE::GetScore() { return Score; }
-
 RESULT TEST_CASE::RedirectIO()
 {
-    if (freopen((WorkDir + "/" + IOFileName + ".in").c_str(), "r", stdin) == nullptr)
+    if (freopen((WorkDir + "/" + Problem->IOFilename + ".in").c_str(), "r", stdin) == nullptr)
         CREATE_RESULT(false, "Can not open input data file")
 
-    if (IOFileName == std::to_string(ID))
+    if (Problem->IOFilename == std::to_string(SID))
     {
-        if (freopen((WorkDir + "/" + IOFileName + ".out").c_str(), "w", stdout) == nullptr)
+        if (freopen((WorkDir + "/" + Problem->IOFilename + ".out").c_str(), "w", stdout) == nullptr)
             CREATE_RESULT(false, "Can not open output data file");
     }
     else
@@ -135,11 +86,10 @@ RESULT TEST_CASE::SetupEnvrionment()
             CREATE_RESULT(false, "Can not create symlink for the new root")
     }
 
-    RETURN_IF_FAILED(Utilities.CopyDir("/etc/alternatives", "./etc/alternatives"))
+    RETURN_IF_FAILED(UTILITIES::CopyDir("/etc/alternatives", "./etc/alternatives"))
 
     if (chroot(WorkDir.c_str()) != 0)
         CREATE_RESULT(false, "Can not change root dir")
-    Logger.SetLogFileName("Log.log");
 
     CREATE_RESULT(true, "Environment setted")
 }
@@ -173,7 +123,7 @@ RESULT TEST_CASE::RemoveEnvrionment()
         "tmp",
         "usr"};
     for (int i = 0; i < 6; i++)
-        RETURN_IF_FAILED(Utilities.RemoveDir(DirsToRemove[i].c_str()))
+        RETURN_IF_FAILED(UTILITIES::RemoveDir(DirsToRemove[i].c_str()))
 
     CREATE_RESULT(true, "Environment removed")
 }
@@ -197,15 +147,15 @@ RESULT TEST_CASE::ChangeUser()
 RESULT TEST_CASE::SetLimits()
 {
     struct rlimit Limit;
-    Limit.rlim_cur = Limit.rlim_max = TimeLimit + 1;
+    Limit.rlim_cur = Limit.rlim_max = UnjudgedTestCase->TimeLimit + 1;
     if (setrlimit(RLIMIT_CPU, &Limit))
         CREATE_RESULT(false, "Can not set cpu limit")
 
-    if (alarm(ceil(TimeLimit / 1000.0) + 1) != 0)
+    if (alarm(ceil(UnjudgedTestCase->TimeLimit / 1000.0) + 1) != 0)
         CREATE_RESULT(false, "Can not set alarm")
 
-    Limit.rlim_max = MemoryLimit + 1024 * 1024;
-    Limit.rlim_cur = MemoryLimit;
+    Limit.rlim_max = UnjudgedTestCase->MemoryLimit + 1024 * 1024;
+    Limit.rlim_cur = UnjudgedTestCase->MemoryLimit;
     if (setrlimit(RLIMIT_AS, &Limit))
         CREATE_RESULT(false, "Can not set memory limit")
 
@@ -253,20 +203,20 @@ RESULT TEST_CASE::CheckSignal()
 {
     int Status;
     struct rusage Usage;
-    if (wait4(PID, &Status, 0, &Usage) == -1)
+    if (wait4(ProcessID, &Status, 0, &Usage) == -1)
         CREATE_RESULT(false, "Can not wait for child process")
-    Time = (Usage.ru_utime.tv_sec * 1000 + Usage.ru_utime.tv_usec / 1000) +
-           (Usage.ru_stime.tv_sec * 1000 + Usage.ru_stime.tv_usec / 1000);
+    RETURN_IF_FAILED(SetTime((Usage.ru_utime.tv_sec * 1000 + Usage.ru_utime.tv_usec / 1000) +
+                             (Usage.ru_stime.tv_sec * 1000 + Usage.ru_stime.tv_usec / 1000)));
     if (WIFEXITED(Status))
     {
         int ExitCode = WEXITSTATUS(Status);
         if (ExitCode != 0)
         {
-            Result = JUDGE_RESULT::RUNTIME_ERROR;
-            Description = "Child process exited with code " + std::to_string(ExitCode) + " which is recognized as runtime error";
+            RETURN_IF_FAILED(SetResult(JUDGE_RESULT::RUNTIME_ERROR))
+            RETURN_IF_FAILED(SetDescription("Child process exited with code " + std::to_string(ExitCode) + " which is recognized as runtime error"))
             CREATE_RESULT(false, "Child process exited with code " + std::to_string(ExitCode))
         }
-        Result = JUDGE_RESULT::JUDGED;
+        RETURN_IF_FAILED(SetResult(JUDGE_RESULT::JUDGED))
         CREATE_RESULT(false, "Judged")
     }
     if (WIFSIGNALED(Status))
@@ -274,26 +224,26 @@ RESULT TEST_CASE::CheckSignal()
         int Signal = WTERMSIG(Status);
         if (Signal == SIGVTALRM || Signal == SIGALRM || Signal == SIGXCPU)
         {
-            Result = JUDGE_RESULT::TIME_LIMIT_EXCEEDED;
-            DEBUG_HERE
+            RETURN_IF_FAILED(SetResult(JUDGE_RESULT::TIME_LIMIT_EXCEEDED))
             CREATE_RESULT(false, "Time limit exceeded");
         }
         else if (Signal == SIGXFSZ)
         {
-            Result = JUDGE_RESULT::OUTPUT_LIMIT_EXCEEDED;
+            RETURN_IF_FAILED(SetResult(JUDGE_RESULT::OUTPUT_LIMIT_EXCEEDED))
             CREATE_RESULT(false, "Output limit exceeded");
         }
         else if (Signal == SIGSEGV)
         {
-            Result = JUDGE_RESULT::MEMORY_LIMIT_EXCEEDED;
+            RETURN_IF_FAILED(SetResult(JUDGE_RESULT::MEMORY_LIMIT_EXCEEDED))
             CREATE_RESULT(false, "Memory limit exceeded");
         }
         else
         {
-            Result = JUDGE_RESULT::RUNTIME_ERROR;
+            RETURN_IF_FAILED(SetResult(JUDGE_RESULT::RUNTIME_ERROR))
+            RETURN_IF_FAILED(SetDescription("Received an unknown signal"));
             CREATE_RESULT(false, "Can not recognize signal");
         }
-        Result = JUDGE_RESULT::JUDGED;
+        RETURN_IF_FAILED(SetResult(JUDGE_RESULT::JUDGED))
         CREATE_RESULT(false, "Got signal");
     }
     if (WIFSTOPPED(Status))
@@ -301,12 +251,12 @@ RESULT TEST_CASE::CheckSignal()
         int Signal = WSTOPSIG(Status);
         if (Signal == SIGTRAP)
         {
-            if (ptrace(PTRACE_SYSCALL, PID, nullptr, nullptr) == -1)
+            if (ptrace(PTRACE_SYSCALL, ProcessID, nullptr, nullptr) == -1)
                 CREATE_RESULT(false, "Can not continue child process");
         }
         else
         {
-            if (ptrace(PTRACE_SYSCALL, PID, nullptr, Signal) == -1)
+            if (ptrace(PTRACE_SYSCALL, ProcessID, nullptr, Signal) == -1)
                 CREATE_RESULT(false, "Can not continue child process");
         }
     }
@@ -314,17 +264,17 @@ RESULT TEST_CASE::CheckSignal()
 }
 RESULT TEST_CASE::CheckMemory()
 {
-    std::ifstream ProcessStatus("/proc/" + std::to_string(PID) + "/status");
+    std::ifstream ProcessStatus("/proc/" + std::to_string(ProcessID) + "/status");
     if (!ProcessStatus.is_open())
         CREATE_RESULT(false, "Can not open process status file");
     std::string Line;
     while (std::getline(ProcessStatus, Line))
         if (Line.substr(0, 6) == "VmPeak")
         {
-            Memory = std::max(Memory, std::stoi(Line.substr(7, Line.find("kB") - 7)));
-            if (Memory > MemoryLimit)
+            RETURN_IF_FAILED(SetMemory(std::max(Memory, std::stoi(Line.substr(7, Line.find("kB") - 7)))))
+            if (Memory > UnjudgedTestCase->MemoryLimit)
             {
-                Result = JUDGE_RESULT::MEMORY_LIMIT_EXCEEDED;
+                RETURN_IF_FAILED(SetResult(JUDGE_RESULT::MEMORY_LIMIT_EXCEEDED))
                 CREATE_RESULT(false, "Memory limit exceeded");
             }
             break;
@@ -335,23 +285,23 @@ RESULT TEST_CASE::CheckMemory()
 RESULT TEST_CASE::CheckSystemCall()
 {
     struct user_regs_struct Regs;
-    if (ptrace(PTRACE_GETREGS, PID, nullptr, &Regs) == -1)
+    if (ptrace(PTRACE_GETREGS, ProcessID, nullptr, &Regs) == -1)
         CREATE_RESULT(true, "Can not get registers")
     int CallID = (unsigned int)Regs.orig_rax % Settings.SystemCallCount;
     SystemCallCount[CallID]++;
     if (Settings.IsBannedSystemCall(CallID, SystemCallCount[CallID]))
     {
-        Result = JUDGE_RESULT::RESTRICTED_FUNCTION;
-        Description = "Child process tried to execute system call " + std::to_string(CallID);
+        RETURN_IF_FAILED(SetResult(JUDGE_RESULT::RESTRICTED_FUNCTION))
+        RETURN_IF_FAILED(SetDescription("Child process tried to execute system call " + std::to_string(CallID) + (CallID == 14 ? ", which may because of memory exceed" : "")))
         CREATE_RESULT(false, "The system call is banned")
     }
-    if (ptrace(PTRACE_SYSCALL, PID, nullptr, nullptr) != 0)
+    if (ptrace(PTRACE_SYSCALL, ProcessID, nullptr, nullptr) != 0)
         CREATE_RESULT(false, "Can not trace system calls")
     CREATE_RESULT(true, "No banned system call");
 }
 RESULT TEST_CASE::ParentProcess()
 {
-    while (1)
+    while (true)
     {
         if (Result != JUDGE_RESULT::JUDGING)
             CREATE_RESULT(true, "Judge stopped because of status is not JUDGING")
@@ -364,27 +314,27 @@ RESULT TEST_CASE::ParentProcess()
 }
 RESULT TEST_CASE::Run()
 {
-    std::ofstream InputFile(WorkDir + "/" + IOFileName + ".in");
+    std::ofstream InputFile(WorkDir + "/" + Problem->IOFilename + ".in");
     if (!InputFile.is_open())
         CREATE_RESULT(false, "Can not open data file")
-    InputFile << Input;
+    InputFile << UnjudgedTestCase->Input;
     InputFile.close();
 
-    if (chown((WorkDir + "/" + IOFileName + ".in").c_str(), Settings.GetJudgeUserID(), Settings.GetJudgeUserGroupID()) == -1)
+    if (chown((WorkDir + "/" + Problem->IOFilename + ".in").c_str(), Settings.GetJudgeUserID(), Settings.GetJudgeUserGroupID()) == -1)
         CREATE_RESULT(false, "Can not change group of input file")
 
-    if (chmod((WorkDir + "/" + IOFileName + ".in").c_str(), 0740) == -1)
+    if (chmod((WorkDir + "/" + Problem->IOFilename + ".in").c_str(), 0740) == -1)
         CREATE_RESULT(false, "Can not change permission of input file")
 
-    std::ofstream OutputFile(WorkDir + "/" + IOFileName + ".out");
+    std::ofstream OutputFile(WorkDir + "/" + Problem->IOFilename + ".out");
     if (!OutputFile.is_open())
         CREATE_RESULT(false, "Can not open data file")
     OutputFile.close();
 
-    if (chown((WorkDir + "/" + IOFileName + ".out").c_str(), Settings.GetJudgeUserID(), Settings.GetJudgeUserGroupID()) == -1)
+    if (chown((WorkDir + "/" + Problem->IOFilename + ".out").c_str(), Settings.GetJudgeUserID(), Settings.GetJudgeUserGroupID()) == -1)
         CREATE_RESULT(false, "Can not change group of output file")
 
-    if (chmod((WorkDir + "/" + IOFileName + ".out").c_str(), 0760) == -1)
+    if (chmod((WorkDir + "/" + Problem->IOFilename + ".out").c_str(), 0760) == -1)
         CREATE_RESULT(false, "Can not change permission of output file")
 
     std::ofstream StandardOutputFile(WorkDir + "/std.out");
@@ -397,15 +347,15 @@ RESULT TEST_CASE::Run()
         CREATE_RESULT(false, "Can not open data file")
     StandardErrorFile.close();
 
-    pid_t PID = fork();
-    if (PID == 0)
+    pid_t ProcessID = fork();
+    if (ProcessID == 0)
     {
         RETURN_IF_FAILED(ChildProcess())
         exit(0);
     }
     else
     {
-        this->PID = PID;
+        this->ProcessID = ProcessID;
         ParentProcess();
         RemoveEnvrionment();
     }
@@ -417,10 +367,10 @@ RESULT TEST_CASE::Compare()
     if (Result != JUDGE_RESULT::JUDGED)
         CREATE_RESULT(true, "Judge stopped because of status is not JUDGED")
 
-    Result = JUDGE_RESULT::COMPARING;
+    RETURN_IF_FAILED(SetResult(JUDGE_RESULT::COMPARING))
 
     std::string Line;
-    std::ifstream OutputFile(WorkDir + "/" + IOFileName + ".out");
+    std::ifstream OutputFile(WorkDir + "/" + Problem->IOFilename + ".out");
     if (!OutputFile.is_open())
         CREATE_RESULT(false, "Can not open data file")
     while (std::getline(OutputFile, Line))
@@ -441,161 +391,138 @@ RESULT TEST_CASE::Compare()
         StandardError += Line + "\n";
     StandardErrorFile.close();
 
-    Output = Utilities.RemoveSpaces(Output);
-    Answer = Utilities.RemoveSpaces(Answer);
-    StandardOutput = Utilities.RemoveSpaces(StandardOutput);
-    StandardError = Utilities.RemoveSpaces(StandardError);
+    RETURN_IF_FAILED(SetOutput(UTILITIES::RemoveSpaces(Output)))
+    UnjudgedTestCase->Answer = UTILITIES::RemoveSpaces(UnjudgedTestCase->Answer);
+    RETURN_IF_FAILED(SetStandardOutput(UTILITIES::RemoveSpaces(StandardOutput)))
+    RETURN_IF_FAILED(SetStandardError(UTILITIES::RemoveSpaces(StandardError)))
 
-    std::string FixedOutput = Utilities.StringReplaceAll(Output, "\r", "");
-    FixedOutput = Utilities.StringReplaceAll(FixedOutput, "\n", "");
-    FixedOutput = Utilities.StringReplaceAll(FixedOutput, "\t", "");
-    FixedOutput = Utilities.StringReplaceAll(FixedOutput, " ", "");
-    std::string FixedAnswer = Utilities.StringReplaceAll(Answer, "\r", "");
-    FixedAnswer = Utilities.StringReplaceAll(FixedAnswer, "\n", "");
-    FixedAnswer = Utilities.StringReplaceAll(FixedAnswer, "\t", "");
-    FixedAnswer = Utilities.StringReplaceAll(FixedAnswer, " ", "");
+    std::string FixedOutput = UTILITIES::StringReplaceAll(Output, "\r", "");
+    FixedOutput = UTILITIES::StringReplaceAll(FixedOutput, "\n", "");
+    FixedOutput = UTILITIES::StringReplaceAll(FixedOutput, "\t", "");
+    FixedOutput = UTILITIES::StringReplaceAll(FixedOutput, " ", "");
+    std::string FixedAnswer = UTILITIES::StringReplaceAll(UnjudgedTestCase->Answer, "\r", "");
+    FixedAnswer = UTILITIES::StringReplaceAll(FixedAnswer, "\n", "");
+    FixedAnswer = UTILITIES::StringReplaceAll(FixedAnswer, "\t", "");
+    FixedAnswer = UTILITIES::StringReplaceAll(FixedAnswer, " ", "");
 
     if (StandardError != "")
     {
-        Result = JUDGE_RESULT::RUNTIME_ERROR;
-        Description = "Do not output to stderr if you do so. ";
+        RETURN_IF_FAILED(SetResult(JUDGE_RESULT::RUNTIME_ERROR))
+        RETURN_IF_FAILED(SetDescription("Do not output to stderr if you do so. "))
     }
-    else if (Output == Answer)
+    else if (Output == UnjudgedTestCase->Answer)
     {
-        Result = JUDGE_RESULT::ACCEPTED;
-        Description = "Accepted";
+        RETURN_IF_FAILED(SetResult(JUDGE_RESULT::ACCEPTED))
+        RETURN_IF_FAILED(SetDescription("Accepted"))
     }
     else
     {
         if (FixedOutput == FixedAnswer)
         {
-            Result = JUDGE_RESULT::PRESENTATION_ERROR;
-            Description = "Presentation error";
+            RETURN_IF_FAILED(SetResult(JUDGE_RESULT::PRESENTATION_ERROR))
+            RETURN_IF_FAILED(SetDescription("Presentation error"))
         }
         else if (Output == "" && StandardOutput != "")
         {
-            Result = JUDGE_RESULT::RUNTIME_ERROR;
-            Description = "Your program outputs data to stdout instead of a file";
+            RETURN_IF_FAILED(SetResult(JUDGE_RESULT::RUNTIME_ERROR))
+            RETURN_IF_FAILED(SetDescription("Your program outputs data to stdout instead of a file"))
         }
         else if (Output == "" && StandardOutput == "")
         {
-            Result = JUDGE_RESULT::RUNTIME_ERROR;
-            Description = "Output is empty, checking if the program output it's data to a wrong file";
+            RETURN_IF_FAILED(SetResult(JUDGE_RESULT::RUNTIME_ERROR))
+            RETURN_IF_FAILED(SetDescription("Output is empty, checking if the program output it's data to a wrong file"))
         }
         else
         {
-            Result = JUDGE_RESULT::WRONG_ANSWER;
-            Description = "Wrong answer";
+            RETURN_IF_FAILED(SetResult(JUDGE_RESULT::WRONG_ANSWER))
+            RETURN_IF_FAILED(SetDescription("Wrong answer"))
         }
     }
     CREATE_RESULT(true, "Compared");
 }
 
-RESULT TEST_CASE::LoadFromSubmission(std::string SubmissionID, std::string TestGroupID, std::string ID)
-{
-    this->SubmissionID = SubmissionID;
-    this->TestGroupID = TestGroupID;
-    this->ID = atoi(ID.c_str());
-    UpdateWorkDirFromSubmission();
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Result", (int &)Result))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Description", Description))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Time", Time))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/TimeLimit", TimeLimit))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Memory", Memory))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/MemoryLimit", MemoryLimit))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Score", Score))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Input", Input))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Answer", Answer))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/IOFileName", IOFileName))
-    CREATE_RESULT(true, "Submission " + SubmissionID + " test group " + TestGroupID + " test case " + ID + " loaded");
-}
-RESULT TEST_CASE::LoadFromProblem(std::string ProblemID, std::string TestGroupID, std::string ID)
-{
-    this->ProblemID = ProblemID;
-    this->TestGroupID = TestGroupID;
-    UpdateWorkDirFromProblem();
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Input", Input))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Answer", Answer))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/TimeLimit", TimeLimit))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/MemoryLimit", MemoryLimit))
-    RETURN_IF_FAILED(Utilities.LoadFile(WorkDir + "/Score", Score))
-    this->ID = atoi(ID.c_str());
-    CREATE_RESULT(true, "Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + ID + " loaded");
-}
-RESULT TEST_CASE::SaveToProblem(std::string ProblemID, std::string TestGroupID)
-{
-    this->ProblemID = ProblemID;
-    this->TestGroupID = TestGroupID;
-    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Input", Input))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Answer", Answer))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/TimeLimit", TimeLimit))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/MemoryLimit", MemoryLimit))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Score", Score))
-    CREATE_RESULT(true, "Problem \"" + ProblemID + "\" test group " + TestGroupID + " test case " + std::to_string(ID) + " saved");
-}
-RESULT TEST_CASE::SaveToSubmission()
-{
-    Utilities.MakeDir(WorkDir);
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Result", Result))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Description", Description))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Time", Time))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/TimeLimit", TimeLimit))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Memory", Memory))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/MemoryLimit", MemoryLimit))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Score", Score))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Input", Input))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/Answer", Answer))
-    RETURN_IF_FAILED(Utilities.SaveFile(WorkDir + "/IOFileName", IOFileName))
-    CREATE_RESULT(true, "Submission " + SubmissionID + " test group " + TestGroupID + " test case " + std::to_string(ID) + " saved");
-}
-RESULT TEST_CASE::UpdateWorkDirFromSubmission()
-{
-    WorkDir = Settings.GetSubmissionBaseFolder() + "/" + SubmissionID + "/" + TestGroupID + "/" + std::to_string(ID);
-    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
-    CREATE_RESULT(true, "Updated work dir from submission")
-}
-RESULT TEST_CASE::UpdateWorkDirFromProblem()
-{
-    WorkDir = Settings.GetProblemBaseFolder() + "/" + ProblemID + "/TestGroups/" + TestGroupID + "/" + std::to_string(ID);
-    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
-    CREATE_RESULT(true, "Updated work dir from problem")
-}
 RESULT TEST_CASE::Judge()
 {
-    RETURN_IF_FAILED(Utilities.MakeDir(WorkDir))
-    RETURN_IF_FAILED(Utilities.CopyFile(WorkDir + "/../../main", WorkDir + "/main"))
+    WorkDir = Settings.GetRunDir() + "/" + std::to_string(SID) + "-" + std::to_string(TGID) + "-" + std::to_string(TCID);
+    RETURN_IF_FAILED(UTILITIES::MakeDir(WorkDir))
+    RETURN_IF_FAILED(UTILITIES::CopyFile(Settings.GetRunDir() + "/" + std::to_string(SID) + "/main", WorkDir + "/main"))
 
-    Result = JUDGE_RESULT::JUDGING;
-    RETURN_IF_FAILED(SaveToSubmission())
-    if (IOFileName == "")
-        IOFileName = std::to_string(ID);
+    RETURN_IF_FAILED(SetResult(JUDGE_RESULT::JUDGING))
 
     RESULT RunResult = Run();
-    if (Time > TimeLimit)
+    if (Time > UnjudgedTestCase->TimeLimit)
     {
-        Result = JUDGE_RESULT::TIME_LIMIT_EXCEEDED;
-        DEBUG_HERE
-        CREATE_RESULT(false, "Time limit exceeded")
+        RETURN_IF_FAILED(SetResult(JUDGE_RESULT::TIME_LIMIT_EXCEEDED))
+        CREATE_RESULT(true, "Time limit exceeded")
     }
-    kill(PID, SIGKILL);
-    waitpid(PID, nullptr, 0);
+    kill(ProcessID, SIGKILL);
+    waitpid(ProcessID, nullptr, 0);
     if (!RunResult.Success && Result == JUDGE_RESULT::JUDGING)
     {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = RunResult.Message;
+        RETURN_IF_FAILED(SetResult(JUDGE_RESULT::SYSTEM_ERROR))
+        RETURN_IF_FAILED(SetDescription(RunResult.Message))
         CREATE_RESULT(true, "Judged with system error from run")
     }
 
     RESULT CompareResult = Compare();
     if (!CompareResult.Success && Result == JUDGE_RESULT::JUDGING)
     {
-        Result = JUDGE_RESULT::SYSTEM_ERROR;
-        Description = CompareResult.Message;
+        RETURN_IF_FAILED(SetResult(JUDGE_RESULT::SYSTEM_ERROR))
+        RETURN_IF_FAILED(SetDescription(CompareResult.Message))
         CREATE_RESULT(true, "Judged with system error from compare")
     }
 
-    Score = (Result == JUDGE_RESULT::ACCEPTED ? Score : 0);
+    RETURN_IF_FAILED(SetScore(Result == JUDGE_RESULT::ACCEPTED ? Score : 0))
+    RETURN_IF_FAILED(UTILITIES::RemoveDir(WorkDir));
 
     CREATE_RESULT(true, "Judged")
+}
+
+RESULT TEST_CASE::SetOutput(std::string Output)
+{
+    this->Output = Output;
+    RETURN_IF_FAILED(SUBMISSIONS::UpdateTestCase(this))
+    CREATE_RESULT(true, "Output set")
+}
+RESULT TEST_CASE::SetStandardOutput(std::string StandardOutput)
+{
+    this->StandardOutput = StandardOutput;
+    RETURN_IF_FAILED(SUBMISSIONS::UpdateTestCase(this))
+    CREATE_RESULT(true, "Standard output set")
+}
+RESULT TEST_CASE::SetStandardError(std::string StandardError)
+{
+    this->StandardError = StandardError;
+    RETURN_IF_FAILED(SUBMISSIONS::UpdateTestCase(this))
+    CREATE_RESULT(true, "Standard error set")
+}
+RESULT TEST_CASE::SetResult(JUDGE_RESULT Result)
+{
+    this->Result = Result;
+    RETURN_IF_FAILED(SUBMISSIONS::UpdateTestCase(this))
+    CREATE_RESULT(true, "Result set")
+}
+RESULT TEST_CASE::SetDescription(std::string Description)
+{
+    this->Description = Description;
+    RETURN_IF_FAILED(SUBMISSIONS::UpdateTestCase(this))
+    CREATE_RESULT(true, "Description set")
+}
+RESULT TEST_CASE::SetScore(int Score)
+{
+    this->Score = Score;
+    RETURN_IF_FAILED(SUBMISSIONS::UpdateTestCase(this))
+    CREATE_RESULT(true, "Score set")
+}
+RESULT TEST_CASE::SetTime(int Time)
+{
+    this->Time = Time;
+    RETURN_IF_FAILED(SUBMISSIONS::UpdateTestCase(this))
+    CREATE_RESULT(true, "Time set")
+}
+RESULT TEST_CASE::SetMemory(int Memory)
+{
+    this->Memory = Memory;
+    RETURN_IF_FAILED(SUBMISSIONS::UpdateTestCase(this))
+    CREATE_RESULT(true, "Memory set")
 }

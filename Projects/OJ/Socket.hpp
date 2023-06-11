@@ -14,7 +14,6 @@ private:
     int Port;
     int ListenSocket;
     struct sockaddr_in ServerAddress;
-    LOGGER Logger;
 
     void SubThread(int Socket, sockaddr_in ClientAddress, CALL_BACK CallBack);
 

@@ -239,13 +239,13 @@ setInterval(() => {
             }
             IOFileElement.parentNode.insertBefore(document.createElement("br"), IOFileElement);
             IOFileElement.remove();
-            let IOFileName = document.querySelector("body > div > div > center").childNodes[2].data.trim();
-            IOFileName = IOFileName.substr(0, IOFileName.length - 3);
+            let IOFilename = document.querySelector("body > div > div > center").childNodes[2].data.trim();
+            IOFilename = IOFilename.substr(0, IOFilename.length - 3);
             let SearchParams = new URLSearchParams(location.search);
             if (SearchParams.get("id") != null) {
-                localStorage.setItem("UserScript-Problem-" + SearchParams.get("id") + "-IOFileName", IOFileName);
+                localStorage.setItem("UserScript-Problem-" + SearchParams.get("id") + "-IOFilename", IOFilename);
             } else if (SearchParams.get("cid") != null && SearchParams.get("pid") != null) {
-                localStorage.setItem("UserScript-Contest-" + SearchParams.get("cid") + "-Problem-" + SearchParams.get("pid") + "-IOFileName", IOFileName);
+                localStorage.setItem("UserScript-Contest-" + SearchParams.get("cid") + "-Problem-" + SearchParams.get("pid") + "-IOFilename", IOFilename);
             }
         }
     } else if (location.pathname == "/status.php") {
@@ -818,24 +818,24 @@ setInterval(() => {
             let Source = document.getElementById("source").value;
             let SearchParams = new URL(location.href).searchParams;
             if (SearchParams.get("id") != null) {
-                let IOFileName = localStorage.getItem("UserScript-Problem-" + SearchParams.get("id") + "-IOFileName");
-                if (IOFileName != null) {
-                    if (Source.indexOf(IOFileName) == -1) {
+                let IOFilename = localStorage.getItem("UserScript-Problem-" + SearchParams.get("id") + "-IOFilename");
+                if (IOFilename != null) {
+                    if (Source.indexOf(IOFilename) == -1) {
                         ErrorElement.style.display = "block";
                         ErrorMessage.style.color = "red";
-                        ErrorMessage.innerText = "此题输入输出文件名为" + IOFileName + "，请检查是否填错";
+                        ErrorMessage.innerText = "此题输入输出文件名为" + IOFilename + "，请检查是否填错";
                         document.querySelector("#Submit").disabled = false;
                         document.querySelector("#Submit").value = "提交";
                         return false;
                     }
                 }
             } else if (SearchParams.get("cid") != null && SearchParams.get("pid") != null) {
-                let IOFileName = localStorage.getItem("UserScript-Contest-" + SearchParams.get("cid") + "-Problem-" + SearchParams.get("pid") + "-IOFileName");
-                if (IOFileName != null) {
-                    if (Source.indexOf(IOFileName) == -1) {
+                let IOFilename = localStorage.getItem("UserScript-Contest-" + SearchParams.get("cid") + "-Problem-" + SearchParams.get("pid") + "-IOFilename");
+                if (IOFilename != null) {
+                    if (Source.indexOf(IOFilename) == -1) {
                         ErrorElement.style.display = "block";
                         ErrorMessage.style.color = "red";
-                        ErrorMessage.innerText = "此题输入输出文件名为" + IOFileName + "，请检查是否填错";
+                        ErrorMessage.innerText = "此题输入输出文件名为" + IOFilename + "，请检查是否填错";
                         document.querySelector("#Submit").disabled = false;
                         document.querySelector("#Submit").value = "提交";
                         return false;

@@ -6,7 +6,6 @@
 #include "Settings.hpp"
 #include "Utilities.hpp"
 
-void UTILITIES::Init() { Logger.SetLogFileName(Settings.GetBaseFolder() + "/Utilities.log"); }
 std::string UTILITIES::StringReplaceAll(std::string Data, std::string Search, std::string Replace)
 {
     size_t Pos = Data.find(Search);
@@ -207,8 +206,8 @@ size_t UTILITIES::UploadFunction(char *ptr, size_t size, size_t nmemb, void *use
 }
 RESULT UTILITIES::SendEmail(std::string To, std::string Subject, std::string Body)
 {
-    std::string From = Settings.GetEmail();
-    std::string Password = Settings.GetEmailPassword();
+    std::string From = UTILITIES::RemoveSpaces(Settings.GetEmail());
+    std::string Password = UTILITIES::RemoveSpaces(Settings.GetEmailPassword());
     CURL *Curl = curl_easy_init();
     if (Curl == nullptr)
         CREATE_RESULT(false, "Can not initialize CURL")
@@ -235,5 +234,13 @@ RESULT UTILITIES::SendEmail(std::string To, std::string Subject, std::string Bod
     curl_easy_cleanup(Curl);
     CREATE_RESULT(true, "Sent email to " + To)
 }
-
-UTILITIES Utilities;
+time_t UTILITIES::StringToTime(std::string String)
+{
+    struct tm Time;
+    memset(&Time, 0, sizeof(Time));
+    if (sscanf(String.c_str(), "%d-%d-%d %d:%d:%d", &Time.tm_year, &Time.tm_mon, &Time.tm_mday, &Time.tm_hour, &Time.tm_min, &Time.tm_sec) != 6)
+        return 0;
+    Time.tm_year -= 1900;
+    Time.tm_mon--;
+    return mktime(&Time);
+}

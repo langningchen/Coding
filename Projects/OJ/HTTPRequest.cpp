@@ -4,8 +4,7 @@
 
 HTTP_REQUEST::HTTP_REQUEST(std::string Data)
 {
-    Logger.SetLogFileName(Settings.GetBaseFolder() + "/HTTPRequest.log");
-    Data = Utilities.StringReplaceAll(Data, "\r", "");
+    Data = UTILITIES::StringReplaceAll(Data, "\r", "");
 
     size_t VerbStartPosition = 0;
     size_t VerbEndPosition = Data.find(" ", VerbStartPosition);
@@ -45,10 +44,3 @@ HTTP_REQUEST::HTTP_REQUEST(std::string Data)
             Line.push_back(Data[i]);
     }
 }
-HTTP_REQUEST::~HTTP_REQUEST() {}
-
-std::string HTTP_REQUEST::GetVersion() { return Version; }
-std::string HTTP_REQUEST::GetVerb() { return Verb; }
-std::string HTTP_REQUEST::GetPath() { return Path; }
-std::string HTTP_REQUEST::GetHeader(std::string Name) { return Headers[Name]; }
-std::string HTTP_REQUEST::GetBody() { return Body; }

@@ -1,21 +1,13 @@
 #include "JudgingList.hpp"
-#include "Submission.hpp"
+#include "Submissions.hpp"
 #include "Settings.hpp"
-#include "Mutexes.hpp"
+#include "Problems.hpp"
 #include <thread>
 #include <unistd.h>
 #include <dirent.h>
 
-JUDGING_LIST::JUDGING_LIST() {}
-JUDGING_LIST::~JUDGING_LIST()
-{
-    while (!JudgingList.empty())
-        ;
-}
-
 void JUDGING_LIST::Init()
 {
-    Logger.SetLogFileName(Settings.GetBaseFolder() + "/JudgingList.log");
     new std::thread([this]()
                     {
         while (true)
@@ -23,31 +15,16 @@ void JUDGING_LIST::Init()
             while (JudgingList.empty())
                 usleep(100000);
             SUBMISSION Submission;
-            OUTPUT_IF_FAILED(Submission.Load(JudgingList.front()))
+            OUTPUT_IF_FAILED(SUBMISSIONS::GetSubmission(JudgingList.front(), Submission))
             JudgingList.pop();
             OUTPUT_IF_FAILED(Submission.Judge())
-            Logger.Info(Submission.WorkDir);
-            OUTPUT_IF_FAILED(Submission.Save())
         } });
 }
 
-RESULT JUDGING_LIST::Add(SUBMISSION Submission, int &SubmissionID)
+RESULT JUDGING_LIST::Add(SUBMISSION &Submission)
 {
-    SubmissionAddMutex.lock();
-    SubmissionID = 0;
-    DIR *SubmissionDir = opendir(Settings.GetSubmissionBaseFolder().c_str());
-    struct dirent *SubmissionDirEntry;
-    while ((SubmissionDirEntry = readdir(SubmissionDir)) != NULL)
-        if (SubmissionDirEntry->d_type == DT_DIR)
-            SubmissionID = std::max(SubmissionID, atoi(SubmissionDirEntry->d_name));
-    SubmissionID++;
-    Submission.ID = SubmissionID;
-    Submission.UpdateWorkDir();
-    Submission.CopyTestGroups();
-    Logger.Info(Submission.WorkDir);
-    RETURN_IF_FAILED_WITH_OPERATION(Submission.Save(), SubmissionAddMutex.unlock())
-    JudgingList.push(SubmissionID);
-    SubmissionAddMutex.unlock();
+    RETURN_IF_FAILED(SUBMISSIONS::AddSubmission(Submission))
+    JudgingList.push(Submission.SID);
     CREATE_RESULT(true, "Submission added to judging list")
 }
 
