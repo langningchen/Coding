@@ -462,38 +462,42 @@ const LoadPage = (Name, Data) => {
                     "URL": location.href
                 });
             }
+            var ProblemTexts = [". ", "Description", "Input", "Output",
+                "Samples", "Sample", "Input", "Output", "Description", "Range", "Hint",
+                "Other", "Key", "Value", "Time limit", "Memory limit",
+                "Input filename", "Standard input", "Output filename", "Standard output"];
             RequestAPI("GetProblem", { "PID": Data["PID"] }, () => { }, (Response) => {
-                var MarkdownData = "# " + Response.PID + ". " + Response.Title + "\n" +
-                    "## Description\n" +
+                var MarkdownData = "# " + Response.PID + ProblemTexts[0] + Response.Title + "\n" +
+                    "## " + ProblemTexts[1] + "\n" +
                     Response.Description + "\n" +
-                    "## Input\n" +
+                    "## " + ProblemTexts[2] + "\n" +
                     Response.Input + "\n" +
-                    "## Output\n" +
+                    "## " + ProblemTexts[3] + "\n" +
                     Response.Output + "\n";
                 if (Response.Samples.length > 0) {
-                    MarkdownData += "## Samples\n";
+                    MarkdownData += "## " + ProblemTexts[4] + "\n";
                     Response.Samples.map((Sample) => {
-                        MarkdownData += "### Sample " + (Response.Samples.indexOf(Sample) + 1) + "\n" +
-                            "#### Input\n" +
-                            Sample.Input + "\n" +
-                            "#### Output\n" +
-                            Sample.Output + "\n";
-                        if (Sample.Description != "") {
-                            MarkdownData += "#### Description\n" +
+                        MarkdownData += "### " + ProblemTexts[5] + " " + (Response.Samples.indexOf(Sample) + 1) + "\n" +
+                            "#### " + ProblemTexts[6] + "\n```\n" +
+                            Sample.Input + "\n```\n" +
+                            "#### " + ProblemTexts[7] + "\n```\n" +
+                            Sample.Output + "\n```\n";
+                        if (Sample.Description != null) {
+                            MarkdownData += "#### " + ProblemTexts[8] + "\n" +
                                 Sample.Description + "\n";
                         }
                     });
                 }
                 if (Response.Range != "") {
-                    MarkdownData += "## Range\n" +
+                    MarkdownData += "## " + ProblemTexts[9] + "\n" +
                         Response.Range + "\n";
                 }
                 if (Response.Hint != "") {
-                    MarkdownData += "## Hint\n" +
+                    MarkdownData += "## " + ProblemTexts[10] + "\n" +
                         Response.Hint + "\n";
                 }
-                MarkdownData += "## Other\n" +
-                    "| Key | Value |\n" +
+                MarkdownData += "## " + ProblemTexts[11] + "\n" +
+                    "| " + ProblemTexts[12] + " | " + ProblemTexts[13] + " |\n" +
                     "|:----|:------|\n";
                 var MaxTimeLimit = 0;
                 var MaxMemoryLimit = 0;
@@ -508,6 +512,8 @@ const LoadPage = (Name, Data) => {
                     "| Input filename | `" + (Response.InputFilename == "" ? Response.InputFilename : "Standard input") + "` |\n" +
                     "| Output filename | `" + (Response.OutputFilename == "" ? Response.OutputFilename : "Standard output") + "` |\n";
                 $("#ProblemData").html(marked.parse(MarkdownData));
+                $("#ProblemData").append($("<a class=\"weui-btn weui-btn_primary\" id=\"ProblemSubmit\"></a>"));
+                $("#ProblemSubmit").text("123");
                 renderMathInElement(document.body,
                     {
                         delimiters: [
@@ -516,6 +522,17 @@ const LoadPage = (Name, Data) => {
                         ]
                     }
                 );
+                $("pre>code").off("click").on("click", (Event) => {
+                    var InputElement = document.createElement("input");
+                    InputElement.value = Event.currentTarget.innerText;
+                    InputElement.style.position = "fixed";
+                    InputElement.style.left = "-100px";
+                    document.body.appendChild(InputElement);
+                    InputElement.select();
+                    document.execCommand("copy");
+                    ShowSuccess("Copied");
+                    InputElement.remove();
+                });
             }, () => { }, () => { });
         }
     };

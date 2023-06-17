@@ -24,11 +24,11 @@ add_executable(main
     Submissions.cpp
     TestCase.cpp
     TestGroup.cpp
+    TestGroupData.cpp
     Tokens.cpp
     Users.cpp
     Utilities.cpp
     WebDataProceed.cpp
-    TestGroupData.cpp
     main.cpp)
 
 set(LIBS

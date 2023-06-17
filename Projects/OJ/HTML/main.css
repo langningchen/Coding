@@ -228,6 +228,11 @@
 .TestCaseLimit>:first-child::after {
     content: "/";
 }
+article>pre code {
+    background-color: gainsboro;
+    padding: 3px 5px;
+    border-radius: 3px;
+}
 article table {
     border-collapse: collapse;
 }
@@ -237,7 +242,6 @@ article table th {
     border: 1px solid black;
     padding: 3px 5px;
 }
-
 
 article table td:last-child,
 article table th:last-child {
