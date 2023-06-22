@@ -1,2 +1,1 @@
-[![Auto ClockIn](https://github.com/langningchen/Coding/actions/workflows/Auto%20ClockIn.yml/badge.svg?branch=main)](https://github.com/langningchen/Coding/actions/workflows/Auto%20ClockIn.yml)
-[![Wakatime](https://wakatime.com/badge/github/langningchen/Coding.svg)](https://wakatime.com/badge/github/langningchen/Coding)
+This repo is divided into smaller repos. Go [/langningchen](https://github.com/langningchen?tab=repositories) to have a look.
